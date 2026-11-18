@@ -9,6 +9,7 @@
 | `assets/sprites/house.png` | Projeto idle do autor (casa com telhado verde) | ⚠️ confirmar |
 | `assets/source/character/*`, `assets/sprites/player.png` | Personagem com mochila, via projeto idle do autor | ⚠️ confirmar |
 | `assets/source/animals/*`, `assets/sprites/animals/*` | Moombor, Fofrança, Catarrápio e Piuplum, enviados pelo autor | ⚠️ confirmar |
+| `assets/source/icons/*`, `assets/sprites/items_hd.png` | Ícones de ferramentas enviados pelo autor | ⚠️ confirmar |
 | Demais sprites em `assets/sprites/` | Arte provisória gerada por `tools/generate_placeholder_art.py` | do projeto |
 
 Antes de publicar na Play Store, confirme que todo asset de terceiros permite uso comercial e, se exigido, dê o crédito aqui e na tela de créditos do jogo.

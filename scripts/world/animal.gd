@@ -144,6 +144,7 @@ func _refresh() -> void:
 	if has_product:
 		_interact.label = "Coletar"
 		_bubble.texture = ItemDB.icon(SPECIES[species]["product"])
+		_bubble.scale = Vector2.ONE * (16.0 / _bubble.texture.get_width())
 		_bubble.visible = true
 	else:
 		_interact.label = "Carinho" if not petted_today else nickname

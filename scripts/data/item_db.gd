@@ -5,6 +5,10 @@ class_name ItemDB
 const ICONS := preload("res://assets/sprites/icons.png")
 const ICON_SIZE := 16
 const ICON_COLUMNS := 16
+## Ícones em alta resolução (32x32), gerados por tools/import_icons.py.
+## Itens com "hd" usam este atlas no lugar de icons.png.
+const ICONS_HD := preload("res://assets/sprites/items_hd.png")
+const HD_SIZE := 32
 
 ## Ícones de interface (índices em icons.png)
 const UI_ICON := {
@@ -14,15 +18,15 @@ const UI_ICON := {
 
 ## type: tool | seed | crop | resource | product
 const ITEMS := {
-	"watering_can": {"name": "Regador", "icon": 0, "type": "tool", "desc": "Rega a terra arada. Encha na água do lago."},
-	"hoe": {"name": "Enxada", "icon": 1, "type": "tool", "desc": "Ara a grama para plantar."},
-	"axe": {"name": "Machado", "icon": 2, "type": "tool", "desc": "Corta árvores e tocos."},
-	"pickaxe": {"name": "Picareta", "icon": 3, "type": "tool", "desc": "Quebra pedras e desfaz a terra arada."},
-	"scythe": {"name": "Foice", "icon": 4, "type": "tool", "desc": "Corta mato e colhe plantações."},
+	"watering_can": {"name": "Regador", "icon": 0, "hd": 0, "type": "tool", "desc": "Rega a terra arada. Encha na água do lago."},
+	"hoe": {"name": "Enxada", "icon": 1, "hd": 1, "type": "tool", "desc": "Ara a grama para plantar."},
+	"axe": {"name": "Machado", "icon": 2, "hd": 2, "type": "tool", "desc": "Corta árvores e tocos."},
+	"pickaxe": {"name": "Picareta", "icon": 3, "hd": 3, "type": "tool", "desc": "Quebra pedras e desfaz a terra arada."},
+	"scythe": {"name": "Foice", "icon": 4, "hd": 4, "type": "tool", "desc": "Corta mato e colhe plantações."},
 
 	"wood": {"name": "Madeira", "icon": 5, "type": "resource", "sell": 2, "desc": "Material de construção."},
 	"stone": {"name": "Pedra", "icon": 6, "type": "resource", "sell": 2, "desc": "Material de construção."},
-	"fiber": {"name": "Fibra", "icon": 7, "type": "resource", "sell": 1, "desc": "Usada em artesanato."},
+	"fiber": {"name": "Fibra", "icon": 7, "hd": 5, "type": "resource", "sell": 1, "desc": "Usada em artesanato."},
 
 	"carrot": {"name": "Cenoura-Lunar", "icon": 8, "type": "crop", "sell": 45, "desc": "Crocante e levemente brilhante."},
 	"tomato": {"name": "Tomate-Rubi", "icon": 9, "type": "crop", "sell": 70, "desc": "Vermelho como uma pedra preciosa."},
@@ -84,7 +88,13 @@ static func icon_index_texture(index: int) -> AtlasTexture:
 
 
 static func icon(id: String) -> AtlasTexture:
-	return icon_index_texture(int(get_item(id).get("icon", 0)))
+	var item := get_item(id)
+	if item.has("hd"):
+		var t := AtlasTexture.new()
+		t.atlas = ICONS_HD
+		t.region = Rect2(int(item["hd"]) * HD_SIZE, 0, HD_SIZE, HD_SIZE)
+		return t
+	return icon_index_texture(int(item.get("icon", 0)))
 
 
 static func ui_icon(name: String) -> AtlasTexture:

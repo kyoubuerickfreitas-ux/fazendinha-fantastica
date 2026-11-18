@@ -49,5 +49,5 @@ func _draw() -> void:
 	draw_circle(c + off, radius - 6, Color("e9ddbb"))
 	draw_arc(c + off, radius, 0, TAU, 40, Color("2b2118"), 1.5)
 	if icon:
-		var s := icon.get_size() * icon_scale
+		var s := Vector2(16, 16) * icon_scale  # tamanho fixo, seja o ícone 16 ou 32 px
 		draw_texture_rect(icon, Rect2(c + off - s / 2.0, s), false)
