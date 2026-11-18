@@ -625,6 +625,27 @@ def ic_simple(kind):
         for x in (4, 7, 10):
             d.point((x, 7), fill=OUTLINE)
             d.point((x + 1, 7), fill=OUTLINE)
+    elif kind == "milk":
+        d.rectangle((5, 5, 11, 14), fill=hx("F4EFE0"))
+        d.rectangle((6, 2, 10, 5), fill=hx("F4EFE0"))
+        d.rectangle((6, 1, 10, 2), fill=WOOD_L)
+        d.rectangle((5, 8, 11, 11), fill=GREEN)
+        d.point((6, 6), fill=CREAM)
+    elif kind == "egg":
+        ell(d, 8, 9, 5, 6, hx("F3E2C4"))
+        ell(d, 6, 7, 1, 2, hx("FFF8EA"))
+        d.point((10, 12), fill=hx("D9B98F"))
+        d.point((9, 6), fill=hx("8FB36B"))
+    elif kind == "wool":
+        for cx, cy in ((5, 9), (8, 6), (11, 9), (8, 11)):
+            ell(d, cx, cy, 4, 3, hx("F2E6CF"))
+        ell(d, 7, 8, 2, 1, hx("FFF8EA"))
+        d.point((10, 7), fill=GREEN)
+    elif kind == "truffle":
+        ell(d, 8, 9, 6, 5, hx("4A3426"))
+        for x, y in ((5, 8), (8, 6), (10, 10), (7, 11)):
+            d.point((x, y), fill=hx("6B4E3A"))
+        d.line((10, 4, 12, 2), fill=MOSS)
     return outline(img)
 
 
@@ -665,6 +686,10 @@ def icons_sheet():
         ic_simple("bubble"),            # 23
         ic_simple("moon"),              # 24
         ic_simple("cloud"),             # 25
+        ic_simple("milk"),              # 26
+        ic_simple("egg"),               # 27
+        ic_simple("wool"),              # 28
+        ic_simple("truffle"),           # 29
     ]
     cols = 16
     rows = (len(icons) + cols - 1) // cols

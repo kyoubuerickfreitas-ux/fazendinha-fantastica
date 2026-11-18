@@ -35,6 +35,11 @@ var soil := {}           # Vector2i -> {"wet": bool, "crop": String, "growth": i
 var props := {}          # Vector2i -> Prop
 
 var entities: Node2D     # contêiner com Y-sort (jogador, objetos, NPCs)
+var animals: Array[Animal] = []
+
+## Pasto dos animais (em células): x 32..45, y 13..18
+const PASTURE := Rect2i(32, 13, 14, 6)
+const STARTING_ANIMALS := ["moombor", "fofranca", "catarrapio", "piuplum", "piuplum"]
 var player_start := Vector2.ZERO
 
 var _ground_layer := Node2D.new()
@@ -97,6 +102,8 @@ func generate(saved: Dictionary) -> void:
 			_spawn_prop(str(p[0]), Vector2i(int(p[1]), int(p[2])), int(p[3]), int(p[4]) if p.size() > 4 else 0)
 	else:
 		_generate_props(rng)
+
+	_spawn_animals(saved.get("animals", []))
 
 	soil.clear()
 	if saved.has("soil"):
@@ -236,7 +243,7 @@ func _generate_props(rng: RandomNumberGenerator) -> void:
 	for y in range(3, H - 3):
 		for x in range(2, W - 2):
 			var c := Vector2i(x, y)
-			if not _is_free_grass(c) or _near_path(c):
+			if not _is_free_grass(c) or _near_path(c) or PASTURE.grow(1).has_point(c):
 				continue
 			var r := rng.randf()
 			var in_farm := x >= 5 and x <= 24 and y >= 14 and y <= 30
@@ -257,6 +264,18 @@ func _generate_props(rng: RandomNumberGenerator) -> void:
 
 
 const TALL := ["tree", "old_tree", "pine", "sapling", "mushroom", "boulder", "tent"]
+
+
+func _spawn_animals(saved: Array) -> void:
+	var area := Rect2(PASTURE.position * TILE, PASTURE.size * TILE).grow(-12)
+	for i in STARTING_ANIMALS.size():
+		var a := Animal.new()
+		var pos := area.position + Vector2(area.size.x * (0.15 + 0.18 * i), area.size.y * (0.3 + 0.4 * (i % 2)))
+		a.setup(STARTING_ANIMALS[i], area, pos)
+		entities.add_child(a)
+		if i < saved.size() and saved[i] is Dictionary and saved[i].get("species", "") == STARTING_ANIMALS[i]:
+			a.restore(saved[i])
+		animals.append(a)
 
 
 func _can_place_tree(c: Vector2i, spread: int) -> bool:
@@ -482,6 +501,8 @@ func on_new_day() -> void:
 	# o mato volta a crescer aos pouquinhos
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
+	for a in animals:
+		a.new_day()
 	for i in 3:
 		var c := Vector2i(rng.randi_range(5, 24), rng.randi_range(14, 30))
 		if _is_free_grass(c):
@@ -499,7 +520,10 @@ func serialize() -> Dictionary:
 	for c in soil:
 		var d: Dictionary = soil[c]
 		s.append({"x": c.x, "y": c.y, "wet": d["wet"], "crop": d["crop"], "growth": d["growth"]})
-	return {"props": p, "soil": s}
+	var an := []
+	for a in animals:
+		an.append(a.serialize())
+	return {"props": p, "soil": s, "animals": an}
 
 
 # =================================================================== desenho

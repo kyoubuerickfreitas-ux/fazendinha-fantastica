@@ -12,7 +12,7 @@ const UI_ICON := {
 	"backpack": 21, "hand": 22, "bubble": 23, "moon": 24, "cloud": 25,
 }
 
-## type: tool | seed | crop | resource
+## type: tool | seed | crop | resource | product
 const ITEMS := {
 	"watering_can": {"name": "Regador", "icon": 0, "type": "tool", "desc": "Rega a terra arada. Encha na água do lago."},
 	"hoe": {"name": "Enxada", "icon": 1, "type": "tool", "desc": "Ara a grama para plantar."},
@@ -28,6 +28,11 @@ const ITEMS := {
 	"tomato": {"name": "Tomate-Rubi", "icon": 9, "type": "crop", "sell": 70, "desc": "Vermelho como uma pedra preciosa."},
 	"kale": {"name": "Couve-Musgo", "icon": 10, "type": "crop", "sell": 35, "desc": "Folhas macias como musgo."},
 	"starflower": {"name": "Flor-Estrela", "icon": 11, "type": "crop", "sell": 110, "desc": "Brilha suavemente à noite."},
+
+	"milk": {"name": "Leite de Moombor", "icon": 26, "type": "product", "sell": 60, "desc": "Cremoso, com cheirinho de capim."},
+	"egg": {"name": "Ovo de Piuplum", "icon": 27, "type": "product", "sell": 30, "desc": "Cada ovo tem uma pintinha diferente."},
+	"wool": {"name": "Lã de Fofrança", "icon": 28, "type": "product", "sell": 80, "desc": "Macia como nuvem, com cheiro de flor."},
+	"truffle": {"name": "Trufa da Floresta", "icon": 29, "type": "product", "sell": 120, "desc": "Farejada pelo Catarrápio."},
 
 	"seed_carrot": {"name": "Sementes de Cenoura-Lunar", "icon": 12, "type": "seed", "crop": "carrot", "buy": 20, "desc": "Cresce em 3 dias."},
 	"seed_tomato": {"name": "Sementes de Tomate-Rubi", "icon": 13, "type": "seed", "crop": "tomato", "buy": 30, "desc": "Cresce em 4 dias."},

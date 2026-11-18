@@ -79,16 +79,16 @@ func _sell_all() -> void:
 	var count := 0
 	for i in Game.INV_SIZE:
 		var s = Game.inventory[i]
-		if s != null and ItemDB.get_item(s["id"]).get("type", "") == "crop":
+		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product"]:
 			total += ItemDB.sell_price(s["id"]) * int(s["qty"])
 			count += int(s["qty"])
 			Game.inventory[i] = null
 	if count == 0:
-		Game.toast.emit("Coloque colheitas aqui para vender.")
+		Game.toast.emit("Coloque colheitas e produtos aqui para vender.")
 		return
 	Game.inventory_changed.emit()
 	Game.add_money(total)
-	Game.toast.emit("Vendeu %d colheitas por %d moedas!" % [count, total])
+	Game.toast.emit("Vendeu %d itens por %d moedas!" % [count, total])
 
 
 func _sleep(rested: bool) -> void:

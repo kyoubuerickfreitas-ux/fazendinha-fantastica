@@ -20,3 +20,7 @@ Efeitos ficam em `assets/fx/` (quadros de 64×64, 9 linhas de cores). Para troca
 
 ## Forest Map Kit
 Árvores, pinheiros, pedras, arbustos, mato, cogumelos gigantes e decoração de acampamento ficam em `forest/`. São gerados a partir dos originais em `assets/source/forest_kit/` por `tools/import_forest_kit.py` (redução para 60%, para combinar com o tamanho do personagem). As variantes de cada tipo estão em `DEFS` de `scripts/world/prop.gd`.
+
+## Animais
+`animals/<nome>.png`: 256×256, 4×4 quadros de 64×64. Linhas: baixo, esquerda, direita (espelho da esquerda), cima. Colunas: 4 quadros de caminhada. Pés em y=58.
+São gerados a partir das folhas originais em `assets/source/animals/` por `tools/import_animals.py`, que encontra cada quadro sozinho, remove fundo xadrez pintado e reduz para a escala do jogo (altura alvo por animal no próprio script).

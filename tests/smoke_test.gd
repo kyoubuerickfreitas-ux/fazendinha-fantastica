@@ -76,6 +76,22 @@ func _run() -> void:
 	main.save_now()
 	var reloaded: Dictionary = game.load_game()
 	print("save ok, canteiros salvos: ", reloaded.get("soil", []).size())
+	# animais: carinho, novo dia, coleta
+	var cow = w.animals[0]
+	cow._on_interact(p)
+	assert(cow.petted_today, "carinho deveria marcar o dia")
+	w.on_new_day()
+	assert(cow.has_product, "o Moombor deveria ter leite no dia seguinte")
+	cow._on_interact(p)
+	print("leite coletado: ", game.count_item("milk"))
+	assert(game.count_item("milk") == 1)
+	for an in w.animals:
+		an.has_product = an != cow
+		an._refresh()
+	p.position = Vector2(38 * 32, 16 * 32)
+	main.camera.reset_smoothing()
+	await _wait(2.5)
+	await _shot("07_pasto")
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

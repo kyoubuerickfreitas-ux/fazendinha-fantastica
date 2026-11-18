@@ -11,6 +11,7 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ferramentas: regador (enche no lago), enxada, machado, picareta e foice
 - Plantações: Couve-Musgo, Cenoura-Lunar, Tomate-Rubi e Flor-Estrela. Arar, plantar, regar, crescer por dia e colher
 - Limpeza do terreno: mato, pedras, tocos e árvores dão fibra, pedra e madeira
+- Animais no pasto (a leste): **Moombor** (leite), **Fofrança** (lã), **Catarrápio** (trufa) e **Piuplum** (ovos). Faça carinho uma vez por dia e no dia seguinte colete o produto
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -83,7 +84,7 @@ godot --path . -s tests/smoke_test.gd -- /caminho/para/capturas
 ## Próximos passos sugeridos
 
 1. Arte definitiva do personagem e dos tiles
-2. Primeiro animal: **Moombor** (alimentar, amizade, leite)
+2. Animais: alimentação, filhotes, celeiro e galinheiro
 3. Criação de personagem (espécie, cores, chapéus, roupas)
 4. Construções (celeiro, abrigos) e expansão do terreno
 5. Pesca, mineração e novas regiões
