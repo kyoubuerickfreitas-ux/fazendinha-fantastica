@@ -48,6 +48,9 @@ func _run() -> void:
 		game.select_slot(1); p._busy = 0; p.use_tool()
 		game.select_slot(5); p._busy = 0; p.use_tool()
 		game.select_slot(0); p._busy = 0; p.use_tool()
+		if i == 1:
+			await _wait(0.15)
+			await _shot("02b_efeito")
 		game.joystick_vector = Vector2(1, 0)
 		await _wait(0.38)
 		game.joystick_vector = Vector2(0, 1)

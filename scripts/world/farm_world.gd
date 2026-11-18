@@ -11,6 +11,7 @@ const TILES_TEX := preload("res://assets/sprites/tiles.png")
 const CROPS_TEX := preload("res://assets/sprites/crops.png")
 const HOUSE_TEX := preload("res://assets/sprites/house.png")
 const BIN_TEX := preload("res://assets/sprites/shipping_bin.png")
+const SHOP_TEX := preload("res://assets/sprites/shop.png")
 
 enum Ground { GRASS, PATH, WATER }
 # Índices em tiles.png
@@ -150,6 +151,19 @@ func _build_static_scenery() -> void:
 	bin.interacted.connect(func(_w): bin_used.emit())
 	entities.add_child(bin)
 	blocked[bin_cell] = true
+
+	# barraca do Fungo (ocupa x 13..18, y 6..9)
+	var shop := StaticBody2D.new()
+	shop.position = Vector2(15 * TILE + TILE / 2, 9 * TILE + 26)
+	var ss := Sprite2D.new()
+	ss.texture = SHOP_TEX
+	ss.position = Vector2(0, -56)
+	shop.add_child(ss)
+	_add_rect_collision(shop, Vector2(104, 34), Vector2(0, -17))
+	entities.add_child(shop)
+	for y in range(6, 10):
+		for x in range(13, 19):
+			blocked[Vector2i(x, y)] = true
 
 	# Fungo, o vendedor de sementes
 	var npc := NPC.new()
@@ -306,6 +320,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 			if not Game.use_energy(ENERGY_COST["hoe"]):
 				return ""
 			soil[c] = {"wet": Game.weather == "rain", "crop": "", "growth": 0}
+			FX.spawn(self, "till", _cell_center(c))
 			_soil_layer.queue_redraw()
 		"watering_can":
 			if ground_at(c) == Ground.WATER:
@@ -320,6 +335,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				return ""
 			Game.water -= 1
 			soil[c]["wet"] = true
+			FX.spawn(self, "water", _cell_center(c))
 			Game.inventory_changed.emit()
 			_soil_layer.queue_redraw()
 		"axe", "pickaxe", "scythe":
@@ -328,6 +344,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 					return "Precisa de outra ferramenta." if prop.required_tool() != "" else "Essa árvore é antiga demais."
 				if not Game.use_energy(ENERGY_COST[item_id]):
 					return ""
+				FX.spawn(self, "hit", prop.position + Vector2(0, -12))
 				if prop.hit():
 					_destroy_prop(prop)
 				return ""
@@ -337,6 +354,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				if not Game.use_energy(ENERGY_COST["pickaxe"]):
 					return ""
 				soil.erase(c)
+				FX.spawn(self, "till", _cell_center(c))
 				_soil_layer.queue_redraw()
 	return ""
 
@@ -368,6 +386,7 @@ func _plant(seed_id: String, c: Vector2i) -> String:
 	soil[c]["crop"] = ItemDB.get_item(seed_id)["crop"]
 	soil[c]["growth"] = 0
 	Game.remove_from_slot(Game.selected_slot, 1)
+	FX.spawn(self, "plant", _cell_center(c) + Vector2(0, 6))
 	_soil_layer.queue_redraw()
 	return ""
 
@@ -384,6 +403,7 @@ func _harvest(c: Vector2i, with_scythe: bool) -> String:
 	s["crop"] = ""
 	s["growth"] = 0
 	_popup("+%d %s" % [def["amount"], ItemDB.item_name(def["produce"])], _cell_center(c))
+	FX.spawn(self, "harvest", _cell_center(c))
 	_soil_layer.queue_redraw()
 	return ""
 
@@ -394,6 +414,8 @@ func _destroy_prop(prop: Prop) -> void:
 		Game.add_item(d[0], d[1])
 		_popup("+%d %s" % [d[1], ItemDB.item_name(d[0])], prop.position + Vector2(0, -20))
 	props.erase(prop.cell)
+	var fx_name := "weed" if prop.kind == "weed" else ("break_stone" if prop.kind == "rock" else "break_wood")
+	FX.spawn(self, fx_name, prop.position + Vector2(0, -10))
 	var tw := prop.create_tween()
 	tw.tween_property(prop, "modulate:a", 0.0, 0.15)
 	tw.tween_callback(prop.queue_free)

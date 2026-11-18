@@ -93,7 +93,7 @@ func _build_top_left() -> void:
 	var portrait := PanelContainer.new()
 	portrait.add_theme_stylebox_override("panel", UIStyle.wood_panel())
 	var inner := PanelContainer.new()
-	var inner_style := UIStyle.panel(Color("6a8c42"), UIStyle.WOOD_DARK, 1, 4)
+	var inner_style := UIStyle.panel(Color("526a23"), UIStyle.WOOD_DARK, 1, 4)
 	inner_style.set_content_margin_all(0)
 	inner_style.shadow_size = 0
 	inner.add_theme_stylebox_override("panel", inner_style)

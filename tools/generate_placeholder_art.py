@@ -198,24 +198,33 @@ def npc_sheet():
 
 
 # ================================================================ TILES
+# Paleta do chão tirada do tile de terreno do projeto idle (assets/source/terrain_ref.png)
+G_BASE, G_D1, G_D2, G_D3 = hx("526A23"), hx("465C22"), hx("3F531F"), hx("2A3918")
+G_H1, G_H2, G_H3, G_H4 = hx("5E7725"), hx("6E8727"), hx("89A22F"), hx("99B435")
+D_BASE, D_L1, D_L2, D_D1, D_D2, D_PEB = hx("855728"), hx("93602D"), hx("A46C35"), hx("794F23"), hx("6A441D"), hx("C19865")
+
+
+def grass_tuft(px, x, y, rng, big=False):
+    """Tufo de grama: sombra escura embaixo, folhas claras em cima."""
+    w = 4 if big else 3
+    for dx in range(-1, w + 1):
+        if 0 <= x + dx < 32 and y + 1 < 32:
+            px[(x + dx) % 32, (y + 1) % 32] = G_D3 if dx in (-1, w) else G_D2
+    for dx in range(w):
+        px[(x + dx) % 32, y % 32] = G_H2
+        px[(x + dx) % 32, (y - 1) % 32] = G_H1 if dx in (0, w - 1) else G_H3
+    px[(x + 1) % 32, (y - 2) % 32] = G_H4 if big else G_H3
+
+
 def tile_grass(seed, flowers=False, clover=False):
     rng = random.Random(seed)
     img, d = new(32, 32)
-    d.rectangle((0, 0, 31, 31), fill=hx("6A8C42"))
-    speckle(img, rng, [hx("5C7D38"), hx("628540")], 70)
-    speckle(img, rng, [hx("78994D")], 40)
+    d.rectangle((0, 0, 31, 31), fill=G_BASE)
+    speckle(img, rng, [G_D1, G_D1, G_D2], 90)
+    speckle(img, rng, [G_H1], 30)
     px = img.load()
-    for _ in range(6):
-        x, y = rng.randrange(1, 31), rng.randrange(2, 31)
-        px[x, y] = hx("86A85A")
-        px[x - 1, y - 1] = hx("86A85A")
-        if x + 1 < 32:
-            px[x + 1, y - 1] = hx("7FA052")
-    if clover:
-        for _ in range(4):
-            x, y = rng.randrange(3, 28), rng.randrange(3, 28)
-            d.ellipse((x, y, x + 3, y + 3), fill=hx("557A35"))
-            px[x + 1, y + 1] = hx("6E9447")
+    for _ in range(9 if not clover else 13):
+        grass_tuft(px, rng.randrange(0, 32), rng.randrange(2, 31), rng, big=rng.random() < 0.4)
     if flowers:
         for _ in range(3):
             x, y = rng.randrange(3, 28), rng.randrange(3, 28)
@@ -223,25 +232,30 @@ def tile_grass(seed, flowers=False, clover=False):
             for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1)):
                 px[x + dx, y + dy] = c
             px[x, y] = hx("E3A23B")
+            px[x, y + 2] = G_D3
     return img
 
 
 def tile_path(seed):
     rng = random.Random(seed)
     img, d = new(32, 32)
-    d.rectangle((0, 0, 31, 31), fill=hx("A88A5B"))
-    speckle(img, rng, [hx("9A7D50"), hx("B49768")], 90)
+    d.rectangle((0, 0, 31, 31), fill=D_BASE)
+    speckle(img, rng, [D_L1, D_D1], 160)
+    speckle(img, rng, [D_L2], 25)
     px = img.load()
-    for _ in range(7):
-        x, y = rng.randrange(1, 30), rng.randrange(1, 30)
-        px[x, y] = hx("C7AD80")
-        px[x + 1, y] = hx("8F7449")
+    for _ in range(8):
+        x, y = rng.randrange(1, 31), rng.randrange(1, 30)
+        px[x, y] = D_PEB
+        px[x, y + 1] = D_D2
     return img
 
 
 def tile_tilled(wet):
     img, d = new(32, 32)
-    base, furrow, hi = (hx("4F3522"), hx("3D281A"), hx("5F4130")) if wet else (hx("7A5535"), hx("5E3F26"), hx("8D6440"))
+    if wet:
+        base, furrow, hi = hx("553820"), hx("3E2815"), hx("6A4626")
+    else:
+        base, furrow, hi = D_D1, D_D2, D_L1
     d.rectangle((0, 0, 31, 31), fill=base)
     for y in range(4, 32, 7):
         d.line((2, y, 29, y), fill=furrow)
@@ -263,10 +277,10 @@ def tile_water(seed, bank=False):
         x, y = rng.randrange(2, 24), rng.randrange(8 if bank else 2, 30)
         d.line((x, y, x + rng.randrange(3, 7), y), fill=hx("7DB4C9"))
     if bank:
-        d.rectangle((0, 0, 31, 3), fill=hx("6A8C42"))
-        d.rectangle((0, 4, 31, 7), fill=hx("6B5338"))
+        d.rectangle((0, 0, 31, 3), fill=G_BASE)
+        d.rectangle((0, 4, 31, 7), fill=D_D2)
         d.line((0, 8, 31, 8), fill=hx("3B6A82"))
-        speckle(img, rng, [hx("5C7D38")], 10, box=(0, 0, 32, 4))
+        speckle(img, rng, [G_D2, G_H1], 14, box=(0, 0, 32, 4))
     return img
 
 
@@ -664,7 +678,7 @@ def app_icon():
     img = Image.new("RGBA", (256, 256), TRANSPARENT)
     d = ImageDraw.Draw(img)
     d.rounded_rectangle((0, 0, 255, 255), radius=48, fill=GREEN)
-    d.rounded_rectangle((12, 12, 243, 243), radius=40, fill=hx("6A8C42"))
+    d.rounded_rectangle((12, 12, 243, 243), radius=40, fill=G_BASE)
     face = draw_creature(0, 0, "player").crop((8, 0, 56, 48)).resize((192, 192), Image.NEAREST)
     img.alpha_composite(face, (32, 44))
     img.save(os.path.join(ROOT, "icon.png"))
