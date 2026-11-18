@@ -86,6 +86,16 @@ func setup(p_kind: String, p_cell: Vector2i, tile_size: int, p_hp: int = -1, p_v
 		collision_layer = 0
 
 
+## O ponto (em coordenadas do mundo) está sobre a imagem deste objeto?
+func contains_point(p: Vector2) -> bool:
+	var local := p - position - _sprite.position
+	var r := Rect2(_sprite.offset, _sprite.texture.get_size())
+	# só a parte de baixo das copas grandes conta, para não pegar árvores atrás
+	if r.size.y > 64:
+		r = Rect2(r.position.x + r.size.x * 0.2, r.end.y - 72, r.size.x * 0.6, 72)
+	return r.has_point(local)
+
+
 func required_tool() -> String:
 	return DEFS[kind]["tool"]
 

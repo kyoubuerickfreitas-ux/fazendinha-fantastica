@@ -92,6 +92,41 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	await _wait(2.5)
 	await _shot("07_pasto")
+	# mira: pedra ao lado, personagem de costas para ela -> a mira automática acerta
+	var rock_cell := Vector2i(-1, -1)
+	for c in w.props:
+		if w.props[c].kind == "rock":
+			rock_cell = c
+			break
+	var rock = w.props[rock_cell]
+	p.position = Vector2(rock_cell.x * 32 + 16 + 30, rock_cell.y * 32 + 28)
+	p.facing = Vector2.RIGHT
+	game.select_slot(3)   # picareta
+	var hp0: int = rock.hp
+	p._busy = 0
+	p.use_tool()
+	print("mira automática na pedra: hp ", hp0, " -> ", rock.hp)
+	assert(rock.hp == hp0 - 1, "a mira automática deveria acertar a pedra")
+
+	# toque na copa de uma árvore próxima
+	var tree = null
+	for c in w.props:
+		if w.props[c].kind == "tree":
+			tree = w.props[c]
+			break
+	p.position = tree.position + Vector2(40, 10)
+	main.camera.reset_smoothing()
+	await _wait(0.3)
+	game.select_slot(2)   # machado
+	p._busy = 0
+	var hp1: int = tree.hp
+	var screen: Vector2 = main.get_viewport().get_canvas_transform() * (tree.position + Vector2(0, -40))
+	main._on_world_tap(screen)
+	print("toque na árvore: hp ", hp1, " -> ", tree.hp)
+	assert(tree.hp == hp1 - 1, "tocar na árvore deveria usar o machado nela")
+	await _wait(0.1)
+	await _shot("08_mira")
+
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

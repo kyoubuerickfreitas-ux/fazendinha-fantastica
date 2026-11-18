@@ -28,6 +28,8 @@ var _toast_tween: Tween
 var _fade: ColorRect
 
 var _open_panel: Control = null
+## Áreas da HUD em que um toque não deve atingir o mundo.
+var _blockers: Array[Control] = []
 var _backpack: Control
 var _bp_slots: Array[ItemSlot] = []
 var _bp_marked := -1
@@ -89,6 +91,7 @@ func _build_top_left() -> void:
 	box.add_theme_constant_override("separation", 4)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(box)
+	_blockers.append(box)
 
 	var portrait := PanelContainer.new()
 	portrait.add_theme_stylebox_override("panel", UIStyle.wood_panel())
@@ -147,6 +150,7 @@ func _build_top_right() -> void:
 	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(panel)
+	_blockers.append(panel)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 5)
 	panel.add_child(h)
@@ -190,6 +194,7 @@ func _build_hotbar() -> void:
 	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(panel)
+	_blockers.append(panel)
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 3)
 	panel.add_child(h)
@@ -372,6 +377,17 @@ func _build_confirm() -> void:
 
 
 # ================================================================= painéis
+## O ponto da tela está sobre algum elemento da HUD?
+func blocks_point(p: Vector2) -> bool:
+	for c in _blockers:
+		if c.get_global_rect().grow(4).has_point(p):
+			return true
+	for b in [_use_btn, _hand_btn]:
+		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
+			return true
+	return false
+
+
 func is_panel_open() -> bool:
 	return _open_panel != null
 
@@ -509,7 +525,7 @@ func _process(_d: float) -> void:
 		var it := player.find_interactable()
 		if it:
 			text = it.label
-		elif player.world and player.world.can_interact_cell(player.target_cell()):
+		elif player.world and player.world.can_interact_cell(player.pick_target("")):
 			text = "Colher"
 	if _context_label.text != text:
 		_context_label.text = text

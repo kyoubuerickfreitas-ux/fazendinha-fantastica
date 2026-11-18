@@ -47,6 +47,7 @@ var _soil_layer := Node2D.new()
 var _cursor := Node2D.new()
 var _cursor_cell := Vector2i(-1, -1)
 var _cursor_visible := false
+var _cursor_valid := true
 
 
 func _ready() -> void:
@@ -332,11 +333,61 @@ func world_size() -> Vector2:
 	return Vector2(W * TILE, H * TILE)
 
 
-func set_cursor(c: Vector2i, visible_: bool) -> void:
-	if c != _cursor_cell or visible_ != _cursor_visible:
+func set_cursor(c: Vector2i, visible_: bool, valid: bool = true) -> void:
+	if c != _cursor_cell or visible_ != _cursor_visible or valid != _cursor_valid:
 		_cursor_cell = c
 		_cursor_visible = visible_
+		_cursor_valid = valid
 		_cursor.queue_redraw()
+
+
+## Ponto que representa o alvo de uma célula (a base do objeto, se houver um).
+func target_anchor(c: Vector2i) -> Vector2:
+	if props.has(c):
+		return props[c].position
+	return _cell_center(c)
+
+
+## O item faria alguma coisa nesta célula?
+func would_act(item_id: String, c: Vector2i) -> bool:
+	if item_id == "":
+		return can_interact_cell(c)
+	var item := ItemDB.get_item(item_id)
+	var prop: Prop = props.get(c)
+	if item.get("type", "") == "seed":
+		return soil.has(c) and soil[c]["crop"] == "" and prop == null
+	match item_id:
+		"hoe":
+			return prop == null and _is_free_grass(c)
+		"watering_can":
+			return ground_at(c) == Ground.WATER or (soil.has(c) and not soil[c]["wet"])
+		"axe", "pickaxe", "scythe":
+			if prop:
+				return prop.required_tool() == item_id
+			if item_id == "scythe" and soil.has(c) and soil[c]["crop"] != "":
+				return ItemDB.crop_stage(soil[c]["crop"], soil[c]["growth"]) == 3
+			if item_id == "pickaxe" and soil.has(c):
+				return soil[c]["crop"] == ""
+	return false
+
+
+## Penalidade na mira automática (para preferir o alvo mais útil).
+func target_penalty(item_id: String, c: Vector2i) -> float:
+	if item_id == "watering_can" and ground_at(c) == Ground.WATER:
+		return 0.0 if Game.water <= 0 else 60.0   # só mira na água se precisar encher
+	if item_id == "pickaxe" and soil.has(c):
+		return 40.0   # prefere pedras a desfazer canteiros
+	return 0.0
+
+
+## Objeto cuja imagem contém o ponto (o que estiver mais à frente).
+func prop_at_point(p: Vector2) -> Prop:
+	var best: Prop = null
+	for c in props:
+		var prop: Prop = props[c]
+		if prop.contains_point(p) and (best == null or prop.position.y > best.position.y):
+			best = prop
+	return best
 
 
 # =================================================================== ações
@@ -564,5 +615,9 @@ func _draw_cursor() -> void:
 	if not _cursor_visible:
 		return
 	var r := Rect2(_cursor_cell.x * TILE + 1, _cursor_cell.y * TILE + 1, TILE - 2, TILE - 2)
-	_cursor.draw_rect(r, Color(0.98, 0.95, 0.82, 0.18), true)
-	_cursor.draw_rect(r, Color(0.98, 0.95, 0.82, 0.8), false, 1.0)
+	if _cursor_valid:
+		_cursor.draw_rect(r, Color(0.71, 0.79, 0.58, 0.28), true)
+		_cursor.draw_rect(r, Color(0.86, 0.95, 0.66, 0.95), false, 2.0)
+	else:
+		_cursor.draw_rect(r, Color(0.98, 0.95, 0.82, 0.10), true)
+		_cursor.draw_rect(r, Color(0.98, 0.95, 0.82, 0.45), false, 1.0)

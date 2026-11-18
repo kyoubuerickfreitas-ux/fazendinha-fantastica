@@ -27,6 +27,7 @@ func _input(event: InputEvent) -> void:
 			_base = event.position - global_position
 			_knob = _base
 			_update()
+			get_viewport().set_input_as_handled()
 		elif not event.pressed and event.index == _touch:
 			_release()
 	elif event is InputEventScreenDrag and event.index == _touch:

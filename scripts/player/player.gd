@@ -7,6 +7,9 @@ extends CharacterBody2D
 const SHEET := preload("res://assets/sprites/player.png")
 const SPEED := 85.0
 const REACH := 20.0
+const AUTO_REACH := 52.0    # alcance da mira automática (~1,6 célula)
+const TAP_REACH := 72.0     # alcance ao tocar direto na tela
+const FACING_BIAS := 18.0   # quanto a direção do personagem pesa na escolha
 const ACTION_TIME := 0.28
 const COLS := 7
 const WALK_FRAMES := 6
@@ -65,7 +68,9 @@ func _physics_process(delta: float) -> void:
 		_sprite.frame = _dir * COLS
 
 	if world:
-		world.set_cursor(target_cell(), Game.ui_lock == 0)
+		var id := Game.selected_item_id()
+		var c := target_cell()
+		world.set_cursor(c, Game.ui_lock == 0, world.would_act(id, c) or world.can_interact_cell(c))
 
 
 ## Direção (4 lados) para a qual o personagem está virado.
@@ -77,22 +82,67 @@ func facing_vector() -> Vector2:
 	return Vector2.DOWN
 
 
+func feet() -> Vector2:
+	return global_position + Vector2(0, -6)
+
+
 func target_point() -> Vector2:
-	return global_position + Vector2(0, -6) + facing_vector() * REACH
+	return feet() + facing_vector() * REACH
 
 
+## Mira inteligente: entre as células ao alcance, escolhe a mais próxima em que o item
+## selecionado faz alguma coisa. A direção em que o personagem anda desempata.
+## Se nada servir, devolve a célula logo à frente (para dar a mensagem certa).
 func target_cell() -> Vector2i:
-	return world.cell_of(target_point())
+	return pick_target(Game.selected_item_id())
+
+
+func pick_target(item_id: String) -> Vector2i:
+	var f := feet()
+	var pc := world.cell_of(f)
+	var best := world.cell_of(target_point())
+	var best_score := INF
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			var c := pc + Vector2i(dx, dy)
+			if not (world.would_act(item_id, c) or (item_id == "" and world.can_interact_cell(c))):
+				continue
+			var p := world.target_anchor(c)
+			var to := p - f
+			var d := to.length()
+			if d > AUTO_REACH:
+				continue
+			var score := d - FACING_BIAS * facing.dot(to.normalized() if d > 0.1 else facing)
+			score += world.target_penalty(item_id, c)
+			if score < best_score:
+				best_score = score
+				best = c
+	return best
 
 
 func use_tool() -> void:
+	use_at(target_cell())
+
+
+## Usa o item selecionado numa célula específica (mira automática ou toque na tela).
+func use_at(c: Vector2i) -> void:
 	if _busy > 0.0 or Game.ui_lock > 0 or world == null:
 		return
+	var id := Game.selected_item_id()
+	_face(world.target_anchor(c))
 	_busy = ACTION_TIME
 	_play_action_anim()
-	var msg := world.use_item(Game.selected_item_id(), target_cell())
+	var msg: String
+	if id != "" and not world.would_act(id, c) and world.can_interact_cell(c):
+		msg = world.interact_cell(c)   # ex.: tocar numa colheita pronta com o machado na mão
+	else:
+		msg = world.use_item(id, c)
 	if msg != "":
 		Game.toast.emit(msg)
+
+
+func can_reach(point: Vector2) -> bool:
+	return feet().distance_to(point) <= TAP_REACH
 
 
 func interact() -> void:
@@ -100,24 +150,43 @@ func interact() -> void:
 		return
 	var it := find_interactable()
 	if it:
+		_face(it.global_position)
 		it.interact(self)
 		return
-	var msg := world.interact_cell(target_cell())
+	var c := pick_target("")
+	_face(world.target_anchor(c))
+	var msg := world.interact_cell(c)
 	if msg != "":
 		Game.toast.emit(msg)
 
 
 func find_interactable() -> Interactable:
 	var best: Interactable = null
-	var best_d := INF
-	var p := target_point()
+	var best_score := INF
+	var f := feet()
 	for n in get_tree().get_nodes_in_group("interactable"):
 		var it := n as Interactable
-		var d := it.global_position.distance_to(p)
-		if d < it.reach and d < best_d:
+		var to := it.global_position - f
+		var d := to.length()
+		if d > it.reach + 14.0:
+			continue
+		var score := d - FACING_BIAS * facing.dot(to.normalized() if d > 0.1 else facing)
+		if score < best_score:
 			best = it
-			best_d = d
+			best_score = score
 	return best
+
+
+func _face(point: Vector2) -> void:
+	var to := point - feet()
+	if to.length() < 2.0:
+		return
+	facing = to.normalized()
+	if abs(to.x) > abs(to.y):
+		_dir = Dir.RIGHT if to.x > 0 else Dir.LEFT
+	else:
+		_dir = Dir.DOWN if to.y > 0 else Dir.UP
+	_sprite.frame = _dir * COLS
 
 
 func _play_action_anim() -> void:

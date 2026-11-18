@@ -16,6 +16,11 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
 
+## Mira
+
+- **Mira automática:** o botão de usar escolhe sozinho o alvo mais próximo em que a ferramenta da mão faz algo (machado → árvore, regador → terra seca, sementes → canteiro vazio...). A direção em que você anda desempata. O quadrado **verde** mostra o alvo; quadrado apagado = nada para fazer ali.
+- **Tocar para usar:** toque direto numa árvore, pedra, canteiro, animal ou personagem perto de você para usar a ferramenta/interagir exatamente ali.
+
 ## Como abrir
 
 1. Instale o [Godot 4.3](https://godotengine.org/download) (versão padrão, não a .NET).

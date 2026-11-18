@@ -62,10 +62,45 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed:
+		_on_world_tap(event.position)
+		return
 	if event.is_action_pressed("use_tool"):
 		player.use_tool()
 	elif event.is_action_pressed("interact"):
 		player.interact()
+
+
+# ------------------------------------------------------------------ toque no mundo
+## Tocar na tela (fora dos botões) usa o item exatamente onde você tocou.
+func _on_world_tap(screen_pos: Vector2) -> void:
+	if Game.ui_lock > 0 or hud.blocks_point(screen_pos):
+		return
+	var wp := get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+
+	# personagens, animais, caixa, porta
+	var best: Interactable = null
+	var best_d := 22.0
+	for n in get_tree().get_nodes_in_group("interactable"):
+		var it := n as Interactable
+		var d := (it.global_position + Vector2(0, -14)).distance_to(wp)
+		if d < best_d:
+			best = it
+			best_d = d
+	if best:
+		if player.can_reach(best.global_position):
+			best.interact(player)
+		else:
+			Game.toast.emit("Chegue mais perto.")
+		return
+
+	# objetos grandes (árvore, pedra...) pela imagem; senão, a célula tocada
+	var prop := world.prop_at_point(wp)
+	var c: Vector2i = prop.cell if prop else world.cell_of(wp)
+	if not player.can_reach(world.target_anchor(c)):
+		Game.toast.emit("Chegue mais perto.")
+		return
+	player.use_at(c)
 
 
 # ------------------------------------------------------------------ ações do mundo
