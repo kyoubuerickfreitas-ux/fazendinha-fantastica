@@ -23,7 +23,18 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 
 Controles no PC: WASD/setas para andar, Espaço para usar a ferramenta, E para interagir, I/Tab para a mochila e 1–6 para a barra rápida. O mouse simula o toque.
 
-## Testar no celular
+## Baixar o APK pronto (GitHub Actions)
+
+A cada `push`, o GitHub compila o APK de teste sozinho:
+
+1. Abra o repositório no GitHub → aba **Actions** → **Gerar APK (Android)**.
+2. Clique na execução mais recente (com ✅) e baixe o artefato **fazendinha-apk-N** em **Artifacts**.
+3. Descompacte o `.zip`, copie o `fazendinha.apk` para o celular e instale (permita "instalar apps desconhecidos").
+
+Também dá para rodar na mão: **Actions → Gerar APK (Android) → Run workflow**.
+O APK é assinado com uma chave de depuração gerada na hora. Serve para testar, não para a Play Store.
+
+## Testar no celular pelo editor
 
 1. No Godot: **Editor → Gerenciar modelos de exportação → Baixar**.
 2. Instale o Android SDK e o JDK 17 e configure em **Editor → Configurações do editor → Exportar → Android**. [Guia oficial](https://docs.godotengine.org/pt-br/4.x/tutorials/export/exporting_for_android.html)
