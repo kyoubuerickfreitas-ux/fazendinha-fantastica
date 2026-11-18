@@ -69,7 +69,9 @@ jobs:
           cat ~/.config/godot/editor_settings-${GODOT_VERSION}.tres
 
       - name: Importar projeto
-        run: ~/godot/godot --headless --editor --quit --path . || true
+        run: |
+          timeout 300 ~/godot/godot --headless --editor --quit --path . || true
+          timeout 300 ~/godot/godot --headless --editor --quit --path . || true
 
       - name: Exportar APK
         run: |
@@ -77,7 +79,7 @@ jobs:
           export GODOT_ANDROID_KEYSTORE_DEBUG_USER="androiddebugkey"
           export GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD="android"
           mkdir -p build
-          ~/godot/godot --headless --path . --export-debug "Android (teste APK)" build/fazendinha.apk
+          ~/godot/godot --headless --path . --verbose --export-debug "Android (teste APK)" build/fazendinha.apk 2>&1 | grep -vE "^(Loading|Loaded|load_|Saving|Moving)" | tail -80
           ls -la build
           test -s build/fazendinha.apk
 
