@@ -84,7 +84,7 @@ func generate(saved: Dictionary) -> void:
 			if dx * dx + dy * dy <= 1.0:
 				ground[y * W + x] = Ground.WATER
 	# caminhos
-	_path_rect(6, 7, 6, 12)
+	_path_rect(5, 7, 5, 12)
 	_path_rect(3, 12, 44, 12)
 	_path_rect(30, 12, 30, 18)
 	_path_rect(14, 11, 14, 12)
@@ -115,23 +115,23 @@ func _path_rect(x0: int, y0: int, x1: int, y1: int) -> void:
 
 
 func _build_static_scenery() -> void:
-	# casa (ocupa x 3..9, y 1..7)
+	# casa (ocupa x 4..8, y 3..7). A porta fica à esquerda do centro.
 	var house := StaticBody2D.new()
 	house.position = Vector2(6 * TILE + TILE / 2, 7 * TILE + 4)
 	var hs := Sprite2D.new()
 	hs.texture = HOUSE_TEX
-	hs.position = Vector2(0, -70)
+	hs.position = Vector2(0, -52)
 	house.add_child(hs)
-	_add_rect_collision(house, Vector2(116, 40), Vector2(0, -24))
+	_add_rect_collision(house, Vector2(104, 30), Vector2(2, -17))
 	entities.add_child(house)
-	for y in range(1, 8):
-		for x in range(3, 10):
+	for y in range(3, 8):
+		for x in range(4, 9):
 			blocked[Vector2i(x, y)] = true
 
 	var door := Interactable.new()
 	door.label = "Dormir"
 	door.reach = 26.0
-	door.position = house.position + Vector2(0, 6)
+	door.position = house.position + Vector2(-20, 6)
 	door.interacted.connect(func(_w): house_door_used.emit())
 	entities.add_child(door)
 
@@ -173,7 +173,7 @@ func _build_static_scenery() -> void:
 	entities.add_child(npc)
 	blocked[npc_cell] = true
 
-	player_start = Vector2(6 * TILE + TILE / 2, 9 * TILE + 8)
+	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
 
 	# água bloqueia passagem
 	var water_body := StaticBody2D.new()

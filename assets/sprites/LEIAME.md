@@ -5,12 +5,12 @@ Para colocar a arte definitiva, substitua o arquivo mantendo **o mesmo nome, tam
 
 | Arquivo | Tamanho | Organização |
 |---|---|---|
-| `player.png` | 256×256 | 4×4 quadros de 64×64. Linhas: baixo, esquerda, direita, cima. Colunas: 4 quadros de caminhada (o 1º é o parado). Pés em y≈58 do quadro. |
+| `player.png` | 448×256 | 7×4 quadros de 64×64. Linhas: baixo, esquerda, direita, cima. Coluna 0 = parado, 1–6 = caminhada. Pés em y=58. Gerado por `tools/import_character.py` a partir de `assets/source/character/`. |
 | `npc_fungo.png` | 128×64 | 2 quadros de 64×64 (animação parado). |
 | `tiles.png` | 256×32 | Peças de 32×32: grama, grama c/ flores, grama c/ trevos, caminho, terra arada, terra molhada, água, água com margem. |
 | `crops.png` | 128×128 | Linhas: cenoura, tomate, couve, flor-estrela. Colunas: estágios 0 (semente) a 3 (pronta). 32×32 cada. |
 | `stump.png` | 32×32 | Base em y≈28 (só para saves antigos). |
-| `house.png` | 160×144 | Porta centralizada embaixo. |
+| `house.png` | 128×128 | Casa do jogador. Base em y≈116, porta em x≈44. |
 | `shop.png` | 128×128 | Barraca do Fungo (asset do projeto idle). Base em y≈120. |
 | `icons.png` | 256×32 | Ícones 16×16, índices definidos em `scripts/data/item_db.gd`. |
 

@@ -685,12 +685,10 @@ def app_icon():
 
 
 if __name__ == "__main__":
-    creature_sheet("player", "player.png")
     npc_sheet()
     tiles_sheet()
     crops_sheet()
     save(stump(), "stump.png")
-    save(house(), "house.png")
     icons_sheet()
     app_icon()
     print("Arte provisória gerada em", OUT)

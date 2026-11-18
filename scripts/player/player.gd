@@ -1,12 +1,15 @@
 class_name Player
 extends CharacterBody2D
-## Personagem do jogador: movimento livre em 8 direções, animação em 4 direções
-## (spritesheet 4x4 de 64x64: linhas = baixo, esquerda, direita, cima).
+## Personagem do jogador: movimento livre em 8 direções, animação em 4 direções.
+## Spritesheet 7x4 de 64x64. Linhas: baixo, esquerda, direita, cima.
+## Coluna 0 = parado, colunas 1..6 = caminhada.
 
 const SHEET := preload("res://assets/sprites/player.png")
 const SPEED := 85.0
 const REACH := 20.0
 const ACTION_TIME := 0.28
+const COLS := 7
+const WALK_FRAMES := 6
 
 enum Dir { DOWN, LEFT, RIGHT, UP }
 
@@ -21,7 +24,7 @@ var _sprite: Sprite2D
 func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = SHEET
-	_sprite.hframes = 4
+	_sprite.hframes = COLS
 	_sprite.vframes = 4
 	_sprite.position = Vector2(0, -26)
 	add_child(_sprite)
@@ -55,11 +58,11 @@ func _physics_process(delta: float) -> void:
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
 		else:
 			_dir = Dir.DOWN if v.y > 0 else Dir.UP
-		_anim_t += delta * (6.0 + 4.0 * v.length())
-		_sprite.frame = _dir * 4 + int(_anim_t) % 4
+		_anim_t += delta * (7.0 + 5.0 * v.length())
+		_sprite.frame = _dir * COLS + 1 + int(_anim_t) % WALK_FRAMES
 	else:
 		_anim_t = 0.0
-		_sprite.frame = _dir * 4
+		_sprite.frame = _dir * COLS
 
 	if world:
 		world.set_cursor(target_cell(), Game.ui_lock == 0)
