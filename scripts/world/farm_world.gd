@@ -5,12 +5,12 @@ extends Node2D
 
 const TILE := 32
 const W := 50
-const H := 34
+const H := 38
 
 const TILES_TEX := preload("res://assets/sprites/tiles.png")
 const CROPS_TEX := preload("res://assets/sprites/crops.png")
 const HOUSE_TEX := preload("res://assets/sprites/house.png")
-const BIN_TEX := preload("res://assets/sprites/shipping_bin.png")
+const BIN_TEX := preload("res://assets/sprites/forest/crate_veggies.png")
 const SHOP_TEX := preload("res://assets/sprites/shop.png")
 
 enum Ground { GRASS, PATH, WATER }
@@ -94,7 +94,7 @@ func generate(saved: Dictionary) -> void:
 
 	if saved.has("props"):
 		for p in saved["props"]:
-			_spawn_prop(str(p[0]), Vector2i(int(p[1]), int(p[2])), int(p[3]))
+			_spawn_prop(str(p[0]), Vector2i(int(p[1]), int(p[2])), int(p[3]), int(p[4]) if p.size() > 4 else 0)
 	else:
 		_generate_props(rng)
 
@@ -143,7 +143,7 @@ func _build_static_scenery() -> void:
 	bin.position = Vector2(bin_cell.x * TILE + TILE / 2, bin_cell.y * TILE + TILE - 4)
 	var bs := Sprite2D.new()
 	bs.texture = BIN_TEX
-	bs.position = Vector2(0, -12)
+	bs.position = Vector2(0, -16)
 	bin.add_child(bs)
 	var bb := StaticBody2D.new()
 	_add_rect_collision(bb, Vector2(22, 8), Vector2(0, -4))
@@ -212,40 +212,58 @@ func _add_rect_collision(body: Node, size: Vector2, pos: Vector2) -> void:
 
 
 func _generate_props(rng: RandomNumberGenerator) -> void:
-	# borda de árvores grandes (indestrutíveis)
-	for x in range(0, W, 2):
-		_spawn_prop("tree_big", Vector2i(x, 0))
-		_spawn_prop("tree_big", Vector2i(x + (1 if x + 1 < W else 0), H - 1))
-	for y in range(2, H - 1, 2):
-		_spawn_prop("tree_big", Vector2i(0, y))
-		_spawn_prop("tree_big", Vector2i(W - 1, y))
+	# decoração fixa (antes do resto, para garantir o lugar)
+	for d in [
+		["mushroom", 20, 9, 2], ["mushroom", 19, 10, 3], ["mushroom", 34, 4, 0],
+		["mushroom", 46, 15, 1], ["mushroom", 26, 33, 0], ["mushroom", 3, 31, 3],
+		["boulder", 33, 27, 0], ["boulder", 47, 21, 2], ["boulder", 27, 4, 3],
+		["tent", 39, 7, 0], ["campfire", 39, 10, 0], ["barrel", 35, 8, 0],
+		["fence", 43, 9, 0], ["fence", 44, 9, 0],
+		["barrel", 11, 5, 0],
+	]:
+		_spawn_prop(d[0], Vector2i(d[1], d[2]), -1, d[3])
 
-	for y in range(2, H - 2):
+	# borda: árvores antigas em cima e embaixo, pinheiros nas laterais (não podem ser cortadas)
+	for x in range(0, W, 3):
+		_spawn_prop("old_tree", Vector2i(x, 0), -1, rng.randi())
+		_spawn_prop("pine", Vector2i(x + 1, 1), -1, rng.randi())
+		_spawn_prop("old_tree", Vector2i(x + 1, H - 1), -1, rng.randi())
+		_spawn_prop("pine", Vector2i(x, H - 2), -1, rng.randi())
+	for y in range(2, H - 2, 2):
+		_spawn_prop("pine", Vector2i(0, y), -1, rng.randi())
+		_spawn_prop("pine", Vector2i(W - 1, y + 1), -1, rng.randi())
+
+	for y in range(3, H - 3):
 		for x in range(2, W - 2):
 			var c := Vector2i(x, y)
 			if not _is_free_grass(c) or _near_path(c):
 				continue
 			var r := rng.randf()
-			var in_farm := x >= 3 and x <= 24 and y >= 14 and y <= 30
-			var in_forest := x >= 25 and (y <= 10 or y >= 29) or x <= 2 or y >= 31
+			var in_farm := x >= 5 and x <= 24 and y >= 14 and y <= 30
+			var in_forest := (x >= 25 and (y <= 10 or y >= 30)) or x <= 3 or y >= 31
 			if in_farm:
-				if r < 0.10: _spawn_prop("weed", c)
+				if r < 0.10: _spawn_prop("weed", c, -1, rng.randi())
 				elif r < 0.15: _spawn_prop("rock", c)
-				elif r < 0.18: _spawn_prop("stump", c)
+				elif r < 0.18 and _can_place_tree(c, 1): _spawn_prop("sapling", c, -1, rng.randi())
 			elif in_forest:
-				if r < 0.16 and _can_place_tree(c): _spawn_prop("tree", c)
-				elif r < 0.20: _spawn_prop("weed", c)
+				if r < 0.20 and _can_place_tree(c, 2): _spawn_prop("tree", c, -1, rng.randi())
+				elif r < 0.26: _spawn_prop("bush", c, -1, rng.randi())
+				elif r < 0.32: _spawn_prop("weed", c, -1, rng.randi())
 			else:
-				if r < 0.03 and _can_place_tree(c): _spawn_prop("tree", c)
-				elif r < 0.07: _spawn_prop("weed", c)
-				elif r < 0.08: _spawn_prop("rock", c)
+				if r < 0.03 and _can_place_tree(c, 2): _spawn_prop("tree", c, -1, rng.randi())
+				elif r < 0.05: _spawn_prop("bush", c, -1, rng.randi())
+				elif r < 0.09: _spawn_prop("weed", c, -1, rng.randi())
+				elif r < 0.10: _spawn_prop("rock", c)
 
 
-func _can_place_tree(c: Vector2i) -> bool:
-	for dy in range(-2, 2):
-		for dx in range(-1, 2):
+const TALL := ["tree", "old_tree", "pine", "sapling", "mushroom", "boulder", "tent"]
+
+
+func _can_place_tree(c: Vector2i, spread: int) -> bool:
+	for dy in range(-spread - 1, spread + 1):
+		for dx in range(-spread, spread + 1):
 			var n := c + Vector2i(dx, dy)
-			if props.has(n) and props[n].kind in ["tree", "tree_big"]:
+			if props.has(n) and props[n].kind in TALL:
 				return false
 	return true
 
@@ -259,11 +277,16 @@ func _near_path(c: Vector2i) -> bool:
 	return c.distance_to(Vector2i(6, 9)) < 3
 
 
-func _spawn_prop(kind: String, c: Vector2i, hp: int = -1) -> void:
-	if not is_inside(c) or props.has(c) or not Prop.DEFS.has(kind):
+## variant < 0 ou grande: escolhe uma variante a partir do número (aleatório).
+func _spawn_prop(kind: String, c: Vector2i, hp: int = -1, variant: int = 0) -> void:
+	if kind == "tree_big":
+		kind = "pine"   # saves antigos
+	if not is_inside(c) or props.has(c) or blocked.has(c) or not Prop.DEFS.has(kind):
+		return
+	if ground_at(c) == Ground.WATER:
 		return
 	var p := Prop.new()
-	p.setup(kind, c, TILE, hp)
+	p.setup(kind, c, TILE, hp, absi(variant) % Prop.variant_count(kind))
 	entities.add_child(p)
 	props[c] = p
 
@@ -341,7 +364,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 		"axe", "pickaxe", "scythe":
 			if prop:
 				if prop.required_tool() != item_id:
-					return "Precisa de outra ferramenta." if prop.required_tool() != "" else "Essa árvore é antiga demais."
+					return "Precisa de outra ferramenta." if prop.required_tool() != "" else "Isso não sai daqui."
 				if not Game.use_energy(ENERGY_COST[item_id]):
 					return ""
 				FX.spawn(self, "hit", prop.position + Vector2(0, -12))
@@ -414,7 +437,11 @@ func _destroy_prop(prop: Prop) -> void:
 		Game.add_item(d[0], d[1])
 		_popup("+%d %s" % [d[1], ItemDB.item_name(d[0])], prop.position + Vector2(0, -20))
 	props.erase(prop.cell)
-	var fx_name := "weed" if prop.kind == "weed" else ("break_stone" if prop.kind == "rock" else "break_wood")
+	var fx_name := "break_wood"
+	if prop.kind in ["weed", "bush"]:
+		fx_name = "weed"
+	elif prop.kind == "rock":
+		fx_name = "break_stone"
 	FX.spawn(self, fx_name, prop.position + Vector2(0, -10))
 	var tw := prop.create_tween()
 	tw.tween_property(prop, "modulate:a", 0.0, 0.15)
@@ -456,9 +483,9 @@ func on_new_day() -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
 	for i in 3:
-		var c := Vector2i(rng.randi_range(3, 24), rng.randi_range(14, 30))
+		var c := Vector2i(rng.randi_range(5, 24), rng.randi_range(14, 30))
 		if _is_free_grass(c):
-			_spawn_prop("weed", c)
+			_spawn_prop("weed", c, -1, rng.randi())
 	_soil_layer.queue_redraw()
 
 
@@ -467,7 +494,7 @@ func serialize() -> Dictionary:
 	var p := []
 	for c in props:
 		var prop: Prop = props[c]
-		p.append([prop.kind, c.x, c.y, prop.hp])
+		p.append([prop.kind, c.x, c.y, prop.hp, prop.variant])
 	var s := []
 	for c in soil:
 		var d: Dictionary = soil[c]
