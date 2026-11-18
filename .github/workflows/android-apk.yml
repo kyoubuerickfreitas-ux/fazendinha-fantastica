@@ -53,9 +53,8 @@ jobs:
 
       - name: Configurar Android SDK e chave de depuração
         run: |
-          keytool -genkeypair -v -keystore ~/debug.keystore -storepass android -alias androiddebugkey \
-            -keypass android -keyalg RSA -keysize 2048 -validity 10000 \
-            -dname "CN=Android Debug,O=Android,C=US"
+          # chave de teste FIXA (do repositório): os APKs novos instalam por cima dos antigos
+          cp android_debug/debug.keystore ~/debug.keystore
           mkdir -p ~/.config/godot
           for f in editor_settings-4.tres editor_settings-${GODOT_VERSION}.tres; do
             cat > ~/.config/godot/$f <<EOT

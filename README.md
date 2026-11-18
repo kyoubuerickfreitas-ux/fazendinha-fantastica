@@ -40,7 +40,7 @@ Ou pela página do release: https://github.com/kyoubuerickfreitas-ux/fazendinha-
 3. Descompacte o `.zip`, copie o `fazendinha.apk` para o celular e instale (permita "instalar apps desconhecidos").
 
 Também dá para rodar na mão: **Actions → Gerar APK (Android) → Run workflow**.
-O APK é assinado com uma chave de depuração gerada na hora. Serve para testar, não para a Play Store.
+O APK é assinado com a chave de teste fixa de `android_debug/`, então as versões novas instalam **por cima** (o save continua). Serve para testar, não para a Play Store.
 
 ## Testar no celular pelo editor
 

@@ -9,5 +9,6 @@ build/
 *.apk
 *.aab
 *.keystore
+!android_debug/debug.keystore
 *.jks
-android/
+/android/
