@@ -5,6 +5,9 @@ on:
     branches: ["**"]
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 concurrency:
   group: apk-${{ github.ref }}
   cancel-in-progress: true
@@ -89,3 +92,14 @@ jobs:
           name: fazendinha-apk-${{ github.run_number }}
           path: build/fazendinha.apk
           retention-days: 30
+
+      - name: Publicar no release "teste" (link direto para o celular)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete teste --yes --cleanup-tag || true
+          gh release create teste build/fazendinha.apk \
+            --prerelease \
+            --target "${{ github.sha }}" \
+            --title "APK de teste (último build)" \
+            --notes "Build #${{ github.run_number }} do branch ${{ github.ref_name }} (commit ${GITHUB_SHA::7}). Baixe o fazendinha.apk abaixo e instale no celular."

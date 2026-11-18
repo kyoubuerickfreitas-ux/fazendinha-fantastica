@@ -25,7 +25,14 @@ Controles no PC: WASD/setas para andar, Espaço para usar a ferramenta, E para i
 
 ## Baixar o APK pronto (GitHub Actions)
 
-A cada `push`, o GitHub compila o APK de teste sozinho:
+A cada `push`, o GitHub compila o APK de teste sozinho.
+
+**Pelo celular (link direto, sempre a versão mais nova):**
+https://github.com/kyoubuerickfreitas-ux/fazendinha-fantastica/releases/download/teste/fazendinha.apk
+
+Ou pela página do release: https://github.com/kyoubuerickfreitas-ux/fazendinha-fantastica/releases/tag/teste
+
+**Pelo PC (artefato):**
 
 1. Abra o repositório no GitHub → aba **Actions** → **Gerar APK (Android)**.
 2. Clique na execução mais recente (com ✅) e baixe o artefato **fazendinha-apk-N** em **Artifacts**.
