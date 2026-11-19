@@ -143,7 +143,10 @@ func pick_target(item_id: String) -> Vector2i:
 			if d > AUTO_REACH:
 				continue
 			var score := d - FACING_BIAS * facing.dot(to.normalized() if d > 0.1 else facing)
-			score += world.target_penalty(item_id, c)
+			var pen := world.target_penalty(item_id, c)
+			if pen == INF:
+				continue
+			score += pen
 			if score < best_score:
 				best_score = score
 				best = c

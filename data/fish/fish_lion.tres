@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_lion"
+name = "Peixe-Leão"
+description = "Cuidado com os espinhos."
+lore = ""
+rarity = 2
+waters = PackedStringArray("river")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("summer", "autumn")
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "Rio, verão e outono."
+size_min = 20.0
+size_max = 38.0
+weight_min = 0.4
+weight_max = 1.4

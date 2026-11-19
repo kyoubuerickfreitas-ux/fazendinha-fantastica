@@ -38,6 +38,11 @@ var temperature_yesterday := 16.0
 var forecast: Array = []
 var water := WATER_CAPACITY
 var tool_levels := {"watering_can": 1, "hoe": 1}
+## Pesca: registro do Livro ({id: {n, first, max_size, max_weight}}), XP, tesouros e marcadores
+var fish_log := {}
+var fishing_xp := 0
+var treasure_log := {}
+var fish_flags := {}
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
 
@@ -76,6 +81,10 @@ func reset_new_game() -> void:
 	selected_slot = 0
 	equipped_bait = ""
 	tool_levels = {"watering_can": 1, "hoe": 1}
+	fish_log = {}
+	fishing_xp = 0
+	treasure_log = {}
+	fish_flags = {}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -301,6 +310,7 @@ func save_game(world_data: Dictionary) -> void:
 		"day": day, "minutes": minutes, "weather": weather, "water": water,
 		"temperature": temperature, "temperature_yesterday": temperature_yesterday, "forecast": forecast,
 		"bait": equipped_bait, "tools": tool_levels,
+		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -332,6 +342,13 @@ func load_game() -> Dictionary:
 	_fill_forecast()
 	water = int(data.get("water", WATER_CAPACITY))
 	equipped_bait = str(data.get("bait", ""))
+	var fl = data.get("fish_log", {})
+	fish_log = fl if fl is Dictionary else {}
+	fishing_xp = int(data.get("fishing_xp", 0))
+	var tlog = data.get("treasure_log", {})
+	treasure_log = tlog if tlog is Dictionary else {}
+	var ff = data.get("fish_flags", {})
+	fish_flags = ff if ff is Dictionary else {}
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": int(tl.get("watering_can", 1)), "hoe": int(tl.get("hoe", 1))} if tl is Dictionary else {"watering_can": 1, "hoe": 1}
 	selected_slot = int(data.get("selected_slot", 0))

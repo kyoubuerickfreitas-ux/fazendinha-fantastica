@@ -659,6 +659,13 @@ def ic_simple(kind):
         ell(d, 7, 12, 3, 3, hx("E9F2FA"))
         d.rectangle((7, 5, 8, 12), fill=hx("4C88A3"))
         ell(d, 7, 12, 2, 2, hx("4C88A3"))
+    elif kind == "book":
+        d.rectangle((2, 3, 13, 14), fill=hx("4C88A3"))
+        d.rectangle((2, 3, 4, 14), fill=hx("3B6A82"))
+        d.rectangle((5, 12, 13, 13), fill=CREAM)
+        d.polygon([(7, 7), (11, 5), (11, 9)], fill=hx("F2933B"))
+        d.point((8, 7), fill=hx("2B2118"))
+        d.line((6, 7, 7, 7), fill=hx("F2933B"))
     elif kind == "milk":
         d.rectangle((5, 5, 11, 14), fill=hx("F4EFE0"))
         d.rectangle((6, 2, 10, 5), fill=hx("F4EFE0"))
@@ -731,6 +738,7 @@ def icons_sheet():
         ic_simple("wind"),              # 34
         ic_simple("heat"),              # 35
         ic_simple("cold"),              # 36
+        ic_simple("book"),              # 37
     ]
     cols = 16
     rows = (len(icons) + cols - 1) // cols

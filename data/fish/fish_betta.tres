@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_betta"
+name = "Betta-Celeste"
+description = "Briguento, mas lindo."
+lore = ""
+rarity = 1
+waters = PackedStringArray("pond")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("night", "dawn")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "Laguinho, de noite."
+size_min = 5.0
+size_max = 8.0
+weight_min = 0.01
+weight_max = 0.04

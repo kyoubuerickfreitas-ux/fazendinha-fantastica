@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_axolotl"
+name = "Axolote-Rosado"
+description = "Adora dias de chuva. Sorri o tempo todo."
+lore = ""
+rarity = 2
+waters = PackedStringArray("pond")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("spring", "autumn")
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray("rain", "fog")
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "Laguinho na primavera ou outono, melhor com chuva ou neblina."
+size_min = 12.0
+size_max = 25.0
+weight_min = 0.05
+weight_max = 0.2

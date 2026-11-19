@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_angler"
+name = "Peixe-Lanterna"
+description = "Usa a luz para atrair outros peixes."
+lore = ""
+rarity = 3
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("autumn", "winter")
+times = PackedStringArray("night")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray("bait_mushroom")
+min_level = 3
+difficulty = 0.0
+special = ""
+hint = "Fundo do lago, noites frias. Precisa de nível 3."
+size_min = 20.0
+size_max = 45.0
+weight_min = 0.5
+weight_max = 3.0

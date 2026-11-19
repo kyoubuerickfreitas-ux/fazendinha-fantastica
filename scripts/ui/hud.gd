@@ -39,6 +39,11 @@ var _shop: Control
 var _shop_buy: VBoxContainer
 var _shop_sell: VBoxContainer
 var _shop_money: Label
+var _bag_btn: TouchButton
+var _book_btn: TouchButton
+var _book: Control
+var _book_body: VBoxContainer
+var _book_filter := "all"
 var _top_right: Control
 var _calendar: Control
 var _cal_body: VBoxContainer
@@ -74,6 +79,7 @@ func _ready() -> void:
 	_build_shop()
 	_build_crafting()
 	_build_calendar()
+	_build_fish_book()
 	_build_animal_card()
 	_build_name_dialog()
 	_build_confirm()
@@ -264,11 +270,20 @@ func _build_buttons() -> void:
 	bag.position = Vector2(170 - 62, 150 - 120)
 	bag.pressed.connect(toggle_backpack)
 	area.add_child(bag)
+	_bag_btn = bag
+
+	_book_btn = TouchButton.new()
+	_book_btn.radius = 16
+	_book_btn.icon = ItemDB.ui_icon("book")
+	_book_btn.icon_scale = 1.6
+	_book_btn.position = Vector2(170 - 108, 150 - 112)
+	_book_btn.pressed.connect(open_fish_book)
+	area.add_child(_book_btn)
 
 	_context_label = UIStyle.outlined_label("", 11)
 	_context_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_context_label.size = Vector2(80, 14)
-	_context_label.position = Vector2(170 - 145, 150 - 70)
+	_context_label.size = Vector2(130, 14)
+	_context_label.position = Vector2(170 - 170, 150 - 70)
 	area.add_child(_context_label)
 
 
@@ -553,6 +568,150 @@ func _confirm_name() -> void:
 	close_panel()
 
 
+# ================================================================= Livro de Pesca
+func _build_fish_book() -> void:
+	var w := _make_window("Livro de Pesca", Vector2(460, 0))
+	_book = w[0]
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 250)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_book_body = VBoxContainer.new()
+	_book_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_book_body)
+	w[1].add_child(scroll)
+
+
+func open_fish_book(filter: String = "") -> void:
+	if filter != "":
+		_book_filter = filter
+	_open(_book)
+	for c in _book_body.get_children():
+		c.queue_free()
+	var ids := FishDB.all_ids()
+	var lvl := FishDB.level()
+	var nxt := FishDB.xp_for_level(lvl + 1)
+	_book_body.add_child(UIStyle.label("Descobertos %d de %d · Nível de pesca %d%s" % [FishDB.discovered_count(),
+		ids.size(), lvl, "" if lvl >= FishDB.MAX_LEVEL else " (%d/%d XP)" % [Game.fishing_xp, nxt]], 12, UIStyle.WOOD_DARK))
+	# filtros
+	var tabs := HBoxContainer.new()
+	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"]]:
+		var b := Button.new()
+		b.text = f[1]
+		b.toggle_mode = true
+		b.button_pressed = _book_filter == f[0]
+		var key: String = f[0]
+		b.pressed.connect(func(): open_fish_book(key))
+		tabs.add_child(b)
+	_book_body.add_child(tabs)
+	var shown := ids.filter(func(id):
+		var fd: FishData = FishDB.get_fish(id)
+		match _book_filter:
+			"season":
+				return fd.seasons.is_empty() or fd.seasons.has(Game.season_id())
+			"legend":
+				return fd.rarity >= 5
+			"lake", "river", "pond":
+				return fd.waters.has(_book_filter)
+		return fd.rarity < 6 or FishDB.is_discovered(id))   # secretos só aparecem depois de achados
+	var found := shown.filter(func(id): return FishDB.is_discovered(id)).size()
+	_book_body.add_child(UIStyle.label("Nesta lista: %d/%d" % [found, shown.size()], 10, UIStyle.EARTH))
+	var grid := GridContainer.new()
+	grid.columns = 8
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	for id in shown:
+		var known := FishDB.is_discovered(id)
+		var b := Button.new()
+		b.icon = ItemDB.icon(id)
+		b.expand_icon = true
+		b.custom_minimum_size = Vector2(46, 46)
+		if not known:
+			b.self_modulate = Color(1, 1, 1)
+			b.icon = _silhouette(id)
+		var fid: String = id
+		b.pressed.connect(func(): _open_fish_card(fid))
+		grid.add_child(b)
+	_book_body.add_child(grid)
+
+
+static var _sil_cache := {}
+
+
+## Silhueta escura do peixe (espécie ainda não descoberta).
+func _silhouette(id: String) -> Texture2D:
+	if _sil_cache.has(id):
+		return _sil_cache[id]
+	var tex := ItemDB.icon(id)
+	var img: Image
+	if tex is AtlasTexture:
+		var full: Image = tex.atlas.get_image()
+		if full.is_compressed():
+			full.decompress()
+		img = full.get_region(Rect2i(tex.region))
+	else:
+		img = tex.get_image()
+	img = img.duplicate()
+	if img.is_compressed():
+		img.decompress()
+	img.convert(Image.FORMAT_RGBA8)
+	for y in img.get_height():
+		for x in img.get_width():
+			var c := img.get_pixel(x, y)
+			if c.a > 0.1:
+				img.set_pixel(x, y, Color(0.17, 0.13, 0.09, 0.85))
+	var t := ImageTexture.create_from_image(img)
+	_sil_cache[id] = t
+	return t
+
+
+func _open_fish_card(id: String) -> void:
+	for c in _book_body.get_children():
+		c.queue_free()
+	var f := FishDB.get_fish(id)
+	var known := FishDB.is_discovered(id)
+	var e := FishDB.entry(id)
+	var back := Button.new()
+	back.text = "← Voltar"
+	back.pressed.connect(func(): open_fish_book())
+	_book_body.add_child(back)
+	var top := HBoxContainer.new()
+	var ic := TextureRect.new()
+	ic.texture = ItemDB.icon(id) if known else _silhouette(id)
+	ic.custom_minimum_size = Vector2(64, 64)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	top.add_child(ic)
+	var info := VBoxContainer.new()
+	info.add_child(UIStyle.label(f.name if known else "???", 16, UIStyle.WOOD_DARK))
+	info.add_child(UIStyle.label("%s · vende %d" % [f.rarity_name(), ItemDB.sell_price(id)] if known else f.rarity_name(), 11, UIStyle.EARTH))
+	top.add_child(info)
+	_book_body.add_child(top)
+	var lines := []
+	if known:
+		lines.append(f.description)
+		if f.lore != "":
+			lines.append("Lenda: " + f.lore)
+		lines.append("Onde: " + FishDB.where_text(f))
+		lines.append("Quando: " + FishDB.when_text(f))
+		lines.append("Clima: " + FishDB.weather_text(f))
+		if not f.baits.is_empty():
+			lines.append("Iscas preferidas: " + ", ".join(Array(f.baits).map(func(b): return ItemDB.item_name(b))))
+		lines.append("Tamanho: %.0f–%.0f cm · peso %.2f–%.1f kg" % [f.size_min, f.size_max, f.weight_min, f.weight_max])
+		lines.append("Seu recorde: %.1f cm · %.2f kg · pescado %d vez(es) · primeira vez no %s" % [e["max_size"],
+			e["max_weight"], e["n"], Calendar.short_text(int(e["first"]))])
+		lines.append("Usos: " + ", ".join(f.uses))
+	else:
+		lines.append("Ainda não descoberto.")
+		lines.append("Pista: " + (f.hint if f.hint != "" else "procure em %s." % FishDB.where_text(f).to_lower()))
+		if FishDB.level() >= 5:
+			lines.append("(Nível 5+) Quando: " + FishDB.when_text(f))
+	for l in lines:
+		var lab := UIStyle.label(l, 11, UIStyle.WOOD_DARK)
+		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lab.custom_minimum_size = Vector2(420, 0)
+		_book_body.add_child(lab)
+
+
 # ================================================================= calendário
 func _build_calendar() -> void:
 	var w := _make_window("Calendário", Vector2(420, 0))
@@ -709,7 +868,7 @@ func blocks_point(p: Vector2) -> bool:
 	for c in _blockers:
 		if c.get_global_rect().grow(4).has_point(p):
 			return true
-	for b in [_use_btn, _hand_btn]:
+	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn]:
 		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
 			return true
 	return false
@@ -903,6 +1062,15 @@ func _process(_d: float) -> void:
 			text = it.label
 		elif player.world and player.world.can_interact_cell(player.pick_target("")):
 			text = "Colher"
+		elif Game.selected_item_id() == "fishing_rod":
+			var wc := player.target_cell()
+			var wk: String = player.world.water_kind(wc)
+			if wk != "":
+				var dep: String = player.world.water_depth(wc)
+				var ctx := FishDB.context(wk, dep, Game.equipped_bait)
+				var here := FishDB.possible_here(ctx)
+				var known := here.filter(func(i): return FishDB.is_discovered(i)).size()
+				text = "%s%s · %d/%d" % [FishData.WATER_NAMES.get(wk, wk), " fundo" if dep == "deep" else "", known, here.size()]
 	if _context_label.text != text:
 		_context_label.text = text
 

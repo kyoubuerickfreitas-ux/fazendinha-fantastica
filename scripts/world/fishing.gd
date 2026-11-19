@@ -9,9 +9,12 @@ extends Node2D
 
 enum State { IDLE, WAITING, BITE, REELING }
 
+signal caught(fish_id: String, measures: Dictionary)
+
 const ENERGY_COST := 2.0
-const BITE_WINDOW := [1.3, 1.1, 0.9, 0.75]     # tempo para fisgar, por raridade
-const PULL := [10.0, 15.0, 22.0, 30.0]          # força do peixe (barra/segundo), por raridade
+## por raridade (comum, incomum, raro, muito raro, épico, lendário, secreto)
+const BITE_WINDOW := [1.3, 1.1, 0.9, 0.85, 0.8, 0.75, 0.75]   # tempo para fisgar
+const PULL := [10.0, 15.0, 22.0, 26.0, 30.0, 36.0, 36.0]      # força do peixe (barra/segundo)
 const TAP := 9.0                                # quanto cada toque puxa
 const REEL_TIME := 12.0
 
@@ -23,6 +26,10 @@ var _bobber_pos := Vector2.ZERO
 var _timer := 0.0
 var _bait := ""
 var _fish := ""
+var _water := "lake"
+var _depth := "shallow"
+## último resultado (para testes e a interface): {"id", "size", "weight", "q", "new", "record"}
+var last_catch := {}
 var _progress := 0.0
 var _t := 0.0
 
@@ -79,6 +86,8 @@ func _cast(cell: Vector2i) -> String:
 	if not Game.use_energy(ENERGY_COST):
 		return ""
 	_bait = Game.consume_bait()
+	_water = world.water_kind(cell)
+	_depth = world.water_depth(cell)
 	_bobber_pos = world.target_anchor(cell) + Vector2(randf_range(-6, 6), randf_range(-4, 4))
 	var speed: float = ItemDB.BAITS[_bait]["speed"]
 	var wait := randf_range(2.5, 8.0) / speed
@@ -104,42 +113,27 @@ func _catch() -> void:
 	state = State.IDLE
 	_panel.visible = false
 	queue_redraw()
-	var rarity: int = ItemDB.FISH[_fish]["rarity"]
-	if Game.add_item(_fish, 1) > 0:
+	var f := FishDB.get_fish(_fish)
+	var m := FishDB.measure(f)
+	if Game.add_item(_fish, 1, m["q"]) > 0:
 		return
+	var reg := FishDB.register_catch(_fish, m)
+	last_catch = {"id": _fish, "size": m["size"], "weight": m["weight"], "q": m["q"], "new": reg["new"], "record": reg["record"]}
 	FX.spawn(world, "harvest", _bobber_pos)
-	Game.toast.emit("Pescou %s! (%s)" % [ItemDB.item_name(_fish), ItemDB.RARITY_NAMES[rarity]])
+	var text := "Pescou %s! %.1f cm · %s" % [f.name, m["size"], f.rarity_name()]
+	if reg["new"]:
+		text = "NOVA ESPÉCIE! " + text + " (registrada no Livro de Pesca)"
+	elif reg["record"]:
+		text += " · novo recorde!"
+	if reg["level_up"] > 0:
+		text += "\nNível de pesca %d!" % reg["level_up"]
+	Game.toast.emit(text)
+	caught.emit(_fish, m)
 
 
-# ------------------------------------------------------------------ sorteio do peixe
-## Escolhe o peixe pela isca, horário e clima.
-static func roll_fish(bait: String, night: bool, rain: bool) -> String:
-	var bdef: Dictionary = ItemDB.BAITS.get(bait, ItemDB.BAITS[""])
-	var bonus: Array = bdef["bonus"]
-	var weights := {}
-	var total := 0.0
-	for id in ItemDB.FISH:
-		var f: Dictionary = ItemDB.FISH[id]
-		if f["time"] == "day" and night:
-			continue
-		if f["time"] == "night" and not night:
-			continue
-		var r: int = f["rarity"]
-		var w: float = ItemDB.RARITY_WEIGHT[r] * float(bonus[r])
-		if rain and f["rain"]:
-			w *= 2.0
-		if night and f["time"] == "night":
-			w *= float(bdef.get("night", 1.0))
-		if w <= 0.0:
-			continue
-		weights[id] = w
-		total += w
-	var pick := randf() * total
-	for id in weights:
-		pick -= weights[id]
-		if pick <= 0.0:
-			return id
-	return weights.keys()[0]
+## Contexto do lance atual (lugar + momento).
+func context() -> Dictionary:
+	return FishDB.context(_water, _depth, _bait)
 
 
 # ------------------------------------------------------------------ atualização
@@ -151,17 +145,20 @@ func _process(delta: float) -> void:
 		State.WAITING:
 			_timer -= delta
 			if _timer <= 0.0:
-				_fish = roll_fish(_bait, Game.is_night(), Game.is_wet())
+				_fish = FishDB.roll(context())
 				state = State.BITE
-				_timer = BITE_WINDOW[ItemDB.FISH[_fish]["rarity"]]
+				var lvl := FishDB.level()
+				_timer = BITE_WINDOW[FishDB.get_fish(_fish).rarity] * (1.0 + 0.04 * (lvl - 1))
 				FX.spawn(world, "water", _bobber_pos)
 		State.BITE:
 			_timer -= delta
 			if _timer <= 0.0:
 				cancel("O peixe levou a isca...")
 		State.REELING:
-			var rarity: int = ItemDB.FISH[_fish]["rarity"]
-			_progress -= PULL[rarity] * delta
+			var fd := FishDB.get_fish(_fish)
+			var pull: float = PULL[fd.rarity] if fd.difficulty <= 0.0 else lerpf(10.0, 40.0, fd.difficulty)
+			pull *= 1.0 - 0.035 * (FishDB.level() - 1)     # o nível deixa mais fácil puxar
+			_progress -= pull * delta
 			_timer -= delta
 			_bar.value = _progress
 			if _progress <= 0.0 or _timer <= 0.0:

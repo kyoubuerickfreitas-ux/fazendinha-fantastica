@@ -103,6 +103,18 @@ func generate(saved: Dictionary) -> void:
 			var dy := (y - pond_c.y) / 4.2
 			if dx * dx + dy * dy <= 1.0:
 				ground[y * W + x] = Ground.WATER
+	# rio: desce da floresta (nordeste) até o lago
+	for y in range(2, 22):
+		var bend := int(round(sin(y * 0.45) * 0.8))
+		for x in [46 + bend, 47 + bend]:
+			ground[y * W + x] = Ground.WATER
+	# laguinho no sul
+	for y in H:
+		for x in W:
+			var px := (x - 9.0) / 2.6
+			var py := (y - 34.0) / 1.6
+			if px * px + py * py <= 1.0:
+				ground[y * W + x] = Ground.WATER
 	# caminhos
 	_path_rect(5, 7, 5, 12)
 	_path_rect(3, 12, 44, 12)
@@ -149,6 +161,8 @@ func generate(saved: Dictionary) -> void:
 		for s in saved["soil"]:
 			var cell = s.get("cell", s)
 			var sc := Vector2i(int(s["x"]), int(s["y"]))
+			if ground_at(sc) == Ground.WATER:
+				continue   # o mapa ganhou água ali (rio/laguinho)
 			var mc := Agri.migrate(cell if cell is Dictionary else {})
 			if not mc.has("biome"):
 				mc["biome"] = biome_at(sc)
@@ -784,6 +798,28 @@ func _is_free_grass(c: Vector2i) -> bool:
 		and not props.has(c) and not soil.has(c) and not occupied.has(c)
 
 
+## Tipo de água: river (rio do nordeste), pond (laguinho do sul) ou lake.
+func water_kind(c: Vector2i) -> String:
+	if ground_at(c) != Ground.WATER:
+		return ""
+	if c.y <= 20 and c.x >= 44:
+		return "river"
+	if c.y >= 31 and c.x <= 14:
+		return "pond"
+	return "lake"
+
+
+## Profundidade: fundo no lago quando há água em volta toda (2 quadrados), senão raso.
+func water_depth(c: Vector2i) -> String:
+	if water_kind(c) != "lake":
+		return "shallow"
+	for dy in range(-2, 3):
+		for dx in range(-2, 3):
+			if ground_at(c + Vector2i(dx, dy)) != Ground.WATER:
+				return "shallow"
+	return "deep"
+
+
 func cell_of(pos: Vector2) -> Vector2i:
 	return Vector2i(floori(pos.x / TILE), floori(pos.y / TILE))
 
@@ -886,6 +922,9 @@ func _run_sprinklers() -> int:
 
 ## Penalidade na mira automática (para preferir o alvo mais útil).
 func target_penalty(item_id: String, c: Vector2i) -> float:
+	# a mira automática nunca desmonta objetos construídos (só tocando direto neles)
+	if item_id in ["axe", "pickaxe"] and occupied.has(c) and not props.has(c):
+		return INF
 	if item_id == "watering_can" and ground_at(c) == Ground.WATER:
 		return 0.0 if Game.water <= 0 else 60.0   # só mira na água se precisar encher
 	if item_id == "pickaxe" and soil.has(c):

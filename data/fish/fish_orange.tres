@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_orange"
+name = "Peixinho-Brasa"
+description = "Listrado como brasa de fogueira. Gosta das partes rasas."
+lore = ""
+rarity = 0
+waters = PackedStringArray("lake", "pond")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("morning", "afternoon")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = ""
+size_min = 8.0
+size_max = 16.0
+weight_min = 0.05
+weight_max = 0.2

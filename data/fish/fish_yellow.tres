@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_yellow"
+name = "Perca-Dourada"
+description = "Fica dourada ao sol da tarde."
+lore = ""
+rarity = 0
+waters = PackedStringArray("lake")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("afternoon")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = ""
+size_min = 15.0
+size_max = 28.0
+weight_min = 0.2
+weight_max = 0.7

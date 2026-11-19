@@ -330,16 +330,44 @@ func _run() -> void:
 		p.use_tool()
 		await _wait(0.05)
 	var caught := 0
-	for id in ItemDB.FISH:
+	for id in FishDB.all_ids():
 		caught += game.count_item(id)
-	print("peixes pescados: ", caught)
+	print("peixes pescados: ", caught, " | último: ", fishing.last_catch)
 	assert(caught == 1, "deveria ter pescado 1 peixe")
-	# estatística do sorteio por isca
+	assert(FishDB.is_discovered(fishing.last_catch["id"]), "a captura deveria ir para o Livro de Pesca")
+	# sorteio por ambiente, isca e momento
+	print("ambientes: rio=%s laguinho=%s lago fundo=%s" % [w.water_kind(Vector2i(46, 8)) + w.water_kind(Vector2i(47, 8)),
+		w.water_kind(Vector2i(9, 34)), w.water_depth(Vector2i(40, 24))])
+	assert(w.water_kind(Vector2i(9, 34)) == "pond" and w.water_depth(Vector2i(40, 24)) == "deep")
+	for water in ["lake", "river", "pond"]:
+		var seen := {}
+		for i in 600:
+			var ctx := {"water": water, "depth": "deep" if water == "lake" else "shallow", "season": "summer",
+				"time": "afternoon", "weather": "sunny", "level": 10, "bait": "bait_fly", "region": "farm"}
+			seen[FishDB.roll(ctx)] = true
+		print("%s no verão à tarde: %s" % [water, ", ".join(seen.keys().map(func(x): return FishDB.get_fish(x).name))])
 	for bait in ["", "bait_worm", "bait_fly"]:
-		var rar := [0, 0, 0, 0]
+		var rar := [0, 0, 0, 0, 0, 0, 0]
 		for i in 2000:
-			rar[ItemDB.FISH[Fishing.roll_fish(bait, false, false)]["rarity"]] += 1
-		print("isca '%s' -> comum/incomum/raro/lendário: %s" % [bait, rar])
+			var ctx2 := {"water": "lake", "depth": "deep", "season": "winter", "time": "night", "weather": "fog",
+				"level": 10, "bait": bait, "region": "farm"}
+			rar[FishDB.get_fish(FishDB.roll(ctx2)).rarity] += 1
+		print("isca '%s' (lago fundo, noite de inverno) -> por raridade: %s" % [bait, rar])
+	# nível sobe com XP
+	var lv0 := FishDB.level()
+	FishDB.add_xp(400)
+	print("nível de pesca: %d -> %d (xp %d)" % [lv0, FishDB.level(), game.fishing_xp])
+	assert(FishDB.level() > lv0)
+	main.hud.open_fish_book()
+	await _wait(0.3)
+	await _shot("19_livro_pesca")
+	main.hud._open_fish_card(fishing.last_catch["id"])
+	await _wait(0.2)
+	await _shot("20_ficha_peixe")
+	main.hud._open_fish_card("fish_ghost")
+	await _wait(0.2)
+	await _shot("21_ficha_desconhecido")
+	main.hud.close_panel()
 
 	# bancada: fabricar, construir, máquina, feno, celeiro e compra de animal
 	game.add_item("wood", 200)

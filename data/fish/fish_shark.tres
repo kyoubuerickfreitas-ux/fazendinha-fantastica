@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_shark"
+name = "Tubarãozinho-do-Lago"
+description = "Pequeno para um tubarão, mas cheio de dentes."
+lore = ""
+rarity = 2
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray("storm", "heavy_rain")
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "No fundo do lago. Fica agitado com tempestades."
+size_min = 50.0
+size_max = 110.0
+weight_min = 2.0
+weight_max = 9.0

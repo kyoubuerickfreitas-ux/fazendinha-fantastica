@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_snapper"
+name = "Pargo-Rubi"
+description = "Vermelho como o Tomate-Rubi."
+lore = ""
+rarity = 1
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("summer", "autumn")
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "No fundo do lago, no verão e no outono."
+size_min = 25.0
+size_max = 50.0
+weight_min = 0.5
+weight_max = 2.5

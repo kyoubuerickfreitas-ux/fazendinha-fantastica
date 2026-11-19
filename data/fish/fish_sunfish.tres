@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_sunfish"
+name = "Peixe-Lua"
+description = "Raríssimo. Aparece para tomar sol em dias calmos."
+lore = ""
+rarity = 4
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("summer")
+times = PackedStringArray("afternoon")
+weathers = PackedStringArray("sunny", "heatwave")
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 4
+difficulty = 0.0
+special = ""
+hint = "Fundo do lago, tardes de verão com sol. Nível 4."
+size_min = 60.0
+size_max = 140.0
+weight_min = 8.0
+weight_max = 40.0

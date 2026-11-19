@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_catfish"
+name = "Bagre-Barbudo"
+description = "Sai da toca nas noites de chuva."
+lore = ""
+rarity = 1
+waters = PackedStringArray("lake", "river")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("night", "dawn")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray("rain", "heavy_rain")
+baits = PackedStringArray("bait_worm")
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "Aparece de noite. Chuva e minhoca ajudam."
+size_min = 30.0
+size_max = 70.0
+weight_min = 0.8
+weight_max = 4.0

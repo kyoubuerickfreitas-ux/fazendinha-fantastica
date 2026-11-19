@@ -15,7 +15,7 @@ const HD_COLUMNS := 16
 const UI_ICON := {
 	"coin": 16, "sun": 17, "rain": 18, "heart": 19, "bolt": 20,
 	"backpack": 21, "hand": 22, "bubble": 23, "moon": 24, "cloud": 25,
-	"heavy_rain": 30, "storm": 31, "snow": 32, "fog": 33, "wind": 34, "heat": 35, "cold": 36,
+	"heavy_rain": 30, "storm": 31, "snow": 32, "fog": 33, "wind": 34, "heat": 35, "cold": 36, "book": 37,
 }
 
 ## type: tool | seed | crop | resource | product | fish | bait | placeable
@@ -216,30 +216,6 @@ static func building_capacity(kind: String, level: int) -> int:
 	return int(BUILDING_LEVELS[kind][clampi(level, 1, 3) - 1]["capacity"])
 
 const SHOP_SEEDS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower"]
-## Peixes: raridade 0 comum, 1 incomum, 2 raro, 3 lendário; time: day | night | any; rain: aparece mais na chuva
-const FISH := {
-	"fish_orange": {"rarity": 0, "time": "any", "rain": false},
-	"fish_mackerel": {"rarity": 0, "time": "day", "rain": false},
-	"fish_goldfish": {"rarity": 1, "time": "day", "rain": false},
-	"fish_perch": {"rarity": 0, "time": "any", "rain": false},
-	"fish_catfish": {"rarity": 1, "time": "night", "rain": true},
-	"fish_silver": {"rarity": 0, "time": "any", "rain": false},
-	"fish_puffer": {"rarity": 1, "time": "any", "rain": false},
-	"fish_angel": {"rarity": 1, "time": "day", "rain": false},
-	"fish_snapper": {"rarity": 1, "time": "day", "rain": false},
-	"fish_eel": {"rarity": 2, "time": "night", "rain": false},
-	"fish_shark": {"rarity": 2, "time": "any", "rain": true},
-	"fish_clown": {"rarity": 1, "time": "day", "rain": false},
-	"fish_sword": {"rarity": 2, "time": "day", "rain": false},
-	"fish_axolotl": {"rarity": 2, "time": "any", "rain": true},
-	"fish_yellow": {"rarity": 0, "time": "day", "rain": false},
-	"fish_betta": {"rarity": 1, "time": "any", "rain": false},
-	"fish_angler": {"rarity": 2, "time": "night", "rain": false},
-	"fish_ghost": {"rarity": 3, "time": "night", "rain": false},
-	"fish_lion": {"rarity": 2, "time": "any", "rain": false},
-	"fish_sunfish": {"rarity": 3, "time": "day", "rain": false},
-}
-
 ## Iscas: speed = rapidez da fisgada; bonus = multiplicador de chance por raridade [comum, incomum, raro, lendário]
 const BAITS := {
 	"": {"speed": 0.6, "bonus": [1.0, 0.5, 0.2, 0.0]},   # sem isca
@@ -250,8 +226,6 @@ const BAITS := {
 	"bait_fly": {"speed": 0.9, "bonus": [0.5, 1.2, 2.2, 2.5]},
 }
 
-const RARITY_NAMES := ["comum", "incomum", "raro", "lendário"]
-const RARITY_WEIGHT := [60.0, 25.0, 10.0, 2.0]
 
 const SHOP_ITEMS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower",
 	"fishing_rod", "brush", "shears", "bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
