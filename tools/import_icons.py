@@ -3,8 +3,9 @@
 Monta o atlas de ícones em alta resolução dos itens (32x32 por ícone).
 
 Origem (assets/source/icons/):
-  tools_row.png  : regador, picareta, machado, broto, feixe de trigo, vara de pesca (com transparência)
-  hoe_sickle.png : enxada e foice (fundo xadrez pintado, removido aqui)
+  tools_forest.webp : ferramentas no estilo da floresta (fundo branco, removido aqui), em 2 linhas:
+                      picareta, regador, enxada / foice, vara de pesca, machado
+  tools_row.png     : só o broto e o feixe de trigo (fibra) são usados daqui
 
 Saída: assets/sprites/items_hd.png (uma linha de ícones 32x32, na ordem de ORDER).
 O índice de cada ícone é usado em "hd" nos itens de scripts/data/item_db.gd.
@@ -27,10 +28,36 @@ FIT = 30
 ORDER = ["watering_can", "hoe", "axe", "pickaxe", "scythe", "fiber", "sprout", "fishing_rod"]
 
 
-def pieces(path, names, checker=False):
+def remove_white(im):
+    """Apaga o fundo branco ligado às bordas."""
+    from collections import deque
+    w, h = im.size
+    px = im.load()
+    seen = bytearray(w * h)
+    q = deque([(x, 0) for x in range(w)] + [(x, h - 1) for x in range(w)] +
+              [(0, y) for y in range(h)] + [(w - 1, y) for y in range(h)])
+    while q:
+        x, y = q.popleft()
+        i = y * w + x
+        if seen[i]:
+            continue
+        seen[i] = 1
+        r, g, b, a = px[x, y]
+        if min(r, g, b) < 228 or max(r, g, b) - min(r, g, b) > 25:
+            continue
+        px[x, y] = (0, 0, 0, 0)
+        for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+            if 0 <= nx < w and 0 <= ny < h and not seen[ny * w + nx]:
+                q.append((nx, ny))
+    return im
+
+
+def pieces(path, names, checker=False, white=False, rows=1):
     im = Image.open(path).convert("RGBA")
     if checker:
         im = remove_fake_checker(im)
+    if white:
+        im = remove_white(im)
     comps = components(im)
     big = max(c["area"] for c in comps)
     main = [c for c in comps if c["area"] >= big * 0.08]
@@ -48,7 +75,9 @@ def pieces(path, names, checker=False):
             m["bbox"] = [min(b[0], s["bbox"][0]), min(b[1], s["bbox"][1]),
                          max(b[2], s["bbox"][2]), max(b[3], s["bbox"][3])]
     assert len(main) == len(names), f"{path}: esperava {len(names)} ícones, achei {len(main)}"
-    main.sort(key=lambda c: c["bbox"][0])
+    main.sort(key=lambda c: (c["bbox"][1] + c["bbox"][3]) / 2)
+    per = len(main) // rows
+    main = [c for r in range(rows) for c in sorted(main[r * per:(r + 1) * per], key=lambda c: c["bbox"][0])]
     return {n: cut(im, c) for n, c in zip(names, main)}
 
 
@@ -68,9 +97,11 @@ def fit(img):
 
 if __name__ == "__main__":
     icons = {}
-    icons.update(pieces(os.path.join(SRC, "tools_row.png"),
-                        ["watering_can", "pickaxe", "axe", "sprout", "fiber", "fishing_rod"]))
-    icons.update(pieces(os.path.join(SRC, "hoe_sickle.png"), ["hoe", "scythe"], checker=True))
+    old = pieces(os.path.join(SRC, "tools_row.png"),
+                 ["watering_can", "pickaxe", "axe", "sprout", "fiber", "fishing_rod"])
+    icons["sprout"], icons["fiber"] = old["sprout"], old["fiber"]
+    icons.update(pieces(os.path.join(SRC, "tools_forest.webp"),
+                        ["pickaxe", "watering_can", "hoe", "scythe", "fishing_rod", "axe"], white=True, rows=2))
     atlas = Image.new("RGBA", (CELL * len(ORDER), CELL), (0, 0, 0, 0))
     for i, n in enumerate(ORDER):
         atlas.alpha_composite(fit(icons[n]), (i * CELL, 0))
