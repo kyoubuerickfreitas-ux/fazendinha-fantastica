@@ -333,7 +333,7 @@ func _build_shop() -> void:
 	for which in ["buy", "sell"]:
 		var col := VBoxContainer.new()
 		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		col.add_child(UIStyle.label("Comprar sementes" if which == "buy" else "Vender", 13, UIStyle.WOOD))
+		col.add_child(UIStyle.label("Comprar" if which == "buy" else "Vender", 13, UIStyle.WOOD))
 		var scroll := ScrollContainer.new()
 		scroll.custom_minimum_size = Vector2(0, 190)
 		scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -462,7 +462,7 @@ func _refresh_shop() -> void:
 	for c in _shop_sell.get_children():
 		c.queue_free()
 
-	for id in ItemDB.SHOP_SEEDS:
+	for id in ItemDB.SHOP_ITEMS:
 		var price: int = ItemDB.get_item(id)["buy"]
 		var row := _shop_row(id, "%s\n%d moedas" % [ItemDB.item_name(id).replace("Sementes de ", ""), price])
 		var b := Button.new()

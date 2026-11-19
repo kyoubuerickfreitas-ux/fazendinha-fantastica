@@ -253,7 +253,7 @@ def tile_path(seed):
 def tile_tilled(wet):
     img, d = new(32, 32)
     if wet:
-        base, furrow, hi = hx("553820"), hx("3E2815"), hx("6A4626")
+        base, furrow, hi = hx("3F2A18"), hx("2A1B0E"), hx("54371F")
     else:
         base, furrow, hi = D_D1, D_D2, D_L1
     d.rectangle((0, 0, 31, 31), fill=base)

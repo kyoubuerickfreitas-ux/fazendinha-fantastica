@@ -17,6 +17,7 @@ const WALK_FRAMES := 8
 enum Dir { DOWN, LEFT, RIGHT, UP }
 
 var world: FarmWorld
+var fishing: Fishing
 var facing := Vector2.DOWN
 var _dir := Dir.DOWN
 var _anim_t := 0.0
@@ -50,6 +51,11 @@ func _physics_process(delta: float) -> void:
 		v = v.normalized()
 	if Game.ui_lock > 0 or _busy > 0.0:
 		v = Vector2.ZERO
+	if fishing and fishing.is_active():
+		if fishing.blocks_movement():
+			v = Vector2.ZERO
+		elif v.length() > 0.3:
+			fishing.cancel("Você recolheu a linha.")
 	_busy = max(0.0, _busy - delta)
 
 	velocity = v * SPEED
@@ -126,9 +132,29 @@ func use_tool() -> void:
 
 ## Usa o item selecionado numa célula específica (mira automática ou toque na tela).
 func use_at(c: Vector2i) -> void:
-	if _busy > 0.0 or Game.ui_lock > 0 or world == null:
+	if Game.ui_lock > 0 or world == null:
 		return
 	var id := Game.selected_item_id()
+	# pesca em andamento: o botão serve para fisgar/puxar (toques rápidos, sem espera)
+	if fishing and fishing.is_active():
+		if id == "fishing_rod":
+			_report(fishing.on_use(c))
+		else:
+			fishing.cancel("Você recolheu a linha.")
+		return
+	if _busy > 0.0:
+		return
+	# isca na mão: coloca na vara
+	if ItemDB.get_item(id).get("type", "") == "bait":
+		Game.equip_bait(id)
+		Game.toast.emit("%s colocada na vara de pesca." % ItemDB.item_name(id))
+		return
+	if id == "fishing_rod":
+		_face(world.target_anchor(c))
+		_busy = ACTION_TIME
+		_play_action_anim()
+		_report(fishing.on_use(c))
+		return
 	_face(world.target_anchor(c))
 	_busy = ACTION_TIME
 	_play_action_anim()
@@ -141,12 +167,20 @@ func use_at(c: Vector2i) -> void:
 		Game.toast.emit(msg)
 
 
+func _report(msg: String) -> void:
+	if msg != "":
+		Game.toast.emit(msg)
+
+
 func can_reach(point: Vector2) -> bool:
 	return feet().distance_to(point) <= TAP_REACH
 
 
 func interact() -> void:
 	if Game.ui_lock > 0 or world == null:
+		return
+	if fishing and fishing.is_active():
+		fishing.cancel("Você recolheu a linha.")
 		return
 	var it := find_interactable()
 	if it:

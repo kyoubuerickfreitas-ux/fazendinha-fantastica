@@ -22,6 +22,8 @@ const T_TILLED_WET := 5
 const T_WATER := 6
 const T_WATER_BANK := 7
 
+## Quanto subir cada estágio da plantação (semente, broto, crescendo, pronta) para centralizar
+const CROP_LIFT := [9.0, 7.0, 4.0, 3.0]
 const ENERGY_COST := {"hoe": 2.0, "watering_can": 1.0, "axe": 3.0, "pickaxe": 3.0, "scythe": 1.0, "seed": 0.0}
 
 signal house_door_used
@@ -359,6 +361,8 @@ func would_act(item_id: String, c: Vector2i) -> bool:
 	match item_id:
 		"hoe":
 			return prop == null and _is_free_grass(c)
+		"fishing_rod":
+			return ground_at(c) == Ground.WATER
 		"watering_can":
 			return ground_at(c) == Ground.WATER or (soil.has(c) and not soil[c]["wet"])
 		"axe", "pickaxe", "scythe":
@@ -414,6 +418,8 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				return ""
 			soil[c] = {"wet": Game.weather == "rain", "crop": "", "growth": 0}
 			FX.spawn(self, "till", _cell_center(c))
+			if randf() < 0.08 and Game.add_item("bait_worm", 1) == 0:
+				_popup("+1 Minhoca", _cell_center(c))
 			_soil_layer.queue_redraw()
 		"watering_can":
 			if ground_at(c) == Ground.WATER:
@@ -607,7 +613,9 @@ func _draw_soil() -> void:
 		if s["crop"] != "":
 			var row: int = ItemDB.CROPS[s["crop"]]["row"]
 			var stage := ItemDB.crop_stage(s["crop"], s["growth"])
-			_soil_layer.draw_texture_rect_region(CROPS_TEX, dest,
+			# a arte tem a base no pé do quadro; sobe para a planta ficar no meio do canteiro
+			var lift: float = CROP_LIFT[stage]
+			_soil_layer.draw_texture_rect_region(CROPS_TEX, Rect2(dest.position - Vector2(0, lift), dest.size),
 				Rect2(stage * TILE, row * TILE, TILE, TILE))
 
 

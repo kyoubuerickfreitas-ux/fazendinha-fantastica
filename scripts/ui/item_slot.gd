@@ -65,6 +65,12 @@ func _draw() -> void:
 			var pos := Vector2(size.x - 4 - font.get_string_size(qty_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10).x, size.y - 4)
 			draw_string_outline(font, pos, qty_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, 3, UIStyle.INK)
 			draw_string(font, pos, qty_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 10, UIStyle.CREAM)
+	# isca: marca a que está na vara, e mostra a isca no canto da vara
+	if s != null and s["id"] == "fishing_rod" and Game.equipped_bait != "":
+		draw_texture_rect(ItemDB.icon(Game.equipped_bait), Rect2(Vector2(3, size.y - 17), Vector2(14, 14)), false)
+	if s != null and s["id"] == Game.equipped_bait and Game.equipped_bait != "":
+		draw_rect(Rect2(Vector2(size.x - 9, 3), Vector2(6, 6)), UIStyle.GREEN_LIGHT)
+		draw_rect(Rect2(Vector2(size.x - 9, 3), Vector2(6, 6)), UIStyle.INK, false, 1.0)
 	if show_number:
 		var n := str(index + 1)
 		draw_string_outline(font, Vector2(5, 12), n, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 3, UIStyle.INK)

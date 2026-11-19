@@ -46,6 +46,66 @@ FISH = ["fish_orange", "fish_mackerel", "fish_goldfish", "fish_perch", "fish_cat
         "fish_betta", "fish_angler", "fish_ghost", "fish_lion", "fish_sunfish"]
 ORDER += FISH
 
+# iscas: desenhadas aqui mesmo (provisórias), até chegar arte própria
+BAITS = ["bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
+ORDER += BAITS
+
+
+def draw_bait(name):
+    from PIL import ImageDraw
+    img = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    if name == "bait_worm":
+        pts = [(5, 22), (9, 18), (13, 21), (17, 17), (21, 20), (25, 15), (27, 11)]
+        d.line(pts, fill=(196, 112, 108, 255), width=5, joint="curve")
+        d.line(pts, fill=(226, 150, 140, 255), width=2, joint="curve")
+        for x, y in pts[1:-1]:
+            d.point((x, y + 2), fill=(150, 80, 78, 255))
+        d.point((27, 10), fill=(43, 33, 24, 255))
+    elif name == "bait_corn":
+        d.ellipse((7, 7, 25, 25), fill=(226, 178, 70, 255))
+        d.ellipse((9, 8, 19, 16), fill=(244, 210, 120, 255))
+        for x, y in ((12, 18), (17, 13), (20, 19), (14, 22), (21, 11), (10, 13)):
+            d.rectangle((x, y, x + 1, y + 1), fill=(190, 136, 48, 255))
+    elif name == "bait_cricket":
+        d.ellipse((7, 12, 23, 22), fill=(110, 128, 66, 255))
+        d.ellipse((20, 11, 27, 18), fill=(90, 106, 52, 255))
+        d.ellipse((9, 12, 18, 16), fill=(150, 168, 96, 255))
+        d.line((12, 21, 7, 27), fill=(78, 92, 44, 255), width=2)
+        d.line((17, 21, 21, 27), fill=(78, 92, 44, 255), width=2)
+        d.line((8, 16, 3, 10), fill=(78, 92, 44, 255), width=2)
+        d.line((26, 12, 30, 6), fill=(78, 92, 44, 255), width=1)
+        d.line((25, 12, 27, 5), fill=(78, 92, 44, 255), width=1)
+        d.point((25, 14), fill=(20, 16, 12, 255))
+    elif name == "bait_mushroom":
+        for r, a in ((15, 40), (12, 70), (9, 110)):
+            d.ellipse((16 - r, 14 - r, 16 + r, 14 + r), fill=(120, 230, 210, a))
+        d.rectangle((13, 15, 19, 26), fill=(226, 236, 214, 255))
+        d.pieslice((6, 5, 26, 25), 180, 360, fill=(70, 196, 190, 255))
+        d.ellipse((10, 8, 14, 11), fill=(200, 255, 245, 255))
+        d.ellipse((18, 10, 21, 13), fill=(200, 255, 245, 255))
+    elif name == "bait_fly":
+        d.arc((12, 14, 24, 28), 0, 200, fill=(176, 180, 186, 255), width=2)
+        d.line((24, 21, 24, 6), fill=(176, 180, 186, 255), width=2)
+        d.polygon([(24, 6), (10, 2), (14, 10)], fill=(200, 80, 60, 255))
+        d.polygon([(24, 8), (8, 12), (16, 14)], fill=(120, 150, 80, 255))
+        d.polygon([(24, 7), (14, 4), (20, 12)], fill=(242, 200, 107, 255))
+        d.ellipse((21, 5, 27, 11), fill=(85, 57, 38, 255))
+    # contorno escuro, como nos outros ícones
+    out = img.copy()
+    src, dst = img.load(), out.load()
+    for y in range(32):
+        for x in range(32):
+            if src[x, y][3] >= 200:
+                continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < 32 and 0 <= ny < 32 and src[nx, ny][3] >= 200:
+                    if src[x, y][3] == 0:
+                        dst[x, y] = (43, 33, 24, 255)
+                    break
+    return out
+
 # selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
 SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
 
@@ -170,6 +230,8 @@ if __name__ == "__main__":
                 badge = small_icons.crop(((k % 16) * 16, (k // 16) * 16, (k % 16) * 16 + 16, (k // 16) * 16 + 16))
                 badge = badge.resize((12, 12), Image.NEAREST)
             cell.alpha_composite(badge, (17, 17))
+        elif n in BAITS:
+            cell = draw_bait(n)
         else:
             cell = fit(icons[n])
             if n in FISH:

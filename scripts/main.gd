@@ -38,6 +38,13 @@ func _ready() -> void:
 	add_child(daylight)
 	_build_rain()
 
+	var fishing := Fishing.new()
+	fishing.name = "Fishing"
+	fishing.player = player
+	fishing.world = world
+	world.add_child(fishing)
+	player.fishing = fishing
+
 	hud = HUD.new()
 	hud.player = player
 	add_child(hud)
@@ -114,7 +121,7 @@ func _sell_all() -> void:
 	var count := 0
 	for i in Game.INV_SIZE:
 		var s = Game.inventory[i]
-		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product"]:
+		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product", "fish"]:
 			total += ItemDB.sell_price(s["id"]) * int(s["qty"])
 			count += int(s["qty"])
 			Game.inventory[i] = null
@@ -127,6 +134,7 @@ func _sell_all() -> void:
 
 
 func _sleep(rested: bool) -> void:
+	player.fishing.cancel()
 	hud.fade_through(func():
 		Game.start_new_day(rested)
 		world.on_new_day()

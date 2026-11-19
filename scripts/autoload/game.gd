@@ -31,6 +31,8 @@ var day := 1
 var minutes := DAY_START
 var weather := "sunny"
 var water := WATER_CAPACITY
+## Isca colocada na vara de pesca ("" = sem isca)
+var equipped_bait := ""
 
 ## Cada posição: null ou {"id": String, "qty": int}
 var inventory: Array = []
@@ -61,8 +63,9 @@ func reset_new_game() -> void:
 	inventory.clear()
 	inventory.resize(INV_SIZE)
 	selected_slot = 0
+	equipped_bait = ""
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
-			["seed_kale", 10], ["seed_carrot", 6]]:
+			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6]]:
 		add_item(pair[0], pair[1])
 
 
@@ -198,6 +201,26 @@ func swap_slots(a: int, b: int) -> void:
 	inventory_changed.emit()
 
 
+# ------------------------------------------------------------------ iscas
+func equip_bait(id: String) -> void:
+	equipped_bait = id
+	inventory_changed.emit()
+
+
+## Gasta 1 da isca equipada. Retorna a isca usada ("" se não havia).
+func consume_bait() -> String:
+	var b := equipped_bait
+	if b == "":
+		return ""
+	if not remove_item(b, 1):
+		equipped_bait = ""
+		return ""
+	if count_item(b) == 0:
+		equipped_bait = ""
+		toast.emit("Acabaram as iscas: %s." % ItemDB.item_name(b))
+	return b
+
+
 # ------------------------------------------------------------------ salvar / carregar
 func has_save() -> bool:
 	return FileAccess.file_exists(SAVE_PATH)
@@ -208,6 +231,7 @@ func save_game(world_data: Dictionary) -> void:
 		"version": SAVE_VERSION,
 		"money": money, "energy": energy, "health": health,
 		"day": day, "minutes": minutes, "weather": weather, "water": water,
+		"bait": equipped_bait,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -233,6 +257,7 @@ func load_game() -> Dictionary:
 	minutes = int(data.get("minutes", DAY_START))
 	weather = str(data.get("weather", "sunny"))
 	water = int(data.get("water", WATER_CAPACITY))
+	equipped_bait = str(data.get("bait", ""))
 	selected_slot = int(data.get("selected_slot", 0))
 	var inv: Array = data.get("inventory", [])
 	inventory.clear()
@@ -241,6 +266,10 @@ func load_game() -> Dictionary:
 		var s = inv[i]
 		if s is Dictionary and ItemDB.has(str(s.get("id", ""))):
 			inventory[i] = {"id": str(s["id"]), "qty": int(s.get("qty", 1))}
+	# saves de antes da pesca ganham a vara e algumas minhocas
+	if count_item("fishing_rod") == 0:
+		add_item("fishing_rod", 1)
+		add_item("bait_worm", 10)
 	return data.get("world", {})
 
 
