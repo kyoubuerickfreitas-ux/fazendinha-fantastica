@@ -10,6 +10,7 @@ Para colocar a arte definitiva, substitua o arquivo mantendo **o mesmo nome, tam
 | `tiles.png` | 256×32 | Peças de 32×32: grama, grama c/ flores, grama c/ trevos, caminho, terra arada, terra molhada, água, água com margem. |
 | `crops.png` | 128×128 | Linhas: cenoura, tomate, couve, flor-estrela. Colunas: estágios 0 (semente) a 3 (pronta). 32×32 cada. |
 | `stump.png` | 32×32 | Base em y≈28 (só para saves antigos). |
+| `player_base.png` | 576×256 | Corpo base careca, mesmo formato e escala do `player.png` (para roupas/chapéus em camadas). Gerado por `tools/import_protagonist.py` a partir de `assets/source/base_body/Walk/`. |
 | `house.png` | 128×128 | Casa do jogador. Base em y≈116, porta em x≈44. |
 | `shop.png` | 128×128 | Barraca do Fungo (asset do projeto idle). Base em y≈120. |
 | `icons.png` | 256×32 | Ícones 16×16, índices definidos em `scripts/data/item_db.gd`. |
