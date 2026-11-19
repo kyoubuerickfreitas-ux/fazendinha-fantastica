@@ -1,156 +1,253 @@
 class_name Animal
 extends CharacterBody2D
-## Animal fantástico da fazenda: passeia pelo pasto, recebe carinho
-## e produz um item por dia quando foi bem cuidado no dia anterior.
+## O boneco de um animal no mapa. Os dados ficam em `record` (AnimalRecord).
+## Rotina: de dia passeia pelo pasto (jeito muda com a personalidade);
+## às 19h vai para o celeiro/galinheiro e some lá dentro; sem casa, dorme no pasto.
 ## Spritesheet 4x4 de 64x64. Linhas: baixo, esquerda, direita, cima. Pés em y=58.
 
-const SPECIES := {
-	"moombor": {"name": "Moombor", "speed": 22.0, "product": "milk", "chance": 1.0,
-		"body": Vector2(26, 10), "fps": 5.0},
-	"fofranca": {"name": "Fofrança", "speed": 20.0, "product": "wool", "chance": 1.0,
-		"body": Vector2(24, 10), "fps": 5.0},
-	"catarrapio": {"name": "Catarrápio", "speed": 30.0, "product": "truffle", "chance": 0.6,
-		"body": Vector2(20, 8), "fps": 7.0},
-	"piuplum": {"name": "Piuplum", "speed": 34.0, "product": "egg", "chance": 1.0,
-		"body": Vector2(12, 6), "fps": 8.0},
-}
+signal card_requested(animal: Animal)
 
 enum Dir { DOWN, LEFT, RIGHT, UP }
+enum Mode { WANDER, GO_HOME, INSIDE, SLEEP }
 
-var species := ""
-var nickname := ""
-var friendship := 0          # 0..10 corações
-var petted_today := false
-var has_product := false
-var area := Rect2()          # pasto onde ele passeia (em pixels)
+const NIGHT := 19 * 60
+const MORNING := 6 * 60
+
+var record: AnimalRecord
+var area := Rect2()               # pasto onde passeia (em pixels)
+var home_door := Vector2.INF      # porta da casa (INF = sem casa)
+var mode := Mode.WANDER
 
 var _sprite: Sprite2D
 var _bubble: Sprite2D
+var _zzz: Label
 var _interact: Interactable
+var _col: CollisionShape2D
 var _dir := Dir.DOWN
 var _target := Vector2.ZERO
 var _wait := 0.0
 var _anim := 0.0
 var _rng := RandomNumberGenerator.new()
+var _speed_mul := 1.0
+var _rest_mul := 1.0
+var _range := 120.0
 
 
-func setup(p_species: String, p_area: Rect2, pos: Vector2) -> void:
-	species = p_species
-	nickname = SPECIES[species]["name"]
+func setup(r: AnimalRecord, p_area: Rect2, pos: Vector2) -> void:
+	record = r
 	area = p_area
 	position = pos
 	_target = pos
+
+
+func species_data() -> SpeciesData:
+	return record.data()
 
 
 func _ready() -> void:
 	_rng.randomize()
 	_wait = _rng.randf_range(0.5, 3.0)
 	motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
+	match record.personality:
+		"curioso":
+			_range = 200.0
+		"calmo":
+			_rest_mul = 1.6
+			_speed_mul = 0.85
+		"brincalhão":
+			_speed_mul = 1.35
+			_rest_mul = 0.5
+		"preguiçoso":
+			_speed_mul = 0.7
+			_rest_mul = 2.2
+			_range = 80.0
 
 	_sprite = Sprite2D.new()
-	_sprite.texture = load("res://assets/sprites/animals/%s.png" % species)
+	_sprite.texture = load(species_data().sprite_path())
 	_sprite.hframes = 4
 	_sprite.vframes = 4
-	_sprite.position = Vector2(0, -26)
 	add_child(_sprite)
 
-	var col := CollisionShape2D.new()
+	_col = CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
-	shape.size = SPECIES[species]["body"]
-	col.shape = shape
-	col.position = Vector2(0, -shape.size.y / 2)
-	add_child(col)
+	shape.size = species_data().body
+	_col.shape = shape
+	_col.position = Vector2(0, -shape.size.y / 2)
+	add_child(_col)
 
 	_bubble = Sprite2D.new()
 	_bubble.visible = false
-	_bubble.position = Vector2(0, -50)
 	add_child(_bubble)
+	_zzz = Label.new()
+	_zzz.text = "z z"
+	_zzz.add_theme_font_size_override("font_size", 9)
+	_zzz.add_theme_color_override("font_color", Color("dfe6f2"))
+	_zzz.add_theme_color_override("font_outline_color", Color("2b2118"))
+	_zzz.add_theme_constant_override("outline_size", 3)
+	_zzz.visible = false
+	add_child(_zzz)
 
 	_interact = Interactable.new()
 	_interact.reach = 30.0
 	_interact.position = Vector2(0, -6)
 	_interact.interacted.connect(_on_interact)
 	add_child(_interact)
-	_refresh()
+	refresh()
 
 
-func _physics_process(delta: float) -> void:
-	var v := Vector2.ZERO
-	if _wait > 0.0:
-		_wait -= delta
-		if _wait <= 0.0:
-			_pick_target()
+## Atualiza tamanho (filhote/jovem/adulto), ícone e texto da mão.
+func refresh() -> void:
+	if _sprite == null:
+		return
+	var s := species_data()
+	var sc := 1.0
+	match record.stage():
+		"baby":
+			sc = s.baby_scale
+		"young":
+			sc = s.young_scale
+	_sprite.scale = Vector2.ONE * sc
+	_sprite.position = Vector2(0, 32.0 - 58.0 * sc)   # pés sempre no chão
+	_bubble.position = Vector2(0, (32.0 - 58.0 * sc) - 24.0 * sc - 6)
+	_zzz.position = Vector2(4, _bubble.position.y - 6)
+	# ícone de necessidade (um por vez, por prioridade)
+	var tex: Texture2D = null
+	if mode == Mode.SLEEP or mode == Mode.INSIDE:
+		tex = null
+	elif record.product_ready:
+		tex = ItemDB.icon(s.product)
+	elif record.hunger_days > 0 or record.health != "ok":
+		tex = ItemDB.icon("hay")
+	elif not record.petted_today:
+		tex = ItemDB.ui_icon("heart")
+	_bubble.visible = tex != null
+	if tex:
+		_bubble.texture = tex
+		_bubble.scale = Vector2.ONE * (12.0 / tex.get_width())
+	_zzz.visible = mode == Mode.SLEEP
+	if record.product_ready:
+		_interact.label = "Tosquiar" if s.produce_mode == "shears" else "Coletar"
+	elif not record.petted_today:
+		_interact.label = "Carinho"
 	else:
-		var to := _target - position
-		if to.length() < 3.0:
-			_wait = _rng.randf_range(1.5, 5.0)
+		_interact.label = record.name
+
+
+# ------------------------------------------------------------------ rotina
+func _physics_process(delta: float) -> void:
+	var night := Game.minutes >= NIGHT or Game.minutes < MORNING
+	if night and mode == Mode.WANDER:
+		if home_door != Vector2.INF:
+			mode = Mode.GO_HOME
+			_target = home_door
+			_wait = 0.0
 		else:
-			v = to.normalized() * float(SPECIES[species]["speed"])
+			mode = Mode.SLEEP
+			refresh()
+	elif not night and mode != Mode.WANDER:
+		wake_up()
+
+	var v := Vector2.ZERO
+	match mode:
+		Mode.GO_HOME:
+			var to := _target - position
+			if to.length() < 6.0:
+				_enter_home()
+			else:
+				v = to.normalized() * species_data().speed * 1.4
+		Mode.WANDER:
+			if _wait > 0.0:
+				_wait -= delta
+				if _wait <= 0.0:
+					_pick_target()
+			else:
+				var to := _target - position
+				if to.length() < 3.0:
+					_wait = _rng.randf_range(1.5, 5.0) * _rest_mul
+				else:
+					v = to.normalized() * species_data().speed * _speed_mul
 	velocity = v
 	var before := position
 	move_and_slide()
 	if v != Vector2.ZERO and position.distance_to(before) < 0.05:
-		_wait = _rng.randf_range(0.5, 2.0)   # esbarrou em algo: desiste
+		if mode == Mode.GO_HOME:
+			position = position.move_toward(_target, 2.0)   # não trava no caminho de casa
+		else:
+			_wait = _rng.randf_range(0.5, 2.0)
 
 	if v.length() > 0.1:
 		if abs(v.x) > abs(v.y):
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
 		else:
 			_dir = Dir.DOWN if v.y > 0 else Dir.UP
-		_anim += delta * float(SPECIES[species]["fps"])
+		_anim += delta * species_data().anim_fps * (1.4 if record.stage() == "baby" else 1.0)
 		_sprite.frame = _dir * 4 + int(_anim) % 4
 	else:
 		_sprite.frame = _dir * 4
-	_bubble.position.y = -50 + sin(Time.get_ticks_msec() / 300.0) * 1.5
+	if _bubble.visible:
+		_bubble.position.y += sin(Time.get_ticks_msec() / 300.0) * 0.03
+	record.pos = position
 
 
 func _pick_target() -> void:
-	_target = Vector2(
-		_rng.randf_range(area.position.x, area.end.x),
-		_rng.randf_range(area.position.y, area.end.y))
-	if position.distance_to(_target) > 120:
-		_target = position + (_target - position).limit_length(120)
+	var t := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
+	if record.personality == "sociável":
+		var others := get_tree().get_nodes_in_group("animals")
+		if others.size() > 1:
+			var o: Node2D = others[_rng.randi() % others.size()]
+			if o != self:
+				t = o.position + Vector2(_rng.randf_range(-24, 24), _rng.randf_range(-12, 12))
+	if position.distance_to(t) > _range:
+		t = position + (t - position).limit_length(_range)
+	_target = t.clamp(area.position, area.end)
 
 
+func _enter_home() -> void:
+	mode = Mode.INSIDE
+	visible = false
+	_col.disabled = true
+	_interact.remove_from_group("interactable")
+
+
+func wake_up() -> void:
+	mode = Mode.WANDER
+	visible = true
+	_col.disabled = false
+	if not _interact.is_in_group("interactable"):
+		_interact.add_to_group("interactable")
+	if home_door != Vector2.INF:
+		position = home_door + Vector2(_rng.randf_range(-10, 10), 6)
+	_target = position
+	_wait = _rng.randf_range(0.2, 2.0)
+	refresh()
+
+
+func _enter_tree() -> void:
+	add_to_group("animals")
+
+
+# ------------------------------------------------------------------ interação
 func _on_interact(_who: Node) -> void:
 	_wait = 2.5   # para e olha para o jogador
-	if has_product:
-		var item: String = SPECIES[species]["product"]
-		if Game.add_item(item, 1) == 0:
-			has_product = false
-			_float_text("+1 %s" % ItemDB.item_name(item))
-			FX.spawn(get_parent(), "harvest", position + Vector2(0, -20))
-	elif not petted_today:
-		petted_today = true
-		friendship = mini(friendship + 1, 10)
+	if record.product_ready:
+		var res := AnimalSystem.collect(record)
+		if res.has("error"):
+			Game.toast.emit(res["error"])
+		elif not res.is_empty():
+			if Game.add_item(res["item"], res["qty"], res["q"]) > 0:
+				record.product_ready = true   # mochila cheia: devolve
+			else:
+				var qn := "" if res["q"] == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[res["q"]]
+				_float_text("+%d %s%s" % [res["qty"], ItemDB.item_name(res["item"]), qn])
+				FX.spawn(get_parent(), "harvest", position + Vector2(0, -20))
+	elif not record.petted_today:
+		record.petted_today = true
+		record.happiness = mini(100, record.happiness + 5)
 		_float_heart()
-		Game.toast.emit("%s adorou o carinho! (%d/10 ♥)" % [nickname, friendship])
+		Game.toast.emit("%s adorou o carinho!" % record.name)
 	else:
-		Game.toast.emit("%s já está feliz hoje." % nickname)
-	_refresh()
-
-
-## Chamado ao começar um novo dia. Só produz se comeu (feno no comedouro);
-## o carinho aumenta a amizade, que aumenta a chance de produzir.
-func new_day(fed: bool = true) -> void:
-	if fed and not has_product:
-		var chance := float(SPECIES[species]["chance"]) + friendship * 0.04 + (0.15 if petted_today else 0.0)
-		has_product = _rng.randf() < chance
-	petted_today = false
-	_refresh()
-
-
-func _refresh() -> void:
-	if not is_inside_tree():
-		return
-	if has_product:
-		_interact.label = "Coletar"
-		_bubble.texture = ItemDB.icon(SPECIES[species]["product"])
-		_bubble.scale = Vector2.ONE * (16.0 / _bubble.texture.get_width())
-		_bubble.visible = true
-	else:
-		_interact.label = "Carinho" if not petted_today else nickname
-		_bubble.visible = false
+		card_requested.emit(self)
+	refresh()
 
 
 func _float_heart() -> void:
@@ -173,8 +270,8 @@ func _float_text(text: String) -> void:
 	l.add_theme_color_override("font_color", Color("fdf6e3"))
 	l.add_theme_color_override("font_outline_color", Color("2b2118"))
 	l.add_theme_constant_override("outline_size", 4)
-	l.size = Vector2(100, 14)
-	l.position = position + Vector2(-50, -60)
+	l.size = Vector2(140, 14)
+	l.position = position + Vector2(-70, -60)
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	l.z_index = 50
 	get_parent().add_child(l)
@@ -183,17 +280,3 @@ func _float_text(text: String) -> void:
 	tw.tween_property(l, "position:y", l.position.y - 18, 0.9)
 	tw.tween_property(l, "modulate:a", 0.0, 0.9).set_delay(0.4)
 	tw.chain().tween_callback(l.queue_free)
-
-
-func serialize() -> Dictionary:
-	return {"species": species, "x": position.x, "y": position.y, "friendship": friendship,
-		"petted": petted_today, "product": has_product}
-
-
-func restore(d: Dictionary) -> void:
-	position = Vector2(float(d.get("x", position.x)), float(d.get("y", position.y)))
-	_target = position
-	friendship = int(d.get("friendship", 0))
-	petted_today = bool(d.get("petted", false))
-	has_product = bool(d.get("product", false))
-	_refresh()

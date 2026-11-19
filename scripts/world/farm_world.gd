@@ -29,6 +29,8 @@ signal house_door_used
 signal shop_requested
 signal bin_used
 signal workbench_used
+signal animal_card_requested(record: AnimalRecord)
+signal animal_list_requested(records: Array, title: String)
 
 var ground := PackedByteArray()
 var variant := PackedByteArray()
@@ -42,6 +44,7 @@ var player: Node2D
 
 var entities: Node2D     # contêiner com Y-sort (jogador, objetos, NPCs)
 var animals: Array[Animal] = []
+var pickups: Array = []
 
 ## Pasto dos animais (em células): x 32..45, y 13..18
 const PASTURE := Rect2i(32, 13, 14, 6)
@@ -127,6 +130,9 @@ func generate(saved: Dictionary) -> void:
 		_generate_props(rng)
 
 	_spawn_animals(saved.get("animals", []))
+	for pk in saved.get("pickups", []):
+		if pk is Dictionary and ItemDB.has(str(pk.get("id", ""))):
+			_spawn_pickup(str(pk["id"]), int(pk.get("q", 0)), Vector2(float(pk["x"]), float(pk["y"])), str(pk.get("finder", "")))
 
 	soil.clear()
 	if saved.has("soil"):
@@ -295,31 +301,82 @@ func _pasture_area() -> Rect2:
 
 
 func _spawn_animals(saved: Array) -> void:
-	var area := _pasture_area()
 	var list: Array = []
 	for d in saved:
-		if d is Dictionary and Animal.SPECIES.has(str(d.get("species", ""))):
-			list.append(d)
+		if d is Dictionary and AnimalSystem.species(str(d.get("species", ""))) != null:
+			list.append(AnimalRecord.restore(d))
 	if list.is_empty():
 		for sp in STARTING_ANIMALS:
-			list.append({"species": sp})
-	for i in list.size():
-		var d: Dictionary = list[i]
-		var pos := area.position + Vector2(area.size.x * fmod(0.15 + 0.18 * i, 0.9), area.size.y * (0.3 + 0.4 * (i % 2)))
-		add_animal(str(d["species"]), pos, d)
-
-
-func add_animal(species: String, pos: Vector2 = Vector2.ZERO, saved: Dictionary = {}) -> Animal:
+			list.append(AnimalRecord.create(sp, true))
 	var area := _pasture_area()
-	if pos == Vector2.ZERO:
-		pos = area.get_center() + Vector2(randf_range(-60, 60), randf_range(-20, 20))
+	for i in list.size():
+		var r: AnimalRecord = list[i]
+		if r.pos == Vector2.ZERO or not area.grow(64).has_point(r.pos):
+			r.pos = area.position + Vector2(area.size.x * fmod(0.15 + 0.18 * i, 0.9), area.size.y * (0.3 + 0.4 * (i % 2)))
+		_spawn_actor(r)
+	assign_homes()
+
+
+func _spawn_actor(r: AnimalRecord) -> Animal:
 	var a := Animal.new()
-	a.setup(species, area, pos)
+	a.setup(r, _pasture_area(), r.pos)
+	a.card_requested.connect(func(an): animal_card_requested.emit(an.record))
 	entities.add_child(a)
-	if saved.has("x"):
-		a.restore(saved)
 	animals.append(a)
 	return a
+
+
+## Compra/nascimento: cria o registro e o boneco. adult=false chega como filhote.
+func add_animal(species: String, adult: bool = true) -> Animal:
+	var r := AnimalRecord.create(species, adult)
+	var area := _pasture_area()
+	r.pos = area.get_center() + Vector2(randf_range(-60, 60), randf_range(-20, 20))
+	var a := _spawn_actor(r)
+	assign_homes()
+	return a
+
+
+func records() -> Array:
+	return animals.map(func(a): return a.record)
+
+
+func refresh_animals() -> void:
+	for a in animals:
+		a.refresh()
+
+
+## Distribui os animais sem casa nas construções com vaga (celeiro: grandes, galinheiro: aves).
+func assign_homes() -> void:
+	var used := {}
+	for a in animals:
+		if a.record.home != "":
+			used[a.record.home] = used.get(a.record.home, 0) + 1
+	for a in animals:
+		var r: AnimalRecord = a.record
+		var b := _building_at_key(r.home)
+		if b == null:
+			r.home = ""
+		if r.home == "":
+			for p in placeables:
+				if p.kind == r.data().housing and used.get(_key(p), 0) < ItemDB.BUILDING_CAPACITY[p.kind]:
+					r.home = _key(p)
+					used[r.home] = used.get(r.home, 0) + 1
+					break
+		var home := _building_at_key(r.home)
+		a.home_door = home.position + Vector2(0, 10) if home else Vector2.INF
+
+
+func _key(p: Placeable) -> String:
+	return "%d,%d" % [p.origin.x, p.origin.y]
+
+
+func _building_at_key(k: String) -> Placeable:
+	if k == "":
+		return null
+	for p in placeables:
+		if _key(p) == k:
+			return p
+	return null
 
 
 ## Quantos animais cabem: grupo "big" (Moombor, Fofrança, Catarrápio) ou "bird" (Piuplum).
@@ -336,7 +393,7 @@ func capacity(group: String) -> int:
 func count_animals(group: String) -> int:
 	var n := 0
 	for a in animals:
-		if (a.species in ItemDB.BIRDS) == (group == "bird"):
+		if a.record.data().group == group:
 			n += 1
 	return n
 
@@ -394,6 +451,11 @@ func _on_placeable_used(p: Placeable) -> void:
 	match p.kind:
 		"workbench":
 			workbench_used.emit()
+		"barn", "coop":
+			var k := _key(p)
+			var list := records().filter(func(r): return r.home == k)
+			animal_list_requested.emit(list, "%s (%d/%d)" % [ItemDB.item_name(p.kind), list.size(),
+				ItemDB.BUILDING_CAPACITY[p.kind]])
 		"feeder":
 			if held == "hay":
 				var n: int = mini(Game.count_item("hay"), 30 - p.hay)
@@ -559,6 +621,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 		if Game.add_item(p.kind, 1) > 0:
 			return ""
 		remove_placeable(p)
+		assign_homes()
 		return "%s guardado na mochila." % ItemDB.item_name(p.kind)
 	if item.get("type", "") == "seed":
 		return _plant(item_id, c)
@@ -645,6 +708,8 @@ func _build(kind: String, target: Vector2i) -> String:
 		return "Não dá para construir aqui."
 	Game.remove_from_slot(Game.selected_slot, 1)
 	FX.spawn(self, "hit", p.position + Vector2(0, -8))
+	if kind in ["barn", "coop"]:
+		assign_homes()
 	return "%s construído!" % ItemDB.item_name(kind) if kind in ["barn", "coop"] else ""
 
 
@@ -687,6 +752,26 @@ func _harvest(c: Vector2i, with_scythe: bool) -> String:
 	FX.spawn(self, "harvest", _cell_center(c))
 	_soil_layer.queue_redraw()
 	return ""
+
+
+## Item no chão (farejado): toque para pegar.
+func _spawn_pickup(id: String, q: int, pos: Vector2, finder: String) -> void:
+	var it := Interactable.new()
+	it.label = "Pegar"
+	it.reach = 26.0
+	it.position = pos
+	var sp := Sprite2D.new()
+	sp.texture = ItemDB.icon(id)
+	sp.scale = Vector2.ONE * (16.0 / sp.texture.get_width())
+	sp.position = Vector2(0, -8)
+	it.add_child(sp)
+	it.interacted.connect(func(_w):
+		if Game.add_item(id, 1, q) == 0:
+			_popup("+1 %s (achado por %s)" % [ItemDB.item_name(id), finder], it.position + Vector2(0, -16))
+			it.queue_free())
+	it.set_meta("save", {"id": id, "q": q, "x": pos.x, "y": pos.y, "finder": finder})
+	entities.add_child(it)
+	pickups.append(it)
 
 
 func _destroy_prop(prop: Prop) -> void:
@@ -748,19 +833,26 @@ func on_new_day() -> String:
 	# o mato volta a crescer aos pouquinhos
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
-	# alimentação: cada animal come 1 feno dos comedouros
+	# animais (ordem da §19 dos animais em AnimalSystem.process_day)
 	var feeders: Array = placeables.filter(func(p): return p.kind == "feeder")
-	var hungry := 0
-	for a in animals:
-		var fed := false
+	var eat := func(_r: AnimalRecord) -> bool:
 		for f in feeders:
 			if f.hay > 0:
 				f.hay -= 1
-				fed = true
-				break
-		if not fed:
-			hungry += 1
-		a.new_day(fed)
+				return true
+		return false
+	var housed := func(r: AnimalRecord) -> bool: return r.home != ""
+	var ar := AnimalSystem.process_day(records(), eat, housed, Game.weather == "rain", Game.temperature, Game.season_id())
+	var hungry: int = ar["hungry"]
+	for item in ar["forage"]:
+		var finder: AnimalRecord = item["rec"]
+		_spawn_pickup(item["item"], item["q"], finder.pos + Vector2(randf_range(-30, 30), randf_range(-14, 14)), finder.name)
+	if ar["forage"].size() > 0:
+		notes.append("o farejador achou %d coisa(s) no pasto" % ar["forage"].size())
+	if ar["grown"] > 0:
+		notes.append("%d animal(is) cresceu(ram)" % ar["grown"])
+	for an in animals:
+		an.wake_up()
 	for f in feeders:
 		f.refresh()
 	for p in placeables:
@@ -788,11 +880,15 @@ func serialize() -> Dictionary:
 		s.append({"x": c.x, "y": c.y, "cell": d})
 	var an := []
 	for a in animals:
-		an.append(a.serialize())
+		an.append(a.record.serialize())
 	var pl := []
 	for x in placeables:
 		pl.append(x.serialize())
-	return {"props": p, "soil": s, "animals": an, "placeables": pl}
+	var pk := []
+	for it in pickups:
+		if is_instance_valid(it) and not it.is_queued_for_deletion():
+			pk.append(it.get_meta("save"))
+	return {"props": p, "soil": s, "animals": an, "placeables": pl, "pickups": pk}
 
 
 # =================================================================== desenho

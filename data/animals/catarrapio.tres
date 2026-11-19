@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SpeciesData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/species_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "catarrapio"
+name = "Catarrápio"
+description = "Farejador brincalhão. Encontra trufas e coisas escondidas no pasto."
+group = "big"
+housing = "barn"
+price = 1000
+baby_days = 4
+young_days = 5
+food = "hay"
+favorite_foods = PackedStringArray("potato", "mushroom", "strawberry")
+produce_mode = "forage"
+product = "truffle"
+forage_items = PackedStringArray("truffle", "mushroom", "bait_worm", "fiber")
+forage_weights = PackedFloat32Array(0.45, 0.25, 0.2, 0.1)
+forage_chance = 0.35
+temp_min = 0
+temp_max = 30
+speed = 30.0
+anim_fps = 7.0
+body = Vector2(20, 8)
+default_names = PackedStringArray("Trufa", "Focinho", "Fuça", "Raiz", "Bisbilho")

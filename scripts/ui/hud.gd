@@ -45,6 +45,12 @@ var _cal_body: VBoxContainer
 var _craft: Control
 var _craft_list: VBoxContainer
 var _shop_animals: VBoxContainer
+var _animal_card: Control
+var _card_body: VBoxContainer
+var _card_record: AnimalRecord
+var _name_dialog: Control
+var _name_edit: LineEdit
+var _name_record: AnimalRecord
 var _confirm: Control
 var _confirm_label: Label
 var _confirm_action := Callable()
@@ -68,6 +74,8 @@ func _ready() -> void:
 	_build_shop()
 	_build_crafting()
 	_build_calendar()
+	_build_animal_card()
+	_build_name_dialog()
 	_build_confirm()
 	_build_fade()
 
@@ -377,6 +385,122 @@ func _build_crafting() -> void:
 	v.add_child(scroll)
 
 
+# ================================================================= animais
+func _build_animal_card() -> void:
+	var w := _make_window("Animal", Vector2(360, 0))
+	_animal_card = w[0]
+	_card_body = VBoxContainer.new()
+	w[1].add_child(_card_body)
+
+
+## Abre o cartão de um animal (ou a lista, se `records` tiver mais de um).
+func open_animal_card(r: AnimalRecord) -> void:
+	_card_record = r
+	_open(_animal_card)
+	for c in _card_body.get_children():
+		c.queue_free()
+	var s := r.data()
+	var top := HBoxContainer.new()
+	var ic := TextureRect.new()
+	var at := AtlasTexture.new()
+	at.atlas = load(s.sprite_path())
+	at.region = Rect2(0, 0, 64, 64)
+	ic.texture = at
+	ic.custom_minimum_size = Vector2(56, 56)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	top.add_child(ic)
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(UIStyle.label(r.name, 16, UIStyle.WOOD_DARK))
+	var stage_name: String = {"baby": "Filhote", "young": "Jovem", "adult": "Adulto"}[r.stage()]
+	info.add_child(UIStyle.label("%s · %s · %d dia(s) · %s" % [s.name, stage_name, r.age, r.personality], 10, UIStyle.EARTH))
+	var hearts := ""
+	for i in 5:
+		hearts += "♥" if i < r.hearts() else "♡"
+	info.add_child(UIStyle.label("%s   %s" % [hearts, AnimalSystem.mood_text(r)], 13, Color("c8503c")))
+	top.add_child(info)
+	var ren := Button.new()
+	ren.text = "Nome"
+	ren.pressed.connect(func(): ask_animal_name(r))
+	top.add_child(ren)
+	_card_body.add_child(top)
+	var happy := ProgressBar.new()
+	happy.custom_minimum_size = Vector2(0, 10)
+	happy.show_percentage = false
+	happy.value = r.happiness
+	happy.add_theme_stylebox_override("fill", UIStyle.bar_fill(Color("78945b")))
+	_card_body.add_child(UIStyle.label("Felicidade", 10, UIStyle.WOOD))
+	_card_body.add_child(happy)
+	var status := "Saudável" if r.health == "ok" else "Indisposto"
+	var fed := "comeu ontem" if r.fed_today else "ficou com fome"
+	var where := "dorme no %s" % ("celeiro" if s.housing == "barn" else "galinheiro") if r.home != "" else "dorme no pasto"
+	_card_body.add_child(UIStyle.label("%s · %s · %s" % [status, fed, where], 10, UIStyle.WOOD_DARK))
+	if r.produced_total > 0:
+		_card_body.add_child(UIStyle.label("Já deu %d produto(s). Melhor qualidade: %s." % [r.produced_total,
+			AnimalSystem.QUALITY_NAMES[r.best_quality]], 10, UIStyle.EARTH))
+	var tip := UIStyle.label(AnimalSystem.need_text(r), 12, UIStyle.WOOD)
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	tip.custom_minimum_size = Vector2(330, 0)
+	_card_body.add_child(tip)
+
+
+## Lista dos animais de uma construção (ou de todos).
+func open_animal_list(records: Array, title: String) -> void:
+	_open(_animal_card)
+	for c in _card_body.get_children():
+		c.queue_free()
+	_card_body.add_child(UIStyle.label(title, 15, UIStyle.WOOD_DARK))
+	if records.is_empty():
+		_card_body.add_child(UIStyle.label("Ninguém mora aqui ainda. Compre animais na barraca do Fungo.", 11, UIStyle.EARTH))
+	for r: AnimalRecord in records:
+		var row := HBoxContainer.new()
+		var hearts := ""
+		for i in 5:
+			hearts += "♥" if i < r.hearts() else "♡"
+		var l := UIStyle.label("%s (%s) %s\n%s" % [r.name, r.data().name, hearts, AnimalSystem.need_text(r)], 10, UIStyle.WOOD_DARK)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.custom_minimum_size = Vector2(250, 0)
+		row.add_child(l)
+		var b := Button.new()
+		b.text = "Ver"
+		b.pressed.connect(func(): open_animal_card(r))
+		row.add_child(b)
+		_card_body.add_child(row)
+
+
+func _build_name_dialog() -> void:
+	var w := _make_window("Nome do animal", Vector2(300, 0))
+	_name_dialog = w[0]
+	_name_edit = LineEdit.new()
+	_name_edit.max_length = 14
+	_name_edit.custom_minimum_size = Vector2(0, 32)
+	w[1].add_child(_name_edit)
+	var ok := Button.new()
+	ok.text = "Pronto"
+	ok.custom_minimum_size = Vector2(0, 30)
+	ok.pressed.connect(_confirm_name)
+	_name_edit.text_submitted.connect(func(_t): _confirm_name())
+	w[1].add_child(ok)
+
+
+func ask_animal_name(r: AnimalRecord) -> void:
+	_name_record = r
+	_name_edit.text = r.name
+	_open(_name_dialog)
+	_name_edit.grab_focus()
+	_name_edit.select_all()
+
+
+func _confirm_name() -> void:
+	var t := _name_edit.text.strip_edges()
+	if _name_record and t != "":
+		_name_record.name = t
+		if world:
+			world.refresh_animals()
+	close_panel()
+
+
 # ================================================================= calendário
 func _build_calendar() -> void:
 	var w := _make_window("Calendário", Vector2(420, 0))
@@ -580,9 +704,9 @@ func _refresh_shop() -> void:
 			c.queue_free()
 	for c in _shop_animals.get_children():
 		c.queue_free()
-	for sp in ItemDB.ANIMAL_SHOP:
-		var price: int = ItemDB.ANIMAL_SHOP[sp]
-		var group := "bird" if sp in ItemDB.BIRDS else "big"
+	for sp in AnimalSystem.all_species():
+		var price: int = AnimalSystem.species(sp).price
+		var group := AnimalSystem.species(sp).group
 		var has_room: bool = world != null and world.count_animals(group) < world.capacity(group)
 		var row := HBoxContainer.new()
 		var ic := TextureRect.new()
@@ -593,7 +717,7 @@ func _refresh_shop() -> void:
 		ic.custom_minimum_size = Vector2(28, 28)
 		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		row.add_child(ic)
-		var info := "%s\n%d moedas" % [Animal.SPECIES[sp]["name"], price]
+		var info := "%s (filhote)\n%d moedas" % [AnimalSystem.species(sp).name, price]
 		if world and not has_room:
 			info += " · precisa de %s" % ("galinheiro" if group == "bird" else "celeiro")
 		var l := UIStyle.label(info, 10, UIStyle.WOOD_DARK)
@@ -606,9 +730,9 @@ func _refresh_shop() -> void:
 			if Game.money < price or world.count_animals(group) >= world.capacity(group):
 				return
 			Game.add_money(-price)
-			world.add_animal(sp)
-			show_toast("%s chegou ao pasto!" % Animal.SPECIES[sp]["name"])
-			_refresh_shop())
+			var newborn: Animal = world.add_animal(sp, false)
+			show_toast("Um filhote de %s chegou ao pasto!" % AnimalSystem.species(sp).name)
+			ask_animal_name(newborn.record))
 		row.add_child(b)
 		_shop_animals.add_child(row)
 	for c in _shop_sell.get_children():
@@ -635,24 +759,29 @@ func _refresh_shop() -> void:
 
 	var seen := {}
 	for s in Game.inventory:
-		if s == null or seen.has(s["id"]) or ItemDB.sell_price(s["id"]) <= 0:
+		if s == null or ItemDB.sell_price(s["id"]) <= 0:
 			continue
 		var id: String = s["id"]
-		seen[id] = true
-		var price := ItemDB.sell_price(id)
-		var qty := Game.count_item(id)
-		var row := _shop_row(id, "%s x%d\n%d cada" % [ItemDB.item_name(id), qty, price])
+		var q: int = int(s.get("q", 0))
+		var key := "%s/%d" % [id, q]
+		if seen.has(key):
+			continue
+		seen[key] = true
+		var price := ItemDB.sell_price(id, q)
+		var qty := Game.count_item(id, q)
+		var qname := "" if q == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[q]
+		var row := _shop_row(id, "%s%s x%d\n%d cada" % [ItemDB.item_name(id), qname, qty, price])
 		var b1 := Button.new()
 		b1.text = "1"
 		b1.pressed.connect(func():
-			if Game.remove_item(id, 1):
+			if Game.remove_item(id, 1, q):
 				Game.add_money(price)
 			_refresh_shop())
 		var b2 := Button.new()
 		b2.text = "Tudo"
 		b2.pressed.connect(func():
-			var n := Game.count_item(id)
-			if Game.remove_item(id, n):
+			var n := Game.count_item(id, q)
+			if Game.remove_item(id, n, q):
 				Game.add_money(price * n)
 			_refresh_shop())
 		row.add_child(b1)

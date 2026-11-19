@@ -1,0 +1,27 @@
+[gd_resource type="Resource" script_class="SpeciesData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/species_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fofranca"
+name = "Fofrança"
+description = "Pelagem volumosa e chifres em espiral. Tosquie a lã com a tesoura."
+group = "big"
+housing = "barn"
+price = 900
+baby_days = 4
+young_days = 4
+food = "hay"
+favorite_foods = PackedStringArray("starflower", "beet")
+produce_mode = "shears"
+product = "wool"
+product_interval = 3
+product_min = 1
+product_max = 2
+temp_min = -8
+temp_max = 28
+speed = 20.0
+anim_fps = 5.0
+body = Vector2(24, 10)
+default_names = PackedStringArray("Nuvem", "Algodão", "Cachinho", "Fofa", "Lã-Lã")

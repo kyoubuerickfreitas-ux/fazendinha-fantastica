@@ -62,6 +62,7 @@ const ITEMS := {
 	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
+	"shears": {"name": "Tesoura de Tosquia", "tex": "res://assets/sprites/craft/icon_shears.png", "type": "tool", "buy": 150, "desc": "Com ela na mochila, toque na Fofrança de lã crescida para tosquiar."},
 	"fishing_rod": {"name": "Vara de Pesca", "icon": 0, "hd": 7, "type": "tool", "buy": 100, "desc": "Use na água do lago. Coloque uma isca para pescar melhor."},
 
 	"fish_orange": {"name": "Peixinho-Brasa", "icon": 0, "hd": 41, "type": "fish", "sell": 25, "desc": "Listrado como brasa de fogueira."},
@@ -130,9 +131,7 @@ const RECIPES := [
 	{"result": "barn", "qty": 1, "cost": {"wood": 120, "stone": 60, "money": 1000}},
 ]
 
-## Animais à venda no Fungo: precisam de espaço (celeiro/galinheiro).
-const ANIMAL_SHOP := {"moombor": 800, "fofranca": 900, "catarrapio": 1000, "piuplum": 300}
-const BIRDS := ["piuplum"]
+## Espaço para animais: o pasto comporta BASE; cada construção soma a sua capacidade.
 const BASE_CAPACITY := {"big": 3, "bird": 2}
 const BUILDING_CAPACITY := {"barn": 4, "coop": 6}
 
@@ -231,8 +230,12 @@ static func is_stackable(id: String) -> bool:
 	return get_item(id).get("type", "") != "tool"
 
 
-static func sell_price(id: String) -> int:
-	return int(get_item(id).get("sell", 0))
+const QUALITY_MULT := [1.0, 1.25, 1.5, 2.0]
+const QUALITY_COLORS := [Color(0, 0, 0, 0), Color("c9d1d9"), Color("f2c14e"), Color("c58cf2")]
+
+
+static func sell_price(id: String, q: int = 0) -> int:
+	return int(round(int(get_item(id).get("sell", 0)) * QUALITY_MULT[clampi(q, 0, 3)]))
 
 
 static func icon_index_texture(index: int) -> AtlasTexture:

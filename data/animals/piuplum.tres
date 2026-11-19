@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SpeciesData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/species_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "piuplum"
+name = "Piuplum"
+description = "Curioso e agitado. Bota ovos de pintinhas diferentes."
+group = "bird"
+housing = "coop"
+price = 300
+baby_days = 3
+young_days = 3
+food = "hay"
+favorite_foods = PackedStringArray("blueberry", "radish")
+produce_mode = "hand"
+product = "egg"
+product_interval = 1
+temp_min = 2
+temp_max = 32
+speed = 34.0
+anim_fps = 8.0
+body = Vector2(12, 6)
+default_names = PackedStringArray("Piu", "Pipoca", "Pena", "Bolinha", "Pintada")

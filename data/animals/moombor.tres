@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="SpeciesData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/species_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "moombor"
+name = "Moombor"
+description = "Robusto e dócil, com manchas de musgo. Dá leite todo dia."
+group = "big"
+housing = "barn"
+price = 800
+baby_days = 5
+young_days = 5
+food = "hay"
+favorite_foods = PackedStringArray("kale", "carrot", "melon")
+produce_mode = "hand"
+product = "milk"
+product_interval = 1
+temp_min = -2
+temp_max = 30
+speed = 22.0
+anim_fps = 5.0
+body = Vector2(26, 10)
+default_names = PackedStringArray("Mumu", "Bolota", "Musgoso", "Pudim", "Nata")

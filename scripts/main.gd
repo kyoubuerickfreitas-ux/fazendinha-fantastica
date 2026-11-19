@@ -56,6 +56,8 @@ func _ready() -> void:
 	world.shop_requested.connect(_on_shop)
 	world.bin_used.connect(_sell_all)
 	world.workbench_used.connect(func(): hud.open_crafting())
+	world.animal_card_requested.connect(func(r): hud.open_animal_card(r))
+	world.animal_list_requested.connect(func(list, title): hud.open_animal_list(list, title))
 	hud.world = world
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")
@@ -125,7 +127,7 @@ func _sell_all() -> void:
 	for i in Game.INV_SIZE:
 		var s = Game.inventory[i]
 		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product", "fish"]:
-			total += ItemDB.sell_price(s["id"]) * int(s["qty"])
+			total += ItemDB.sell_price(s["id"], int(s.get("q", 0))) * int(s["qty"])
 			count += int(s["qty"])
 			Game.inventory[i] = null
 	if count == 0:

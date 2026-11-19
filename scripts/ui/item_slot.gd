@@ -71,6 +71,17 @@ func _draw() -> void:
 	if s != null and s["id"] == Game.equipped_bait and Game.equipped_bait != "":
 		draw_rect(Rect2(Vector2(size.x - 9, 3), Vector2(6, 6)), UIStyle.GREEN_LIGHT)
 		draw_rect(Rect2(Vector2(size.x - 9, 3), Vector2(6, 6)), UIStyle.INK, false, 1.0)
+	# estrela de qualidade
+	if s != null and int(s.get("q", 0)) > 0:
+		var c: Color = ItemDB.QUALITY_COLORS[int(s["q"])]
+		var p := Vector2(6, size.y - 8)
+		var pts := PackedVector2Array()
+		for k in 10:
+			var rr := 4.5 if k % 2 == 0 else 2.0
+			var ang := -PI / 2 + k * PI / 5
+			pts.append(p + Vector2(cos(ang), sin(ang)) * rr)
+		draw_colored_polygon(pts, c)
+		draw_polyline(pts + PackedVector2Array([pts[0]]), UIStyle.INK, 1.0)
 	if show_number:
 		var n := str(index + 1)
 		draw_string_outline(font, Vector2(5, 12), n, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 3, UIStyle.INK)

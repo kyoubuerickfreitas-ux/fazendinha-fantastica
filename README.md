@@ -14,7 +14,12 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - **Calendário** (toque no relógio): estação, dias restantes, previsão de 3 dias e o que dá tempo de plantar
 - Sinais no canteiro: gota (precisa de água), brilho (pronta), z (dormindo), planta seca (morreu — colha com a mão/foice para limpar)
 - Limpeza do terreno: mato, pedras, tocos e árvores dão fibra, pedra e madeira
-- Animais no pasto (a leste): **Moombor** (leite), **Fofrança** (lã), **Catarrápio** (trufa) e **Piuplum** (ovos). Faça carinho uma vez por dia e no dia seguinte colete o produto
+- **Animais** (fichas em `data/animals/*.tres`): cada um tem nome, personalidade, idade (filhote → jovem → adulto), amizade (5 corações), felicidade e saúde
+  - Moombor dá leite e Piuplum ovos todo dia; a lã da Fofrança cresce em 3 dias e é tosquiada com a Tesoura; o Catarrápio fareja trufas e achados no pasto (fora do inverno, com tempo bom)
+  - Comem 1 feno por dia do comedouro; sem comer não produzem, e com 3 dias de fome ficam indispostos (melhoram comendo)
+  - Produtos têm qualidade (comum, prata, ouro, lendário) pela amizade e felicidade; vale mais na venda
+  - À noite vão para o celeiro/galinheiro (ou dormem no pasto); ícones mostram o que precisam
+  - Toque num animal já cuidado para ver o cartão (e mudar o nome); toque no celeiro/galinheiro para ver a lista
 - **Bancada de trabalho** (ao lado da casa): fabrique feno, comedouro, cercas, caminho de pedra, espantalho, Mosca de Fibra, máquinas, galinheiro e celeiro com madeira, pedra e fibra
 - **Construir**: selecione o objeto na barra; o quadrado verde mostra onde cabe. Toque para construir. Machado ou picareta desmontam (máquinas vazias e objetos pequenos)
 - **Máquinas**: Prensa de Queijo (leite → queijo, 1 dia), Tear (lã → tecido, 1 dia), Pote de Conserva (qualquer colheita → geleia, 2 dias). Segure o item e toque na máquina

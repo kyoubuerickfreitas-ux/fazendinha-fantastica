@@ -240,6 +240,19 @@ def icon_hay():
     return outline(img)
 
 
+def icon_shears():
+    img, d = canvas(32, 32)
+    for a, b in (((6, 26), (22, 6)), ((10, 6), (26, 26))):
+        d.line(a + b, fill=hx("A9AEB3"), width=3)
+    d.line((8, 24, 20, 8), fill=hx("D6DADD"), width=1)
+    ell(d, 8, 26, 4, 4, WOOD)
+    ell(d, 24, 26, 4, 4, WOOD)
+    ell(d, 8, 26, 2, 2, (0, 0, 0, 0))
+    ell(d, 24, 26, 2, 2, (0, 0, 0, 0))
+    ell(d, 16, 17, 2, 2, hx("6B6A5E"))
+    return outline(img)
+
+
 def fit_icon(img):
     w, h = img.size
     s = 30 / max(w, h)
@@ -268,6 +281,6 @@ if __name__ == "__main__":
         img.save(os.path.join(OUT, name + ".png"))
         if name != "feeder_full":
             fit_icon(img).save(os.path.join(OUT, "icon_" + name + ".png"))
-    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay()}.items():
+    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears()}.items():
         img.save(os.path.join(OUT, "icon_" + name + ".png"))
     print("arte de fabricação gerada em", OUT)

@@ -104,24 +104,84 @@ func _run() -> void:
 	for pl in w.placeables:
 		if pl.kind == "feeder":
 			pl.hay = 20
-	# animais: carinho, novo dia, coleta
-	var cow = w.animals[0]
-	cow.has_product = false
-	cow.petted_today = false
+	# animais: carinho, novo dia, coleta (com qualidade)
+	var cow = null
+	for an in w.animals:
+		if an.record.species == "moombor":
+			cow = an
+	cow.record.product_ready = false
+	cow.record.petted_today = false
 	cow._on_interact(p)
-	assert(cow.petted_today, "carinho deveria marcar o dia")
+	assert(cow.record.petted_today, "carinho deveria marcar o dia")
+	var f0: int = cow.record.friendship
 	w.on_new_day()
-	assert(cow.has_product, "o Moombor deveria ter leite no dia seguinte")
+	print("amizade do Moombor: %d -> %d, felicidade %d" % [f0, cow.record.friendship, cow.record.happiness])
+	assert(cow.record.product_ready, "o Moombor deveria ter leite no dia seguinte")
 	cow._on_interact(p)
 	print("leite coletado: ", game.count_item("milk"))
 	assert(game.count_item("milk") == 1)
+	# tosquia: lã cresce em 3 dias e precisa da tesoura
+	var sheep = null
 	for an in w.animals:
-		an.has_product = an != cow
-		an._refresh()
+		if an.record.species == "fofranca":
+			sheep = an
+	sheep.record.product_ready = false
+	sheep.record.prod_days = 0
+	for i in 3:
+		for pl in w.placeables:
+			if pl.kind == "feeder":
+				pl.hay = 20
+		w.on_new_day()
+	print("lã pronta após 3 dias: ", sheep.record.product_ready, " (tesouras: ", game.count_item("shears"), ")")
+	assert(sheep.record.product_ready)
+	sheep._on_interact(p)
+	print("lã coletada: ", game.count_item("wool"))
+	assert(game.count_item("wool") >= 1)
+	# fome: sem feno não produz; 3 dias seguidos = indisposto
+	for pl in w.placeables:
+		if pl.kind == "feeder":
+			pl.hay = 0
+	cow.record.product_ready = false
+	for i in 3:
+		w.on_new_day()
+	print("Moombor com fome: produto=%s saúde=%s fome=%d dias" % [cow.record.product_ready, cow.record.health, cow.record.hunger_days])
+	assert(not cow.record.product_ready and cow.record.health == "indisposto")
+	# filhote cresce até adulto
+	var baby = w.add_animal("piuplum", false)
+	assert(baby.record.stage() == "baby")
+	baby.record.age = baby.record.data().baby_days + baby.record.data().young_days
+	print("filhote virou: ", baby.record.stage())
+	assert(baby.record.is_adult())
+	# farejar: estatística sem rodar o mundo
+	var pig := AnimalRecord.create("catarrapio", true)
+	pig.friendship = 600
+	pig.happiness = 80
+	var found := 0
+	for i in 200:
+		pig.product_ready = false
+		var rr := AnimalSystem.process_day([pig], func(_r): return true, func(_r): return true, false, 18.0, "spring")
+		found += rr["forage"].size()
+	print("Catarrápio farejou em %d de 200 dias" % found)
+	assert(found > 40 and found < 200)
+	# save antigo (formato de antes) vira registro adulto
+	var old := AnimalRecord.restore({"species": "fofranca", "x": 10, "y": 20, "friendship": 4, "petted": true, "product": false})
+	print("migração: ", old.name, " amizade ", old.friendship, " adulto ", old.is_adult())
+	assert(old.friendship == 400 and old.is_adult())
+	for pl in w.placeables:
+		if pl.kind == "feeder":
+			pl.hay = 20
+	for an in w.animals:
+		an.record.product_ready = an != cow
+		an.record.hunger_days = 0
+		an.refresh()
 	p.position = Vector2(38 * 32, 16 * 32)
 	main.camera.reset_smoothing()
 	await _wait(2.5)
 	await _shot("07_pasto")
+	main.hud.open_animal_card(cow.record)
+	await _wait(0.2)
+	await _shot("16_cartao_animal")
+	main.hud.close_panel()
 	# mira: pedra ao lado, personagem de costas para ela -> a mira automática acerta
 	var rock_cell := Vector2i(-1, -1)
 	for c in w.props:
@@ -259,6 +319,29 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	await _wait(0.3)
 	await _shot("12_construcoes")
+	# rotina da noite: quem tem casa vai para o celeiro e some; sem casa dorme no pasto
+	var housed_n := 0
+	for an in w.animals:
+		if an.record.home != "":
+			housed_n += 1
+	game.minutes = 20 * 60
+	await _wait(1.0)
+	for an in w.animals:
+		an.position = an.home_door if an.home_door != Vector2.INF else an.position
+	await _wait(0.3)
+	var inside_n := 0
+	var sleeping_n := 0
+	for an in w.animals:
+		if an.mode == Animal.Mode.INSIDE:
+			inside_n += 1
+		elif an.mode == Animal.Mode.SLEEP:
+			sleeping_n += 1
+	print("noite: %d com casa, %d dentro de casa, %d dormindo no pasto" % [housed_n, inside_n, sleeping_n])
+	assert(inside_n == housed_n and housed_n > 0)
+	game.minutes = 8 * 60
+	await _wait(0.2)
+	for an in w.animals:
+		assert(an.visible, "de manhã todos saem")
 	main.save_now()
 	var saved: Dictionary = game.load_game()
 	print("objetos salvos: ", saved.get("placeables", []).size(), " animais: ", saved.get("animals", []).size())

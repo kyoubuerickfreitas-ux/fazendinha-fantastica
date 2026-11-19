@@ -75,7 +75,7 @@ func reset_new_game() -> void:
 	selected_slot = 0
 	equipped_bait = ""
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
-			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6]]:
+			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1]]:
 		add_item(pair[0], pair[1])
 
 
@@ -172,10 +172,11 @@ func selected_item_id() -> String:
 
 
 ## Adiciona itens. Retorna quantos NÃO couberam.
-func add_item(id: String, qty: int = 1) -> int:
+## q = qualidade (0 comum, 1 prata, 2 ouro, 3 lendário); só empilha com a mesma qualidade.
+func add_item(id: String, qty: int = 1, q: int = 0) -> int:
 	if ItemDB.is_stackable(id):
 		for s in inventory:
-			if s != null and s["id"] == id and s["qty"] < ItemDB.MAX_STACK:
+			if s != null and s["id"] == id and int(s.get("q", 0)) == q and s["qty"] < ItemDB.MAX_STACK:
 				var add: int = min(qty, ItemDB.MAX_STACK - s["qty"])
 				s["qty"] += add
 				qty -= add
@@ -186,7 +187,7 @@ func add_item(id: String, qty: int = 1) -> int:
 		if idx == -1:
 			break
 		var add: int = min(qty, ItemDB.MAX_STACK) if ItemDB.is_stackable(id) else 1
-		inventory[idx] = {"id": id, "qty": add}
+		inventory[idx] = {"id": id, "qty": add} if q == 0 else {"id": id, "qty": add, "q": q}
 		qty -= add
 	inventory_changed.emit()
 	if qty > 0:
@@ -194,10 +195,11 @@ func add_item(id: String, qty: int = 1) -> int:
 	return qty
 
 
-func count_item(id: String) -> int:
+## q = -1: qualquer qualidade
+func count_item(id: String, q: int = -1) -> int:
 	var total := 0
 	for s in inventory:
-		if s != null and s["id"] == id:
+		if s != null and s["id"] == id and (q < 0 or int(s.get("q", 0)) == q):
 			total += s["qty"]
 	return total
 
@@ -212,12 +214,12 @@ func remove_from_slot(i: int, qty: int = 1) -> void:
 	inventory_changed.emit()
 
 
-func remove_item(id: String, qty: int = 1) -> bool:
-	if count_item(id) < qty:
+func remove_item(id: String, qty: int = 1, q: int = -1) -> bool:
+	if count_item(id, q) < qty:
 		return false
 	for i in range(INV_SIZE - 1, -1, -1):
 		var s = inventory[i]
-		if s != null and s["id"] == id:
+		if s != null and s["id"] == id and (q < 0 or int(s.get("q", 0)) == q):
 			var take: int = min(qty, s["qty"])
 			s["qty"] -= take
 			qty -= take
@@ -307,6 +309,11 @@ func load_game() -> Dictionary:
 		var s = inv[i]
 		if s is Dictionary and ItemDB.has(str(s.get("id", ""))):
 			inventory[i] = {"id": str(s["id"]), "qty": int(s.get("qty", 1))}
+			if int(s.get("q", 0)) > 0:
+				inventory[i]["q"] = int(s["q"])
+	# saves de antes dos animais F1 ganham a tesoura de tosquia
+	if count_item("shears") == 0:
+		add_item("shears", 1)
 	# saves de antes da pesca ganham a vara e algumas minhocas
 	if count_item("fishing_rod") == 0:
 		add_item("fishing_rod", 1)
