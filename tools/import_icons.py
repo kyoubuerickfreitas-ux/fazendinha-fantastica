@@ -37,14 +37,14 @@ ORDER += PRODUCE
 
 # produtos dos animais (animal_products.webp, 1 linha)
 ANIMAL_PRODUCTS = ["milk", "wool", "egg"]
-ORDER += ANIMAL_PRODUCTS
+ORDER += ANIMAL_PRODUCTS + ["truffle"]
 
 # selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
 SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
 
 
-def remove_white(im):
-    """Apaga o fundo branco ligado às bordas."""
+def remove_white(im, black=False):
+    """Apaga o fundo branco (ou preto, com black=True) ligado às bordas."""
     from collections import deque
     w, h = im.size
     px = im.load()
@@ -58,7 +58,10 @@ def remove_white(im):
             continue
         seen[i] = 1
         r, g, b, a = px[x, y]
-        if min(r, g, b) < 228 or max(r, g, b) - min(r, g, b) > 25:
+        if black:
+            if r + g + b > 18:   # o contorno (marrom bem escuro) fica
+                continue
+        elif min(r, g, b) < 228 or max(r, g, b) - min(r, g, b) > 25:
             continue
         px[x, y] = (0, 0, 0, 0)
         for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
@@ -67,12 +70,12 @@ def remove_white(im):
     return im
 
 
-def pieces(path, names, checker=False, white=False, rows=1):
+def pieces(path, names, checker=False, white=False, rows=1, black=False):
     im = Image.open(path).convert("RGBA")
     if checker:
         im = remove_fake_checker(im)
-    if white:
-        im = remove_white(im)
+    if white or black:
+        im = remove_white(im, black=black)
     comps = components(im)
     big = max(c["area"] for c in comps)
     main = [c for c in comps if c["area"] >= big * 0.08]
@@ -120,6 +123,7 @@ if __name__ == "__main__":
     icons.update(pieces(os.path.join(SRC, "seed_bag.webp"), ["seed_bag"], white=True))
     icons.update(pieces(os.path.join(SRC, "produce.webp"), PRODUCE, white=True, rows=4))
     icons.update(pieces(os.path.join(SRC, "animal_products.webp"), ANIMAL_PRODUCTS, white=True))
+    icons.update(pieces(os.path.join(SRC, "truffle.webp"), ["truffle"], black=True))
     small_icons = Image.open(os.path.join(ROOT, "assets", "sprites", "icons.png")).convert("RGBA")
     per_row = 16
     atlas = Image.new("RGBA", (CELL * per_row, CELL * ((len(ORDER) + per_row - 1) // per_row)), (0, 0, 0, 0))

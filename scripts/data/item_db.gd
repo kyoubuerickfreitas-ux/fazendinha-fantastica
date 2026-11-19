@@ -37,7 +37,7 @@ const ITEMS := {
 	"milk": {"name": "Leite de Moombor", "icon": 26, "hd": 37, "type": "product", "sell": 60, "desc": "Cremoso, com cheirinho de capim."},
 	"egg": {"name": "Ovo de Piuplum", "icon": 27, "hd": 39, "type": "product", "sell": 30, "desc": "Cada ovo tem uma pintinha diferente."},
 	"wool": {"name": "Lã de Fofrança", "icon": 28, "hd": 38, "type": "product", "sell": 80, "desc": "Macia como nuvem, com cheiro de flor."},
-	"truffle": {"name": "Trufa da Floresta", "icon": 29, "type": "product", "sell": 120, "desc": "Farejada pelo Catarrápio."},
+	"truffle": {"name": "Trufa da Floresta", "icon": 29, "hd": 40, "type": "product", "sell": 120, "desc": "Farejada pelo Catarrápio."},
 
 	"seed_carrot": {"name": "Sementes de Cenoura-Lunar", "icon": 12, "hd": 10, "type": "seed", "crop": "carrot", "buy": 20, "desc": "Cresce em 3 dias."},
 	"seed_tomato": {"name": "Sementes de Tomate-Rubi", "icon": 13, "hd": 11, "type": "seed", "crop": "tomato", "buy": 30, "desc": "Cresce em 4 dias."},
