@@ -103,7 +103,7 @@ func _build_top_left() -> void:
 	var face := TextureRect.new()
 	var at := AtlasTexture.new()
 	at.atlas = PLAYER_SHEET
-	at.region = Rect2(18, 16, 28, 28)
+	at.region = Rect2(18, 7, 28, 28)
 	face.texture = at
 	face.custom_minimum_size = Vector2(36, 36)
 	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED

@@ -5,7 +5,7 @@ Para colocar a arte definitiva, substitua o arquivo mantendo **o mesmo nome, tam
 
 | Arquivo | Tamanho | Organização |
 |---|---|---|
-| `player.png` | 448×256 | 7×4 quadros de 64×64. Linhas: baixo, esquerda, direita, cima. Coluna 0 = parado, 1–6 = caminhada. Pés em y=58. Gerado por `tools/import_character.py` a partir de `assets/source/character/`. |
+| `player.png` | 576×256 | 9×4 quadros de 64×64. Linhas: baixo, esquerda, direita, cima. Coluna 0 = parado, 1–8 = caminhada. Pés em y=58. Gerado por `tools/import_protagonist.py` a partir de `assets/source/protagonist/` (PixelLab). |
 | `npc_fungo.png` | 128×64 | 2 quadros de 64×64 (animação parado). |
 | `tiles.png` | 256×32 | Peças de 32×32: grama, grama c/ flores, grama c/ trevos, caminho, terra arada, terra molhada, água, água com margem. |
 | `crops.png` | 128×128 | Linhas: cenoura, tomate, couve, flor-estrela. Colunas: estágios 0 (semente) a 3 (pronta). 32×32 cada. |

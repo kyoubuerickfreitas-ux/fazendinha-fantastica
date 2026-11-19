@@ -1,8 +1,8 @@
 class_name Player
 extends CharacterBody2D
 ## Personagem do jogador: movimento livre em 8 direções, animação em 4 direções.
-## Spritesheet 7x4 de 64x64. Linhas: baixo, esquerda, direita, cima.
-## Coluna 0 = parado, colunas 1..6 = caminhada.
+## Spritesheet 9x4 de 64x64. Linhas: baixo, esquerda, direita, cima.
+## Coluna 0 = parado, colunas 1..8 = caminhada (gerada por tools/import_protagonist.py).
 
 const SHEET := preload("res://assets/sprites/player.png")
 const SPEED := 85.0
@@ -11,8 +11,8 @@ const AUTO_REACH := 52.0    # alcance da mira automática (~1,6 célula)
 const TAP_REACH := 72.0     # alcance ao tocar direto na tela
 const FACING_BIAS := 18.0   # quanto a direção do personagem pesa na escolha
 const ACTION_TIME := 0.28
-const COLS := 7
-const WALK_FRAMES := 6
+const COLS := 9
+const WALK_FRAMES := 8
 
 enum Dir { DOWN, LEFT, RIGHT, UP }
 
@@ -61,7 +61,7 @@ func _physics_process(delta: float) -> void:
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
 		else:
 			_dir = Dir.DOWN if v.y > 0 else Dir.UP
-		_anim_t += delta * (7.0 + 5.0 * v.length())
+		_anim_t += delta * (8.0 + 6.0 * v.length())
 		_sprite.frame = _dir * COLS + 1 + int(_anim_t) % WALK_FRAMES
 	else:
 		_anim_t = 0.0
