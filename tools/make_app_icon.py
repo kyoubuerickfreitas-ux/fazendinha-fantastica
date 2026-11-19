@@ -5,7 +5,7 @@ Gera o ícone do app a partir da arte do jogo.
 Saídas:
   icon.png                         512x512 (ícone do projeto e do APK)
   assets/app_icon/icon_192.png     192x192 (launcher Android)
-  assets/app_icon/foreground.png   432x432 (ícone adaptável: personagens, com margem segura)
+  assets/app_icon/foreground.png   432x432 (ícone adaptável: o Moombor, com margem segura)
   assets/app_icon/background.png   432x432 (ícone adaptável: fundo)
 
 Uso: python3 tools/make_app_icon.py
@@ -59,32 +59,14 @@ def outline(img, width=6, color=(43, 33, 24, 255)):
 
 
 def foreground():
+    """Só o Moombor, grande e centralizado (dentro da margem segura do ícone adaptável)."""
     img = Image.new("RGBA", (S, S), (0, 0, 0, 0))
-    # Moombor atrás, à direita
     moo_src = Image.open(os.path.join(ROOT, "assets", "source", "animals", "moombor.webp")).convert("RGBA")
     rows = find_frames(moo_src)
     moo = cut(moo_src, rows[0][0])
-    moo = moo.resize((round(moo.width * 215 / moo.height), 215), Image.LANCZOS)
-    img.alpha_composite(outline(moo, 5), (S - moo.width - 30, 200))
-    # personagem grande na frente (close: as pernas saem pela borda)
-    hero = Image.open(os.path.join(ROOT, "assets", "source", "base_body", "bald", "careca_1_frente.png")).convert("RGBA")
-    hero = hero.crop(hero.getbbox())
-    hero = hero.resize((round(hero.width * 400 / hero.height), 400), Image.LANCZOS)
-    hero = outline(hero, 5)
-    hx0, hy0 = 52, 92
-    img.alpha_composite(hero, (hx0, hy0))
-    # brotinho saindo do topo da cabeça
-    a = hero.getchannel("A")
-    cx = hero.width // 2
-    top = next(y for y in range(hero.height) if a.getpixel((cx, y)) > 0) + hy0
-    cx += hx0
-    d = ImageDraw.Draw(img)
-    d.line((cx, top + 8, cx + 2, top - 30), fill=hx("2B2118"), width=10)
-    d.line((cx, top + 6, cx + 2, top - 28), fill=hx("4C6A30"), width=5)
-    d.polygon([(cx, top - 26), (cx - 44, top - 52), (cx - 50, top - 30), (cx - 18, top - 16)], fill=hx("2B2118"))
-    d.polygon([(cx - 3, top - 26), (cx - 40, top - 47), (cx - 44, top - 32), (cx - 18, top - 21)], fill=hx("86A85A"))
-    d.polygon([(cx + 2, top - 28), (cx + 46, top - 64), (cx + 54, top - 38), (cx + 20, top - 18)], fill=hx("2B2118"))
-    d.polygon([(cx + 5, top - 28), (cx + 43, top - 58), (cx + 48, top - 40), (cx + 20, top - 23)], fill=hx("B6C995"))
+    moo = moo.resize((round(moo.width * 300 / moo.height), 300), Image.LANCZOS)
+    moo = outline(moo, 6)
+    img.alpha_composite(moo, ((S - moo.width) // 2, S - moo.height - 40))
     return img
 
 
