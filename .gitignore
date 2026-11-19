@@ -12,3 +12,4 @@ build/
 !android_debug/debug.keystore
 *.jks
 /android/
+__pycache__/
