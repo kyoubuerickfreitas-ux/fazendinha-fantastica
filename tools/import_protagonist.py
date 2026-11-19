@@ -12,7 +12,7 @@ Linhas: 0 baixo, 1 esquerda, 2 direita, 3 cima. Coluna 0 = parado, 1..8 = caminh
 O personagem fica com TARGET_H px de altura e os pés em y=58 em todos os quadros
 (a mesma escala e o mesmo encaixe para todos, então a animação não treme).
 
-Também monta o corpo base (assets/source/base_body/ -> assets/sprites/player_base.png),
+O corpo base (assets/source/base_body/) vira player.png e o fazendeiro player_farmer.png,
 usando a MESMA escala do protagonista, para roupas e chapéus encaixarem depois.
 Se não houver Idle/rotations, a pose parada é o 1º quadro da caminhada.
 
