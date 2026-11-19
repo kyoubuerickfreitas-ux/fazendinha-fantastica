@@ -253,6 +253,37 @@ def icon_shears():
     return outline(img)
 
 
+def pasture_grass(seed):
+    rng = random.Random(seed)
+    img, d = canvas(32, 32)
+    cols = [MOSS_D, MOSS, LEAF, hx("9CBF5E")]
+    for _ in range(16):
+        x = rng.randrange(5, 27)
+        top = rng.randrange(8, 18)
+        d.line((x, 28, x + rng.randrange(-5, 6), top), fill=rng.choice(cols), width=2)
+    for _ in range(3):
+        x = rng.randrange(8, 24)
+        ell(d, x, rng.randrange(9, 15), 1, 2, hx("E8C766"))
+    return outline(img)
+
+
+def silo():
+    rng = random.Random(11)
+    img, d = canvas(56, 84)
+    d.rectangle((8, 20, 48, 80), fill=STONE_L)
+    for y in range(26, 80, 8):
+        d.line((8, y, 48, y), fill=STONE)
+    d.rectangle((8, 20, 14, 80), fill=STONE)
+    d.pieslice((6, 2, 50, 38), 180, 360, fill=hx("8E3F2B"))
+    for x in range(10, 48, 6):
+        d.line((x, 6, x, 20), fill=RED_D)
+    moss(img, rng, (6, 2, 50, 22), 30)
+    d.rectangle((22, 58, 34, 80), fill=WOOD)
+    d.line((28, 58, 28, 80), fill=WOOD_D)
+    d.rectangle((4, 78, 52, 82), fill=STONE_D)
+    return finish(img)
+
+
 def fit_icon(img):
     w, h = img.size
     s = 30 / max(w, h)
@@ -275,11 +306,15 @@ if __name__ == "__main__":
         "fence": fence(),
         "stone_path": stone_path(),
         "barn": building(128, 112, hx("8E3F2B"), RED_D, 30, 8),
+        "silo": silo(),
+        "grass_a": pasture_grass(1),
+        "grass_b": pasture_grass(2),
+        "grass_c": pasture_grass(3),
         "coop": building(88, 72, hx("6F8A4A"), WOOD, 18, 9),
     }
     for name, img in sprites.items():
         img.save(os.path.join(OUT, name + ".png"))
-        if name != "feeder_full":
+        if name != "feeder_full" and not name.startswith("grass_"):
             fit_icon(img).save(os.path.join(OUT, "icon_" + name + ".png"))
     for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears()}.items():
         img.save(os.path.join(OUT, "icon_" + name + ".png"))

@@ -45,6 +45,8 @@ var player: Node2D
 var entities: Node2D     # contêiner com Y-sort (jogador, objetos, NPCs)
 var animals: Array[Animal] = []
 var pickups: Array = []
+var _enclosures := {}     # chave da construção -> {"rect": Rect2, "cells": {Vector2i: true}}
+const SILO_CAPACITY := 240
 
 ## Pasto dos animais (em células): x 32..45, y 13..18
 const PASTURE := Rect2i(32, 13, 14, 6)
@@ -129,6 +131,13 @@ func generate(saved: Dictionary) -> void:
 	else:
 		_generate_props(rng)
 
+	var has_grass := false
+	for c in props:
+		if props[c].kind == "grass":
+			has_grass = true
+			break
+	if not has_grass:
+		_grow_grass(0.4)
 	_spawn_animals(saved.get("animals", []))
 	for pk in saved.get("pickups", []):
 		if pk is Dictionary and ItemDB.has(str(pk.get("id", ""))):
@@ -296,6 +305,109 @@ func _generate_props(rng: RandomNumberGenerator) -> void:
 const TALL := ["tree", "old_tree", "pine", "sapling", "mushroom", "boulder", "tent"]
 
 
+# =================================================================== pasto
+func eat_grass(c: Vector2i) -> bool:
+	var p: Prop = props.get(c)
+	if p == null or p.kind != "grass":
+		return false
+	props.erase(c)
+	p.queue_free()
+	return true
+
+
+func nearest_grass(pos: Vector2, max_dist: float, within: Rect2) -> Vector2:
+	var best := Vector2.INF
+	var bd := max_dist
+	for c in props:
+		var p: Prop = props[c]
+		if p.kind != "grass" or not within.has_point(p.position):
+			continue
+		var d := p.position.distance_to(pos)
+		if d < bd:
+			bd = d
+			best = p.position + Vector2(0, -2)
+	return best
+
+
+## Quadrados onde o capim nasce: o pasto principal + pastos cercados.
+func _pasture_cells() -> Array:
+	var out := {}
+	for y in range(PASTURE.position.y, PASTURE.end.y):
+		for x in range(PASTURE.position.x, PASTURE.end.x):
+			out[Vector2i(x, y)] = true
+	for k in _enclosures:
+		for c in _enclosures[k]["cells"]:
+			out[c] = true
+	return out.keys()
+
+
+func _grow_grass(chance: float) -> int:
+	var n := 0
+	for c in _pasture_cells():
+		if _is_free_grass(c) and randf() < chance:
+			_spawn_prop("grass", c, -1, randi())
+			n += 1
+	return n
+
+
+func _silos() -> Array:
+	return placeables.filter(func(p): return p.kind == "silo")
+
+
+## Guarda feno nos silos. Retorna quanto coube.
+func store_hay(n: int) -> int:
+	var stored := 0
+	for s in _silos():
+		var room: int = SILO_CAPACITY - s.hay
+		var add := mini(room, n - stored)
+		if add > 0:
+			s.hay += add
+			stored += add
+			s.refresh()
+	return stored
+
+
+func take_hay_from_silos(n: int) -> int:
+	var got := 0
+	for s in _silos():
+		var take := mini(s.hay, n - got)
+		if take > 0:
+			s.hay -= take
+			got += take
+			s.refresh()
+	return got
+
+
+## Área cercada a partir da porta da construção (até 500 quadrados). {} se não for fechada.
+func _enclosure_for(b: Placeable) -> Dictionary:
+	var start := Vector2i(b.origin.x + b.size.x / 2, b.origin.y + b.size.y)
+	var seen := {start: true}
+	var q := [start]
+	while not q.is_empty():
+		var c: Vector2i = q.pop_back()
+		if seen.size() > 500 or c.x < 2 or c.y < 2 or c.x > W - 3 or c.y > H - 3:
+			return {}
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = c + d
+			if seen.has(n) or not _passable(n):
+				continue
+			seen[n] = true
+			q.append(n)
+	var r := Rect2i(start, Vector2i.ONE)
+	for c in seen:
+		r = r.expand(c).expand(c + Vector2i.ONE)
+	return {"rect": Rect2(r.position * TILE, r.size * TILE).grow(-6), "cells": seen}
+
+
+func _passable(c: Vector2i) -> bool:
+	if not is_inside(c) or ground_at(c) == Ground.WATER or blocked.has(c):
+		return false
+	if occupied.has(c) and ItemDB.PLACEABLES[occupied[c].kind].get("solid", true):
+		return false
+	var p: Prop = props.get(c)
+	return p == null or p.kind in ["grass", "weed"]
+
+
 func _pasture_area() -> Rect2:
 	return Rect2(PASTURE.position * TILE, PASTURE.size * TILE).grow(-12)
 
@@ -319,6 +431,7 @@ func _spawn_animals(saved: Array) -> void:
 
 func _spawn_actor(r: AnimalRecord) -> Animal:
 	var a := Animal.new()
+	a.world = self
 	a.setup(r, _pasture_area(), r.pos)
 	a.card_requested.connect(func(an): animal_card_requested.emit(an.record))
 	entities.add_child(a)
@@ -347,6 +460,12 @@ func refresh_animals() -> void:
 
 ## Distribui os animais sem casa nas construções com vaga (celeiro: grandes, galinheiro: aves).
 func assign_homes() -> void:
+	_enclosures.clear()
+	for p in placeables:
+		if p.kind in ["barn", "coop"]:
+			var e := _enclosure_for(p)
+			if not e.is_empty():
+				_enclosures[_key(p)] = e
 	var used := {}
 	for a in animals:
 		if a.record.home != "":
@@ -364,6 +483,7 @@ func assign_homes() -> void:
 					break
 		var home := _building_at_key(r.home)
 		a.home_door = home.position + Vector2(0, 10) if home else Vector2.INF
+		a.area = _enclosures[r.home]["rect"] if _enclosures.has(r.home) else _pasture_area()
 
 
 func _key(p: Placeable) -> String:
@@ -456,7 +576,21 @@ func _on_placeable_used(p: Placeable) -> void:
 			var list := records().filter(func(r): return r.home == k)
 			animal_list_requested.emit(list, "%s (%d/%d)" % [ItemDB.item_name(p.kind), list.size(),
 				ItemDB.BUILDING_CAPACITY[p.kind]])
+		"silo":
+			if held == "hay":
+				var n := store_hay(Game.count_item("hay"))
+				Game.remove_item("hay", n)
+				msg = "Guardou %d feno. Silo: %d/%d" % [n, p.hay, SILO_CAPACITY] if n > 0 else "O silo está cheio."
+			else:
+				msg = "Silo: %d/%d feno. Corte capim com a foice para encher." % [p.hay, SILO_CAPACITY]
 		"feeder":
+			if held != "hay" and p.hay < 30:
+				var got := take_hay_from_silos(30 - p.hay)
+				if got > 0:
+					p.hay += got
+					p.refresh()
+					Game.toast.emit("Encheu o comedouro com %d feno do silo. (%d)" % [got, p.hay])
+					return
 			if held == "hay":
 				var n: int = mini(Game.count_item("hay"), 30 - p.hay)
 				if n <= 0:
@@ -708,8 +842,7 @@ func _build(kind: String, target: Vector2i) -> String:
 		return "Não dá para construir aqui."
 	Game.remove_from_slot(Game.selected_slot, 1)
 	FX.spawn(self, "hit", p.position + Vector2(0, -8))
-	if kind in ["barn", "coop"]:
-		assign_homes()
+	assign_homes()
 	return "%s construído!" % ItemDB.item_name(kind) if kind in ["barn", "coop"] else ""
 
 
@@ -776,6 +909,13 @@ func _spawn_pickup(id: String, q: int, pos: Vector2, finder: String) -> void:
 
 func _destroy_prop(prop: Prop) -> void:
 	var d: Array = prop.drops()
+	if prop.kind == "grass":
+		# capim cortado vira feno: no silo, se houver; senão às vezes na mochila
+		if store_hay(1) == 1:
+			_popup("+1 feno no silo", prop.position + Vector2(0, -20))
+		elif randf() < 0.5 and Game.add_item("hay", 1) == 0:
+			_popup("+1 Feno", prop.position + Vector2(0, -20))
+		d = []
 	if d.size() == 2:
 		Game.add_item(d[0], d[1])
 		_popup("+%d %s" % [d[1], ItemDB.item_name(d[0])], prop.position + Vector2(0, -20))
@@ -861,6 +1001,7 @@ func on_new_day() -> String:
 		p.refresh()
 	if hungry > 0:
 		notes.append("%d animal(is) com fome" % hungry)
+	_grow_grass(CropDB.season(Game.season_id()).grass_growth * 0.5)
 	for i in CropDB.season(Game.season_id()).weed_regrow:
 		var c := Vector2i(rng.randi_range(5, 24), rng.randi_range(14, 30))
 		if _is_free_grass(c):

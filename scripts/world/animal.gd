@@ -14,6 +14,7 @@ const NIGHT := 19 * 60
 const MORNING := 6 * 60
 
 var record: AnimalRecord
+var world: FarmWorld
 var area := Rect2()               # pasto onde passeia (em pixels)
 var home_door := Vector2.INF      # porta da casa (INF = sem casa)
 var mode := Mode.WANDER
@@ -116,7 +117,7 @@ func refresh() -> void:
 		tex = null
 	elif record.product_ready:
 		tex = ItemDB.icon(s.product)
-	elif record.hunger_days > 0 or record.health != "ok":
+	elif (record.hunger_days > 0 or record.health != "ok") and not record.ate_grass and not record.hand_fed:
 		tex = ItemDB.icon("hay")
 	elif not record.petted_today:
 		tex = ItemDB.ui_icon("heart")
@@ -166,6 +167,7 @@ func _physics_process(delta: float) -> void:
 				var to := _target - position
 				if to.length() < 3.0:
 					_wait = _rng.randf_range(1.5, 5.0) * _rest_mul
+					_try_graze()
 				else:
 					v = to.normalized() * species_data().speed * _speed_mul
 	velocity = v
@@ -191,7 +193,26 @@ func _physics_process(delta: float) -> void:
 	record.pos = position
 
 
+## Pastar: se ainda não comeu capim hoje, procura um tufo perto e come quando chega.
+func _try_graze() -> bool:
+	if world == null or record.ate_grass or not species_data().grazes:
+		return false
+	var here := world.cell_of(position + Vector2(0, -4))
+	if world.eat_grass(here):
+		record.ate_grass = true
+		_wait = _rng.randf_range(2.0, 4.0)   # mastigando
+		refresh()
+		return true
+	var g := world.nearest_grass(position, _range, area)
+	if g != Vector2.INF:
+		_target = g
+		return true
+	return false
+
+
 func _pick_target() -> void:
+	if _try_graze():
+		return
 	var t := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
 	if record.personality == "sociável":
 		var others := get_tree().get_nodes_in_group("animals")
@@ -242,6 +263,8 @@ func _on_interact(_who: Node) -> void:
 				var qn := "" if res["q"] == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[res["q"]]
 				_float_text("+%d %s%s" % [res["qty"], ItemDB.item_name(res["item"]), qn])
 				FX.spawn(get_parent(), "harvest", position + Vector2(0, -20))
+	elif _hand_feed():
+		pass
 	elif not record.petted_today:
 		record.petted_today = true
 		record.happiness = mini(100, record.happiness + 5)
@@ -250,6 +273,26 @@ func _on_interact(_who: Node) -> void:
 	else:
 		card_requested.emit(self)
 	refresh()
+
+
+## Comida na mão: uma vez por dia; a favorita dá muito mais amizade.
+func _hand_feed() -> bool:
+	if record.hand_fed:
+		return false
+	var held := Game.selected_item_id()
+	if held == "":
+		return false
+	var item := ItemDB.get_item(held)
+	if not (held == "hay" or item.get("type", "") == "crop"):
+		return false
+	Game.remove_from_slot(Game.selected_slot, 1)
+	record.hand_fed = true
+	var fav := species_data().favorite_foods.has(held)
+	record.friendship = mini(1000, record.friendship + (40 if fav else 10))
+	record.happiness = mini(100, record.happiness + (15 if fav else 5))
+	_float_heart()
+	Game.toast.emit("%s %s %s!" % [record.name, "ADOROU" if fav else "comeu", ItemDB.item_name(held)])
+	return true
 
 
 func _float_heart() -> void:

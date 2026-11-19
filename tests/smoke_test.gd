@@ -143,9 +143,57 @@ func _run() -> void:
 			pl.hay = 0
 	cow.record.product_ready = false
 	for i in 3:
+		for an in w.animals:
+			an.record.ate_grass = false
+			an.record.hand_fed = false
 		w.on_new_day()
 	print("Moombor com fome: produto=%s saúde=%s fome=%d dias" % [cow.record.product_ready, cow.record.health, cow.record.hunger_days])
 	assert(not cow.record.product_ready and cow.record.health == "indisposto")
+	# pasto: capim existe, o animal come e conta como alimentado
+	var grass_n := 0
+	for c in w.props:
+		if w.props[c].kind == "grass":
+			grass_n += 1
+	print("tufos de capim no pasto: ", grass_n)
+	assert(grass_n > 10)
+	var gcell: Vector2i = Vector2i(-1, -1)
+	for c in w.props:
+		if w.props[c].kind == "grass":
+			gcell = c
+			break
+	cow.position = Vector2(gcell.x * 32 + 16, gcell.y * 32 + 20)
+	cow.record.ate_grass = false
+	cow.mode = Animal.Mode.WANDER
+	assert(cow._try_graze() and cow.record.ate_grass and not w.props.has(gcell))
+	cow.record.hunger_days = 3
+	cow.record.health = "indisposto"
+	for pl in w.placeables:
+		if pl.kind == "feeder":
+			pl.hay = 0
+	w.on_new_day()
+	print("depois de pastar: fome=%d saúde=%s" % [cow.record.hunger_days, cow.record.health])
+	assert(cow.record.hunger_days == 0 and cow.record.health == "ok")
+	# comida favorita na mão
+	game.add_item("kale", 1)
+	var ks: int = game.inventory.find(game.inventory.filter(func(x): return x != null and x["id"] == "kale")[0])
+	game.swap_slots(ks, 0)
+	game.select_slot(0)
+	cow.record.petted_today = false
+	cow.record.product_ready = false
+	var fr0: int = cow.record.friendship
+	cow._on_interact(p)
+	print("couve na mão (favorita): amizade %d -> %d" % [fr0, cow.record.friendship])
+	assert(cow.record.hand_fed and cow.record.friendship == fr0 + 40)
+	# silo: capim cortado vira feno guardado
+	var silo_pl: Placeable = w.place("silo", Vector2i(26, 14), true)
+	var gcell2: Vector2i = Vector2i(-1, -1)
+	for c in w.props:
+		if w.props[c].kind == "grass":
+			gcell2 = c
+			break
+	w._destroy_prop(w.props[gcell2])
+	print("silo depois da foice: ", silo_pl.hay)
+	assert(silo_pl.hay == 1)
 	# filhote cresce até adulto
 	var baby = w.add_animal("piuplum", false)
 	assert(baby.record.stage() == "baby")

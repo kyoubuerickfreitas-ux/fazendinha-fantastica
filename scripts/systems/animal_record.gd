@@ -17,6 +17,8 @@ var health := "ok"           # ok | indisposto
 var hunger_days := 0         # dias seguidos sem comer
 var fed_today := false       # comeu na última noite
 var petted_today := false
+var ate_grass := false       # pastou hoje
+var hand_fed := false        # recebeu comida na mão hoje
 var home := ""               # "x,y" da construção onde dorme ("" = dorme no pasto)
 var prod_days := 0           # dias acumulados para o próximo produto (lã: crescimento)
 var product_ready := false
@@ -64,7 +66,7 @@ func hearts() -> int:
 func serialize() -> Dictionary:
 	return {"uid": uid, "species": species, "name": name, "personality": personality, "born": born_day,
 		"age": age, "friendship": friendship, "happiness": happiness, "health": health,
-		"hunger": hunger_days, "fed": fed_today, "petted": petted_today, "home": home,
+		"hunger": hunger_days, "fed": fed_today, "petted": petted_today, "grass": ate_grass, "hand": hand_fed, "home": home,
 		"prod_days": prod_days, "ready": product_ready, "quality": product_quality,
 		"total": produced_total, "best": best_quality, "x": pos.x, "y": pos.y}
 
@@ -84,6 +86,8 @@ static func restore(d: Dictionary) -> AnimalRecord:
 		r.hunger_days = int(d.get("hunger", 0))
 		r.fed_today = bool(d.get("fed", false))
 		r.petted_today = bool(d.get("petted", false))
+		r.ate_grass = bool(d.get("grass", false))
+		r.hand_fed = bool(d.get("hand", false))
 		r.home = str(d.get("home", ""))
 		r.prod_days = int(d.get("prod_days", 0))
 		r.product_ready = bool(d.get("ready", false))

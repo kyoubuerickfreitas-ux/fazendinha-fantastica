@@ -12,6 +12,7 @@ temp_max = 8
 air_humidity = 0.7
 tint = Color(0.9, 0.95, 1.08, 1)
 weed_regrow = 0
+grass_growth = 0.0
 weather_weights = {
 "sunny": 34.0,
 "snow": 30.0,

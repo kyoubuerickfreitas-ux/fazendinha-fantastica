@@ -21,6 +21,8 @@ extends Resource
 
 @export_group("Comida")
 @export var food := "hay"
+## come o capim do pasto durante o dia (não precisa do comedouro nesse dia)
+@export var grazes := true
 @export var favorite_foods := PackedStringArray()
 
 @export_group("Produção")

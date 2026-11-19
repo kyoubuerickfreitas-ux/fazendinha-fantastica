@@ -60,6 +60,7 @@ const ITEMS := {
 	"fence": {"name": "Cerca de Madeira", "tex": "res://assets/sprites/craft/icon_fence.png", "type": "placeable", "desc": "Decoração. Bloqueia a passagem."},
 	"stone_path": {"name": "Caminho de Pedra", "tex": "res://assets/sprites/craft/icon_stone_path.png", "type": "placeable", "desc": "Chão decorativo."},
 	"scarecrow": {"name": "Espantalho", "tex": "res://assets/sprites/craft/icon_scarecrow.png", "type": "placeable", "desc": "Decoração com cara de amigo."},
+	"silo": {"name": "Silo", "tex": "res://assets/sprites/craft/icon_silo.png", "type": "placeable", "desc": "Guarda até 240 feno. O capim cortado com a foice vai direto para cá."},
 	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
@@ -105,6 +106,7 @@ const PLACEABLES := {
 	"fence": {"size": Vector2i(1, 1), "solid": true, "pad": 1},
 	"stone_path": {"size": Vector2i(1, 1), "solid": false, "floor": true, "pad": 0},
 	"scarecrow": {"size": Vector2i(1, 1), "solid": true, "pad": 3},
+	"silo": {"size": Vector2i(2, 2), "solid": true, "pad": 2, "fixed": true},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -128,6 +130,7 @@ const RECIPES := [
 	{"result": "loom", "qty": 1, "cost": {"wood": 25, "fiber": 15}},
 	{"result": "preserves_jar", "qty": 1, "cost": {"wood": 15, "stone": 10}},
 	{"result": "workbench", "qty": 1, "cost": {"wood": 30}},
+	{"result": "silo", "qty": 1, "cost": {"wood": 50, "stone": 30, "money": 300}},
 	{"result": "coop", "qty": 1, "cost": {"wood": 80, "stone": 40, "money": 500}},
 	{"result": "barn", "qty": 1, "cost": {"wood": 120, "stone": 60, "money": 1000}},
 ]

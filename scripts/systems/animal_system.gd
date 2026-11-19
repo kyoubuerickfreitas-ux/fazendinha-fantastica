@@ -72,7 +72,10 @@ static func process_day(records: Array, food: Callable, sheltered: Callable, wea
 		if temp > s.temp_max:
 			mood -= 6
 		# comida
-		r.fed_today = food.call(r)
+		# comida: pasto > comida na mão > comedouro
+		r.fed_today = r.ate_grass or r.hand_fed or food.call(r)
+		if r.ate_grass:
+			mood += 5
 		if r.fed_today:
 			r.hunger_days = 0
 			mood += 12
@@ -97,6 +100,8 @@ static func process_day(records: Array, food: Callable, sheltered: Callable, wea
 		elif r.fed_today:
 			r.health = "ok"
 		r.petted_today = false
+		r.ate_grass = false
+		r.hand_fed = false
 		# idade
 		r.age += 1
 		if was_baby != r.stage():
@@ -167,7 +172,7 @@ static func need_text(r: AnimalRecord) -> String:
 	if r.health == "indisposto":
 		return "Está indisposto: precisa comer bem (feno no comedouro)."
 	if r.hunger_days > 0:
-		return "Ficou com fome ontem. Ponha feno no comedouro."
+		return "Ficou com fome ontem. Deixe capim no pasto ou feno no comedouro."
 	if r.product_ready:
 		return "Tem %s pronto para coletar!" % ItemDB.item_name(s.product) if s.produce_mode != "shears" \
 			else "A lã está pronta: tosquie (precisa da tesoura)."

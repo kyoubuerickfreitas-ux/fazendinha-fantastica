@@ -63,7 +63,7 @@ func setup(p_kind: String, p_origin: Vector2i, tile: int) -> void:
 
 
 func is_interactive() -> bool:
-	return kind in ["workbench", "feeder", "barn", "coop"] or is_machine()
+	return kind in ["workbench", "feeder", "barn", "coop", "silo"] or is_machine()
 
 
 func is_machine() -> bool:
@@ -101,6 +101,8 @@ func refresh() -> void:
 			_interact.label = "Fabricar"
 		"barn", "coop":
 			_interact.label = "Animais"
+		"silo":
+			_interact.label = "Silo (%d)" % hay
 		"feeder":
 			_interact.label = "Comedouro (%d)" % hay
 		_:

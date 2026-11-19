@@ -15,3 +15,5 @@ extends Resource
 @export var tint := Color(1, 1, 1)
 ## quanto o mato cresce de volta por noite
 @export var weed_regrow := 3
+## chance por noite de nascer capim em cada quadrado livre do pasto
+@export_range(0.0, 1.0) var grass_growth := 0.2
