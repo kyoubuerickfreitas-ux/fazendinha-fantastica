@@ -534,10 +534,11 @@ func open_calendar() -> void:
 		var f: Dictionary = days[i]
 		var box := HBoxContainer.new()
 		var ic := TextureRect.new()
-		ic.texture = ItemDB.ui_icon("rain" if f["weather"] == "rain" else "sun")
+		ic.texture = ItemDB.ui_icon(CropDB.weather(f["weather"]).icon)
 		ic.custom_minimum_size = Vector2(16, 16)
 		box.add_child(ic)
-		box.add_child(UIStyle.label("%s\n%d°C" % ["Hoje" if i == 0 else Calendar.weekday(d + i), int(f["temp"])], 10, UIStyle.WOOD_DARK))
+		box.add_child(UIStyle.label("%s\n%s\n%d°C" % ["Hoje" if i == 0 else Calendar.weekday(d + i),
+			CropDB.weather(f["weather"]).name, int(f["temp"])], 10, UIStyle.WOOD_DARK))
 		row.add_child(box)
 	_cal_body.add_child(row)
 	# o que plantar agora
@@ -854,7 +855,7 @@ func _refresh_stats() -> void:
 func _refresh_time() -> void:
 	_time_label.text = "%s  %s  %d°" % [Calendar.short_text(Game.day), Game.clock_text(), int(Game.temperature)]
 	_time_icon.texture = ItemDB.ui_icon("moon" if Game.is_night() else "sun")
-	_weather_icon.texture = ItemDB.ui_icon("rain" if Game.weather == "rain" else "cloud")
+	_weather_icon.texture = ItemDB.ui_icon(Game.weather_data().icon)
 	_weather_icon.visible = true
 
 

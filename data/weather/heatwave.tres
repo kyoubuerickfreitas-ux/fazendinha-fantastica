@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeatherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "heatwave"
+name = "Onda de calor"
+icon = "heat"
+soil_water = -1.0
+evap_mult = 1.5
+temp_offset = 7.0
+crop_damage = 0
+wet = false
+animals_inside = false
+forage_ok = true
+particles = "heat"
+light = Color(1.08, 0.98, 0.86, 1)
+tip = "Muito calor: regue tudo e cuidado com plantas sensíveis."

@@ -16,6 +16,7 @@ stage_days = PackedInt32Array(2, 1, 2)
 seasons = PackedStringArray("summer")
 temp_min = 12
 temp_max = 36
+fragile = true
 harvest_type = "regrow"
 regrow_days = 3
 yield_min = 1

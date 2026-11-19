@@ -82,7 +82,7 @@ func _cast(cell: Vector2i) -> String:
 	_bobber_pos = world.target_anchor(cell) + Vector2(randf_range(-6, 6), randf_range(-4, 4))
 	var speed: float = ItemDB.BAITS[_bait]["speed"]
 	var wait := randf_range(2.5, 8.0) / speed
-	if Game.weather == "rain":
+	if Game.is_wet():
 		wait *= 0.8
 	_timer = wait
 	state = State.WAITING
@@ -151,7 +151,7 @@ func _process(delta: float) -> void:
 		State.WAITING:
 			_timer -= delta
 			if _timer <= 0.0:
-				_fish = roll_fish(_bait, Game.is_night(), Game.weather == "rain")
+				_fish = roll_fish(_bait, Game.is_night(), Game.is_wet())
 				state = State.BITE
 				_timer = BITE_WINDOW[ItemDB.FISH[_fish]["rarity"]]
 				FX.spawn(world, "water", _bobber_pos)

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeatherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cold_snap"
+name = "Frio intenso"
+icon = "cold"
+soil_water = -1.0
+evap_mult = 0.7
+temp_offset = -9.0
+crop_damage = 0
+wet = false
+animals_inside = true
+forage_ok = false
+particles = ""
+light = Color(0.86, 0.92, 1.06, 1)
+tip = "Geada: plantas sensíveis ao frio param de crescer."

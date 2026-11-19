@@ -36,6 +36,8 @@ extends Resource
 @export var drought_tolerance := 4
 @export var temp_min := 5
 @export var temp_max := 32
+## planta alta/frágil: tempestades podem estragar o progresso
+@export var fragile := false
 
 @export_group("Colheita")
 ## single = colhe uma vez | regrow = fica no canteiro e produz de novo

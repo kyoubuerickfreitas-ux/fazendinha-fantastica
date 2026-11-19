@@ -115,23 +115,37 @@ static func clear_crop(cell: Dictionary) -> void:
 ##   chuva de hoje -> mudança de estação (dormência/morte/despertar).
 ## Retorna um resumo para avisos ao jogador.
 static func process_day(soil: Dictionary, prev_day: int, day: int, temp_yesterday: float,
-		temp_today: float, raining_today: bool) -> Dictionary:
+		temp_today: float, weather_today: Variant) -> Dictionary:
+	# aceita o id do clima, um WeatherData ou (testes antigos) um bool de chuva
+	var wd: WeatherData
+	if weather_today is WeatherData:
+		wd = weather_today
+	elif weather_today is String:
+		wd = CropDB.weather(weather_today)
+	else:
+		wd = CropDB.weather("rain" if weather_today else "sunny")
 	CropDB.ensure_loaded()
 	var season_y := Calendar.season_id(prev_day)
 	var season_t := Calendar.season_id(day)
 	var season_changed := season_y != season_t
 	var sdata := CropDB.season(season_t)
-	var evap := evaporation(temp_today, sdata)
-	var summary := {"dry": 0, "died": 0, "ready": 0, "dormant": 0, "woke": 0}
+	var evap := evaporation(temp_today, sdata) * wd.evap_mult
+	var summary := {"dry": 0, "died": 0, "ready": 0, "dormant": 0, "woke": 0, "storm": 0}
 
 	for c in soil:
 		var cell: Dictionary = soil[c]
 		if has_crop(cell):
 			_grow(cell, season_y, temp_yesterday, summary)
-		# evaporação e chuva
-		cell["moist"] = maxf(0.0, cell["moist"] - evap)
-		if raining_today:
-			cell["moist"] = RAIN_MOISTURE
+		# evaporação e o clima de hoje
+		cell["moist"] = maxf(0.0, cell["moist"] - evap * cell.get("evap_mult", 1.0))
+		if wd.soil_water >= 0.0:
+			cell["moist"] = maxf(cell["moist"], wd.soil_water)
+		# tempestade: plantas frágeis podem perder o progresso do estágio
+		if wd.crop_damage > 0.0 and has_crop(cell) and cell["crop"]["state"] == "growing":
+			var cd := crop_data(cell)
+			if cd and cd.fragile and randf() < wd.crop_damage:
+				cell["crop"]["prog"] = 0.0
+				summary["storm"] += 1
 		if season_changed and has_crop(cell):
 			_season_change(cell, season_t, summary)
 	return summary

@@ -9,7 +9,14 @@ name = "Outono"
 short_name = "Out."
 temp_min = 8
 temp_max = 20
-rain_chance = 0.3
 air_humidity = 0.55
 tint = Color(1.08, 0.9, 0.72, 1)
 weed_regrow = 2
+weather_weights = {
+"sunny": 40.0,
+"rain": 20.0,
+"heavy_rain": 8.0,
+"storm": 5.0,
+"fog": 14.0,
+"wind": 13.0
+}

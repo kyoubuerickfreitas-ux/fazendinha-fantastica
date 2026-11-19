@@ -7,7 +7,7 @@ var player: Player
 var hud: HUD
 var camera: Camera2D
 var daylight: CanvasModulate
-var rain: CPUParticles2D
+var weather_fx: WeatherFX
 
 
 func _ready() -> void:
@@ -147,7 +147,7 @@ func _sleep(rested: bool) -> void:
 		camera.reset_smoothing()
 		save_now()
 		var head := "%s · %d°C%s" % [Calendar.short_text(Game.day), int(Game.temperature),
-			" · chuva" if Game.weather == "rain" else ""]
+			" · " + Game.weather_data().name.to_lower() if Game.weather != "sunny" else ""]
 		Game.toast.emit(head + ("\n" + notes if notes != "" else "")))
 
 
@@ -172,37 +172,18 @@ func _update_daylight() -> void:
 		c = dusk_c.lerp(night_c, (m - 19 * 60) / 120.0)
 	else:
 		c = night_c
-	if Game.weather == "rain":
-		c = c * Color(0.82, 0.86, 0.92)
+	c = c * Game.weather_data().light
 	var tw := create_tween()
 	tw.tween_property(daylight, "color", c, 1.0)
 
 
 func _build_rain() -> void:
-	var layer := CanvasLayer.new()
-	layer.layer = 5
-	add_child(layer)
-	rain = CPUParticles2D.new()
-	rain.amount = 160
-	rain.lifetime = 0.9
-	rain.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-	rain.emission_rect_extents = Vector2(420, 10)
-	rain.position = Vector2(340, -20)
-	rain.direction = Vector2(-0.25, 1)
-	rain.spread = 2
-	rain.gravity = Vector2.ZERO
-	rain.initial_velocity_min = 380
-	rain.initial_velocity_max = 460
-	rain.scale_amount_min = 1.0
-	rain.scale_amount_max = 2.0
-	rain.color = Color(0.75, 0.85, 0.95, 0.55)
-	rain.preprocess = 1.0
-	layer.add_child(rain)
+	weather_fx = WeatherFX.new()
+	add_child(weather_fx)
 
 
 func _update_weather() -> void:
-	rain.emitting = Game.weather == "rain"
-	rain.visible = rain.emitting
+	weather_fx.set_weather(Game.weather)
 	_update_daylight()
 
 

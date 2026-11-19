@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeatherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "storm"
+name = "Tempestade"
+icon = "storm"
+soil_water = 1.0
+evap_mult = 0.4
+temp_offset = -5.0
+crop_damage = 0.25
+wet = true
+animals_inside = true
+forage_ok = false
+particles = "storm"
+light = Color(0.62, 0.66, 0.8, 1)
+tip = "Rega tudo, mas pode estragar plantas altas e frágeis."

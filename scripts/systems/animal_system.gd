@@ -53,9 +53,11 @@ static func roll_quality(r: AnimalRecord) -> int:
 ## Ordem (§19): abrigo -> comida -> fome -> felicidade -> amizade -> saúde ->
 ## idade/estágio -> produção (lã, farejar). Retorna os itens farejados [{item, pos}].
 ## `food` = Callable(r: AnimalRecord) -> bool que tenta alimentar (comedouro).
-static func process_day(records: Array, food: Callable, sheltered: Callable, raining: bool,
+static func process_day(records: Array, food: Callable, sheltered: Callable, weather: Variant,
 		temp: float, season: String) -> Dictionary:
 	ensure_loaded()
+	var wd: WeatherData = weather if weather is WeatherData else CropDB.weather("rain" if weather else "sunny")
+	var raining := wd.wet or wd.id == "snow"
 	var result := {"forage": [], "hungry": 0, "grown": 0}
 	for r: AnimalRecord in records:
 		var s := r.data()
@@ -101,7 +103,7 @@ static func process_day(records: Array, food: Callable, sheltered: Callable, rai
 			result["grown"] += 1
 		# produção
 		if r.is_adult() and r.fed_today and r.health == "ok" and not r.product_ready:
-			_produce(r, s, raining, season, result)
+			_produce(r, s, not wd.forage_ok, season, result)
 	return result
 
 

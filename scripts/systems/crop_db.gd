@@ -7,6 +7,7 @@ const SEASONS := ["spring", "summer", "autumn", "winter"]
 
 static var crops := {}        # id -> CropData
 static var seasons := {}      # id -> SeasonData
+static var weathers := {}     # id -> WeatherData
 static var _seed_to_crop := {}
 static var _loaded := false
 
@@ -17,6 +18,10 @@ static func ensure_loaded() -> void:
 	_loaded = true
 	for s in SEASONS:
 		seasons[s] = load("res://data/seasons/%s.tres" % s)
+	for file in _list("res://data/weather/"):
+		var w: WeatherData = load("res://data/weather/" + file)
+		if w:
+			weathers[w.id] = w
 	var hd_index := {}
 	var f := FileAccess.open("res://data/items_hd.json", FileAccess.READ)
 	if f:
@@ -81,6 +86,11 @@ static func get_crop(id: String) -> CropData:
 static func crop_for_seed(seed_id: String) -> CropData:
 	ensure_loaded()
 	return crops.get(_seed_to_crop.get(seed_id, ""))
+
+
+static func weather(id: String) -> WeatherData:
+	ensure_loaded()
+	return weathers.get(id, weathers.get("sunny"))
 
 
 static func season(id: String) -> SeasonData:

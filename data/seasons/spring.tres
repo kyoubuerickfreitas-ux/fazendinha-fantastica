@@ -9,7 +9,14 @@ name = "Primavera"
 short_name = "Prim."
 temp_min = 10
 temp_max = 22
-rain_chance = 0.35
 air_humidity = 0.6
 tint = Color(1, 1, 1, 1)
 weed_regrow = 3
+weather_weights = {
+"sunny": 50.0,
+"rain": 24.0,
+"heavy_rain": 7.0,
+"storm": 4.0,
+"fog": 8.0,
+"wind": 7.0
+}

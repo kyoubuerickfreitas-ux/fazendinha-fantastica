@@ -9,7 +9,14 @@ name = "Verão"
 short_name = "Verão"
 temp_min = 22
 temp_max = 34
-rain_chance = 0.15
 air_humidity = 0.3
 tint = Color(1.04, 1.02, 0.86, 1)
 weed_regrow = 3
+weather_weights = {
+"sunny": 58.0,
+"rain": 10.0,
+"heavy_rain": 3.0,
+"storm": 9.0,
+"wind": 8.0,
+"heatwave": 12.0
+}

@@ -9,7 +9,14 @@ name = "Inverno"
 short_name = "Inv."
 temp_min = -6
 temp_max = 8
-rain_chance = 0.25
 air_humidity = 0.7
 tint = Color(0.9, 0.95, 1.08, 1)
 weed_regrow = 0
+weather_weights = {
+"sunny": 34.0,
+"snow": 30.0,
+"fog": 12.0,
+"wind": 9.0,
+"cold_snap": 10.0,
+"rain": 5.0
+}

@@ -428,6 +428,39 @@ func _run() -> void:
 	await _wait(0.3)
 	await _shot("15_canteiros")
 
+	# ---------- clima
+	var wc := Agri.new_cell(false)
+	wc["moist"] = 1.0
+	var wl := {Vector2i(0, 0): wc}
+	Agri.process_day(wl, 2, 3, 16.0, 16.0, "sunny")
+	var after_sun: float = wc["moist"]
+	wc["moist"] = 1.0
+	Agri.process_day(wl, 2, 3, 16.0, 16.0, "heatwave")
+	var after_heat: float = wc["moist"]
+	wc["moist"] = 0.0
+	Agri.process_day(wl, 62, 63, -2.0, -4.0, "snow")
+	print("umidade de manhã: sol %.2f | calor %.2f | neve %.2f" % [after_sun, after_heat, wc["moist"]])
+	assert(after_heat < after_sun and absf(wc["moist"] - 0.45) < 0.01)
+	var counts := {}
+	for i in 400:
+		game.forecast.clear()
+		game.day = 1 + (i % 4) * Calendar.SEASON_LENGTH
+		game._fill_forecast()
+		var wid: String = game.forecast[0]["weather"]
+		counts[wid] = counts.get(wid, 0) + 1
+	print("climas sorteados em 400 dias: ", counts)
+	assert(counts.size() >= 7)
+	game.day = 5
+	game.forecast.clear()
+	game._fill_forecast()
+	for wid in ["storm", "snow", "fog"]:
+		game.weather = wid
+		main._update_weather()
+		await _wait(1.2)
+		await _shot("17_clima_" + wid)
+	game.weather = "sunny"
+	main._update_weather()
+
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

@@ -625,6 +625,40 @@ def ic_simple(kind):
         for x in (4, 7, 10):
             d.point((x, 7), fill=OUTLINE)
             d.point((x + 1, 7), fill=OUTLINE)
+    elif kind == "heavy_rain":
+        ell(d, 6, 5, 4, 3, hx("9AA8B2"))
+        ell(d, 10, 4, 4, 4, hx("B4C0C8"))
+        d.rectangle((3, 5, 13, 7), fill=hx("9AA8B2"))
+        for x in (3, 6, 9, 12):
+            d.line((x, 9, x - 2, 15), fill=hx("4C88A3"))
+    elif kind == "storm":
+        ell(d, 6, 5, 4, 3, hx("6E7884"))
+        ell(d, 10, 4, 4, 4, hx("88939E"))
+        d.rectangle((3, 5, 13, 7), fill=hx("6E7884"))
+        d.polygon([(9, 8), (5, 12), (8, 12), (6, 15), (11, 10), (8, 10)], fill=hx("F2D16B"))
+    elif kind == "snow":
+        for (x, y) in ((8, 8),):
+            for dx, dy in ((0, -6), (0, 6), (-6, 0), (6, 0), (-4, -4), (4, 4), (-4, 4), (4, -4)):
+                d.line((x, y, x + dx, y + dy), fill=hx("E9F2FA"))
+        ell(d, 8, 8, 2, 2, hx("FFFFFF"))
+    elif kind == "fog":
+        for y, x0 in ((4, 2), (8, 4), (12, 1)):
+            d.line((x0, y, x0 + 11, y), fill=hx("C8D3DA"), width=2)
+    elif kind == "wind":
+        d.arc((2, 2, 12, 9), 200, 360, fill=hx("C8D3DA"), width=2)
+        d.line((1, 8, 12, 8), fill=hx("C8D3DA"), width=2)
+        d.arc((6, 8, 15, 15), 0, 160, fill=hx("C8D3DA"), width=2)
+        d.line((1, 11, 10, 11), fill=hx("C8D3DA"), width=1)
+    elif kind == "heat":
+        for dx, dy in ((0, -7), (-7, 0), (7, 0), (0, 7), (-5, -5), (5, -5), (-5, 5), (5, 5)):
+            d.line((8, 8, 8 + dx, 8 + dy), fill=hx("E0602C"))
+        ell(d, 8, 8, 4, 4, hx("F2933B"))
+        ell(d, 7, 7, 1, 1, hx("FFE2A0"))
+    elif kind == "cold":
+        d.rectangle((6, 1, 9, 11), fill=hx("E9F2FA"))
+        ell(d, 7, 12, 3, 3, hx("E9F2FA"))
+        d.rectangle((7, 5, 8, 12), fill=hx("4C88A3"))
+        ell(d, 7, 12, 2, 2, hx("4C88A3"))
     elif kind == "milk":
         d.rectangle((5, 5, 11, 14), fill=hx("F4EFE0"))
         d.rectangle((6, 2, 10, 5), fill=hx("F4EFE0"))
@@ -690,6 +724,13 @@ def icons_sheet():
         ic_simple("egg"),               # 27
         ic_simple("wool"),              # 28
         ic_simple("truffle"),           # 29
+        ic_simple("heavy_rain"),        # 30
+        ic_simple("storm"),             # 31
+        ic_simple("snow"),              # 32
+        ic_simple("fog"),               # 33
+        ic_simple("wind"),              # 34
+        ic_simple("heat"),              # 35
+        ic_simple("cold"),              # 36
     ]
     cols = 16
     rows = (len(icons) + cols - 1) // cols

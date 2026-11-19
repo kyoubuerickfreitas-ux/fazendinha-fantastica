@@ -639,7 +639,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				return "Não dá para arar aqui."
 			if not Game.use_energy(ENERGY_COST["hoe"]):
 				return ""
-			soil[c] = Agri.new_cell(Game.weather == "rain")
+			soil[c] = Agri.new_cell(Game.weather_data().soil_water >= 0.9)
 			FX.spawn(self, "till", _cell_center(c))
 			if randf() < 0.08 and Game.add_item("bait_worm", 1) == 0:
 				_popup("+1 Minhoca", _cell_center(c))
@@ -819,13 +819,15 @@ func _popup(text: String, pos: Vector2) -> void:
 func on_new_day() -> String:
 	var notes := []
 	var r := Agri.process_day(soil, Game.day - 1, Game.day, Game.temperature_yesterday,
-		Game.temperature, Game.weather == "rain")
+		Game.temperature, Game.weather_data())
 	if Calendar.day_of_season(Game.day) == 1:
 		notes.append("Começou o %s!" % Calendar.season_name(Game.day))
 	if r["ready"] > 0:
 		notes.append("%d plantação(ões) pronta(s)" % r["ready"])
 	if r["dry"] > 0:
 		notes.append("%d sem água" % r["dry"])
+	if r["storm"] > 0:
+		notes.append("a tempestade estragou %d planta(s)" % r["storm"])
 	if r["died"] > 0:
 		notes.append("%d morreu(ram)" % r["died"])
 	if r["dormant"] > 0:
@@ -842,7 +844,7 @@ func on_new_day() -> String:
 				return true
 		return false
 	var housed := func(r: AnimalRecord) -> bool: return r.home != ""
-	var ar := AnimalSystem.process_day(records(), eat, housed, Game.weather == "rain", Game.temperature, Game.season_id())
+	var ar := AnimalSystem.process_day(records(), eat, housed, Game.weather_data(), Game.temperature, Game.season_id())
 	var hungry: int = ar["hungry"]
 	for item in ar["forage"]:
 		var finder: AnimalRecord = item["rec"]

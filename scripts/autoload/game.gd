@@ -132,13 +132,34 @@ func _fill_forecast() -> void:
 	while forecast.size() < 4:
 		var d := day + 1 + forecast.size()
 		var s := CropDB.season(Calendar.season_id(d))
-		var prev_rain: bool = (forecast.back()["weather"] == "rain") if not forecast.is_empty() else weather == "rain"
-		var chance := s.rain_chance + (0.15 if prev_rain else 0.0)
-		var w := "rain" if randf() < chance else "sunny"
-		var t := randf_range(s.temp_min, s.temp_max)
-		if w == "rain":
-			t -= 3.0
+		var prev: String = forecast.back()["weather"] if not forecast.is_empty() else weather
+		var w := ""
+		# o clima tende a continuar (se for permitido nesta estação)
+		if s.weather_weights.has(prev) and prev != "sunny" and randf() < 0.3:
+			w = prev
+		else:
+			var total := 0.0
+			for k in s.weather_weights:
+				total += float(s.weather_weights[k])
+			var x := randf() * total
+			for k in s.weather_weights:
+				x -= float(s.weather_weights[k])
+				if x <= 0.0:
+					w = k
+					break
+		if w == "" or CropDB.weather(w) == null:
+			w = "sunny"
+		var t := randf_range(s.temp_min, s.temp_max) + CropDB.weather(w).temp_offset
 		forecast.append({"weather": w, "temp": snappedf(t, 1.0)})
+
+
+func weather_data() -> WeatherData:
+	return CropDB.weather(weather)
+
+
+## Chuva de qualquer tipo (rega, peixes de chuva...)
+func is_wet() -> bool:
+	return weather_data().wet
 
 
 func season_id() -> String:

@@ -135,7 +135,9 @@ func refresh() -> void:
 
 # ------------------------------------------------------------------ rotina
 func _physics_process(delta: float) -> void:
-	var night := Game.minutes >= NIGHT or Game.minutes < MORNING
+	# de noite, ou com tempo muito ruim, quem tem casa fica lá dentro
+	var night := Game.minutes >= NIGHT or Game.minutes < MORNING \
+		or (Game.weather_data().animals_inside and home_door != Vector2.INF)
 	if night and mode == Mode.WANDER:
 		if home_door != Vector2.INF:
 			mode = Mode.GO_HOME

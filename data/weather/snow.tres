@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="WeatherData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/weather_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "snow"
+name = "Neve"
+icon = "snow"
+soil_water = 0.45
+evap_mult = 0.5
+temp_offset = -6.0
+crop_damage = 0
+wet = false
+animals_inside = true
+forage_ok = false
+particles = "snow"
+light = Color(0.9, 0.94, 1.05, 1)
+tip = "A neve umedece um pouco a terra. Plantas sensíveis param."
