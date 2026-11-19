@@ -19,6 +19,7 @@ water_min = 0.2
 drought_tolerance = 6
 temp_min = -8
 temp_max = 20
+biomes = PackedStringArray("forest_edge")
 harvest_type = "regrow"
 regrow_days = 4
 yield_min = 1

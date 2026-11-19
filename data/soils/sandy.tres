@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SoilData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/soil_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "sandy"
+name = "Arenoso"
+description = "Drena rápido: seca mais durante a noite."
+evap_mult = 1.35
+fertility = 0.95

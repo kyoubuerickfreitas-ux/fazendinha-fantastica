@@ -16,6 +16,7 @@ seasons = PackedStringArray("summer")
 season_end = "dormant"
 temp_min = 10
 temp_max = 36
+biomes = PackedStringArray("forest_edge", "plains")
 harvest_type = "regrow"
 regrow_days = 2
 yield_min = 2

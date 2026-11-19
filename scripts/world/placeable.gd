@@ -144,16 +144,20 @@ func insert(item_id: String) -> String:
 	if not ok:
 		var need: String = ItemDB.item_name(m["input"]) if m.has("input") else "uma colheita"
 		return "Precisa de %s na mão." % need
-	if not Game.remove_item(item_id, 1):
+	var slot = Game.inventory[Game.selected_slot]
+	var q: int = int(slot.get("q", 0)) if slot != null and slot["id"] == item_id else 0
+	if slot != null and slot["id"] == item_id:
+		Game.remove_from_slot(Game.selected_slot, 1)
+	elif not Game.remove_item(item_id, 1):
 		return ""
-	job = {"input": item_id, "output": m["output"], "ready": Game.day + int(m["days"])}
+	job = {"input": item_id, "output": ItemDB.machine_output(kind, item_id), "ready": Game.day + int(m["days"]), "q": q}
 	refresh()
 	return "%s começou a trabalhar. Fica pronto em %d dia(s)." % [ItemDB.item_name(kind), int(m["days"])]
 
 
 func collect() -> String:
 	var out: String = job["output"]
-	if Game.add_item(out, 1) > 0:
+	if Game.add_item(out, 1, int(job.get("q", 0))) > 0:
 		return ""
 	job = {}
 	refresh()

@@ -16,3 +16,4 @@ seasons = PackedStringArray("summer")
 temp_min = 16
 temp_max = 40
 fragile = true
+biomes = PackedStringArray("plains", "riverbank")

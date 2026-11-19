@@ -16,3 +16,4 @@ stage_days = PackedInt32Array(2, 1, 2)
 seasons = PackedStringArray("autumn", "winter")
 temp_min = -12
 temp_max = 20
+biomes = PackedStringArray("forest_edge")

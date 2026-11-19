@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SoilData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/soil_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "rocky"
+name = "Pedregoso"
+description = "Pouco fértil, mas aguenta seca."
+evap_mult = 0.9
+fertility = 0.88

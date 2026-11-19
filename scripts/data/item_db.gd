@@ -62,6 +62,20 @@ const ITEMS := {
 	"scarecrow": {"name": "Espantalho", "tex": "res://assets/sprites/craft/icon_scarecrow.png", "type": "placeable", "desc": "Decoração com cara de amigo."},
 	"fertile_egg": {"name": "Ovo Fértil de Piuplum", "tex": "res://assets/sprites/craft/icon_fertile_egg.png", "type": "product", "sell": 45, "desc": "Coloque na incubadora para chocar um filhote."},
 	"incubator": {"name": "Incubadora", "tex": "res://assets/sprites/craft/icon_incubator.png", "type": "placeable", "desc": "Choca ovos férteis em 4 dias (precisa de vaga no galinheiro)."},
+	"fert_basic": {"name": "Adubo Básico", "tex": "res://assets/sprites/craft/icon_fert_basic.png", "type": "fertilizer", "sell": 5, "desc": "Use num canteiro: +fertilidade e um pouco mais de qualidade. Dura até a colheita."},
+	"fert_growth": {"name": "Adubo de Crescimento", "tex": "res://assets/sprites/craft/icon_fert_growth.png", "type": "fertilizer", "sell": 15, "desc": "Use num canteiro: a planta cresce 25% mais rápido."},
+	"fert_water": {"name": "Adubo Retém-Água", "tex": "res://assets/sprites/craft/icon_fert_water.png", "type": "fertilizer", "sell": 10, "desc": "Use num canteiro: a terra seca pela metade durante a noite."},
+	"fert_quality": {"name": "Adubo de Qualidade", "tex": "res://assets/sprites/craft/icon_fert_quality.png", "type": "fertilizer", "sell": 40, "desc": "Use num canteiro: muito mais chance de colheita prata, ouro e lendária."},
+	"butter": {"name": "Manteiga", "tex": "res://assets/sprites/craft/icon_butter.png", "type": "product", "sell": 130, "desc": "Feita na batedeira com leite."},
+	"yarn": {"name": "Novelo de Lã", "tex": "res://assets/sprites/craft/icon_yarn.png", "type": "product", "sell": 140, "desc": "Fiado na roca com lã de Fofrança."},
+	"truffle_oil": {"name": "Óleo de Trufa", "tex": "res://assets/sprites/craft/icon_truffle_oil.png", "type": "product", "sell": 320, "desc": "Feito na prensa de óleo com trufas."},
+	"pickles": {"name": "Conserva", "tex": "res://assets/sprites/craft/icon_pickles.png", "type": "product", "sell": 120, "desc": "Legumes, cogumelos ou flores no pote de conserva."},
+	"butter_churn": {"name": "Batedeira", "tex": "res://assets/sprites/craft/icon_butter_churn.png", "type": "placeable", "desc": "Leite vira manteiga em 1 dia."},
+	"spinning_wheel": {"name": "Roca", "tex": "res://assets/sprites/craft/icon_spinning_wheel.png", "type": "placeable", "desc": "Lã vira novelo em 1 dia."},
+	"oil_press": {"name": "Prensa de Óleo", "tex": "res://assets/sprites/craft/icon_oil_press.png", "type": "placeable", "desc": "Trufa vira óleo de trufa em 2 dias."},
+	"sprinkler": {"name": "Aspersor", "tex": "res://assets/sprites/craft/icon_sprinkler.png", "type": "placeable", "desc": "Rega toda manhã os 4 canteiros ao lado (cima, baixo, esquerda, direita)."},
+	"sprinkler_q": {"name": "Aspersor de Cobre", "tex": "res://assets/sprites/craft/icon_sprinkler_q.png", "type": "placeable", "desc": "Rega toda manhã os 8 canteiros em volta."},
+	"sprinkler_c": {"name": "Aspersor de Cristal", "tex": "res://assets/sprites/craft/icon_sprinkler_c.png", "type": "placeable", "desc": "Rega toda manhã um quadrado 5×5 (24 canteiros)."},
 	"silo": {"name": "Silo", "tex": "res://assets/sprites/craft/icon_silo.png", "type": "placeable", "desc": "Guarda até 240 feno. O capim cortado com a foice vai direto para cá."},
 	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
@@ -112,6 +126,12 @@ const PLACEABLES := {
 	"scarecrow": {"size": Vector2i(1, 1), "solid": true, "pad": 3},
 	"silo": {"size": Vector2i(2, 2), "solid": true, "pad": 2, "fixed": true},
 	"incubator": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"butter_churn": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"spinning_wheel": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"oil_press": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"sprinkler": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 1},
+	"sprinkler_q": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 2},
+	"sprinkler_c": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 3},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -120,14 +140,37 @@ const PLACEABLES := {
 const MACHINES := {
 	"cheese_press": {"input": "milk", "output": "cheese", "days": 1},
 	"loom": {"input": "wool", "output": "cloth", "days": 1},
-	"preserves_jar": {"input_type": "crop", "output": "jam", "days": 2},
+	"preserves_jar": {"input_type": "crop", "output": "jam", "days": 2,
+		"rules": [{"category": "fruit", "output": "jam"}, {"category": "*", "output": "pickles"}]},
+	"butter_churn": {"input": "milk", "output": "butter", "days": 1},
+	"spinning_wheel": {"input": "wool", "output": "yarn", "days": 1},
+	"oil_press": {"input": "truffle", "output": "truffle_oil", "days": 2},
 	"incubator": {"input": "fertile_egg", "output": "hatch:piuplum", "days": 4},
+}
+
+## Melhorias de ferramenta (na bancada): custo para o nível 2 e 3.
+## Nível 2: age em 3 canteiros em linha; nível 3: área 3x3. Regador: +20 de água por nível.
+const TOOL_UPGRADES := {
+	"watering_can": [{"stone": 25, "money": 800}, {"stone": 60, "truffle": 1, "money": 2500}],
+	"hoe": [{"stone": 25, "money": 600}, {"stone": 60, "money": 2000}],
+}
+
+## Adubos: efeitos no canteiro (duram até a colheita).
+const FERTILIZERS := {
+	"fert_basic": {"fert": 0.15, "quality": 0.08},
+	"fert_growth": {"speed": 1.25},
+	"fert_water": {"retention": 0.5},
+	"fert_quality": {"quality": 0.2, "fert": 0.05},
 }
 
 ## Receitas da bancada. cost: item -> quantidade ("money" = moedas).
 const RECIPES := [
 	{"result": "hay", "qty": 3, "cost": {"fiber": 2}},
 	{"result": "feeder", "qty": 1, "cost": {"wood": 10}},
+	{"result": "fert_basic", "qty": 4, "cost": {"fiber": 3, "hay": 2}},
+	{"result": "fert_water", "qty": 3, "cost": {"stone": 3, "fiber": 2}},
+	{"result": "fert_growth", "qty": 2, "cost": {"fiber": 4, "kale": 1}},
+	{"result": "fert_quality", "qty": 2, "cost": {"truffle": 1, "fiber": 4, "stone": 2}},
 	{"result": "herbal_tea", "qty": 2, "cost": {"fiber": 3, "mushroom": 1}},
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
@@ -138,6 +181,12 @@ const RECIPES := [
 	{"result": "preserves_jar", "qty": 1, "cost": {"wood": 15, "stone": 10}},
 	{"result": "workbench", "qty": 1, "cost": {"wood": 30}},
 	{"result": "incubator", "qty": 1, "cost": {"wood": 25, "stone": 15, "money": 400}},
+	{"result": "butter_churn", "qty": 1, "cost": {"wood": 20, "stone": 5}},
+	{"result": "spinning_wheel", "qty": 1, "cost": {"wood": 30, "fiber": 10}},
+	{"result": "oil_press", "qty": 1, "cost": {"wood": 25, "stone": 25, "money": 600}},
+	{"result": "sprinkler", "qty": 1, "cost": {"stone": 10, "wood": 5}},
+	{"result": "sprinkler_q", "qty": 1, "cost": {"stone": 25, "wood": 10, "money": 300}},
+	{"result": "sprinkler_c", "qty": 1, "cost": {"stone": 50, "truffle": 1, "money": 1500}},
 	{"result": "silo", "qty": 1, "cost": {"wood": 50, "stone": 30, "money": 300}},
 	{"result": "coop", "qty": 1, "cost": {"wood": 80, "stone": 40, "money": 500}},
 	{"result": "barn", "qty": 1, "cost": {"wood": 120, "stone": 60, "money": 1000}},
@@ -216,6 +265,16 @@ static var _extra := {}
 
 static func register(id: String, data: Dictionary) -> void:
 	_extra[id] = data
+
+
+## Produto da máquina para esta entrada (regras por categoria, ex.: fruta -> geleia).
+static func machine_output(machine: String, item_id: String) -> String:
+	var m: Dictionary = MACHINES[machine]
+	for rule in m.get("rules", []):
+		var cat: String = rule.get("category", "*")
+		if cat == "*" or CropDB.category_of(item_id) == cat:
+			return rule["output"]
+	return m["output"]
 
 
 static func can_afford(cost: Dictionary) -> bool:

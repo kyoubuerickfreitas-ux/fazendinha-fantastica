@@ -626,6 +626,64 @@ func _run() -> void:
 	game.weather = "sunny"
 	main._update_weather()
 
+	# ---------- solo, adubo, qualidade, aspersor, ferramentas, máquinas
+	var clay := Agri.new_cell(false, "clay")
+	var sand := Agri.new_cell(false, "sandy")
+	clay["moist"] = 1.0
+	sand["moist"] = 1.0
+	Agri.process_day({Vector2i(0, 0): clay, Vector2i(1, 0): sand}, 2, 3, 18.0, 18.0, "sunny")
+	print("de manhã: argiloso %.2f | arenoso %.2f" % [clay["moist"], sand["moist"]])
+	assert(clay["moist"] > sand["moist"])
+	var qual := [[0, 0, 0, 0], [0, 0, 0, 0]]
+	for k in 2:
+		for i in 300:
+			var qc := Agri.new_cell(false, "common")
+			if k == 1:
+				Agri.apply_fertilizer(qc, "fert_quality")
+			Agri.plant(qc, "seed_kale")
+			qc["crop"]["care"] = 3
+			qc["crop"]["days"] = 3
+			qc["crop"]["state"] = "ready"
+			qual[k][Agri.harvest(qc)["q"]] += 1
+	print("qualidade couve (comum/prata/ouro/lendária): sem adubo %s | com adubo de qualidade %s" % [qual[0], qual[1]])
+	assert(qual[1][2] + qual[1][3] > qual[0][2] + qual[0][3])
+	# aspersor de cobre rega os 8 em volta de manhã
+	var sp_origin := Vector2i(8, 26)
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var cc: Vector2i = sp_origin + Vector2i(dx, dy)
+			w.props.erase(cc)
+			w.soil.erase(cc)
+	w.place("sprinkler_q", sp_origin, true)
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			if dx != 0 or dy != 0:
+				w.soil[sp_origin + Vector2i(dx, dy)] = Agri.new_cell(false)
+	var watered: int = w._run_sprinklers()
+	print("aspersor de cobre regou: ", watered)
+	assert(watered == 8)
+	# regador nível 3: área 3x3
+	game.tool_levels["watering_can"] = 3
+	print("área do regador nível 3: ", w.tool_area("watering_can", Vector2i(10, 20)).size(), " | capacidade ", game.water_capacity())
+	assert(w.tool_area("watering_can", Vector2i(10, 20)).size() == 9 and game.water_capacity() == 60)
+	game.tool_levels["watering_can"] = 1
+	# máquinas: regras por categoria e qualidade herdada
+	print("pote: tomate -> %s | couve -> %s" % [ItemDB.machine_output("preserves_jar", "tomato"), ItemDB.machine_output("preserves_jar", "kale")])
+	assert(ItemDB.machine_output("preserves_jar", "tomato") == "jam" and ItemDB.machine_output("preserves_jar", "kale") == "pickles")
+	var churn: Placeable = w.place("butter_churn", Vector2i(28, 17), true)
+	game.inventory[0] = {"id": "milk", "qty": 1, "q": 2}
+	game.select_slot(0)
+	w._on_placeable_used(churn)
+	game.day += 1
+	w._on_placeable_used(churn)
+	game.day -= 1
+	print("manteiga ouro: ", game.count_item("butter", 2))
+	assert(game.count_item("butter", 2) == 1)
+	var info_cell := Agri.new_cell(false, "fertile", "forest_edge")
+	Agri.plant(info_cell, "seed_kale")
+	print("info do canteiro: ", Agri.describe(info_cell))
+	print("ficha da semente: ", ItemDB.get_item("seed_grape")["desc"])
+
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

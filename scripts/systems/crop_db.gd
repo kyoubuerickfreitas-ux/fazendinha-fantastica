@@ -8,6 +8,8 @@ const SEASONS := ["spring", "summer", "autumn", "winter"]
 static var crops := {}        # id -> CropData
 static var seasons := {}      # id -> SeasonData
 static var weathers := {}     # id -> WeatherData
+static var soils := {}        # id -> SoilData
+static var biomes := {}       # id -> BiomeData
 static var _seed_to_crop := {}
 static var _loaded := false
 
@@ -18,6 +20,14 @@ static func ensure_loaded() -> void:
 	_loaded = true
 	for s in SEASONS:
 		seasons[s] = load("res://data/seasons/%s.tres" % s)
+	for file in _list("res://data/soils/"):
+		var sd: SoilData = load("res://data/soils/" + file)
+		if sd:
+			soils[sd.id] = sd
+	for file in _list("res://data/biomes/"):
+		var bd: BiomeData = load("res://data/biomes/" + file)
+		if bd:
+			biomes[bd.id] = bd
 	for file in _list("res://data/weather/"):
 		var w: WeatherData = load("res://data/weather/" + file)
 		if w:
@@ -59,8 +69,20 @@ static func _register_items(c: CropData, hd_index: Dictionary) -> void:
 	var info := "%s · %d dias" % [_season_names(c), c.total_days()]
 	if c.harvest_type == "regrow":
 		info += ", depois a cada %d" % c.regrow_days
+	var water_txt := "pouca água" if c.water_min <= 0.3 else ("muita água" if c.water_min >= 0.5 else "água normal")
+	var biome_names := []
+	for b in c.biomes:
+		if biomes.has(b):
+			biome_names.append(biomes[b].name)
+	var extra := " · %s · %d a %d°C · vende %d" % [water_txt, c.temp_min, c.temp_max, c.sell_price]
+	if c.yield_max > 1:
+		extra += " (rende %d-%d)" % [c.yield_min, c.yield_max]
+	if biome_names.size() > 0:
+		extra += " · nativa: %s" % ", ".join(biome_names)
+	if c.fragile:
+		extra += " · frágil a tempestades"
 	var seed := {"name": c.seed_name if c.seed_name != "" else "Sementes de " + c.name, "type": "seed",
-		"crop": c.id, "buy": c.seed_price, "desc": "%s. %s" % [info, c.description]}
+		"crop": c.id, "buy": c.seed_price, "desc": "%s%s. %s" % [info, extra, c.description]}
 	var base_seed: Dictionary = ItemDB.ITEMS.get(c.seed_id(), {})
 	if base_seed.has("hd"):
 		seed["hd"] = base_seed["hd"]
@@ -86,6 +108,25 @@ static func get_crop(id: String) -> CropData:
 static func crop_for_seed(seed_id: String) -> CropData:
 	ensure_loaded()
 	return crops.get(_seed_to_crop.get(seed_id, ""))
+
+
+static func soil(id: String) -> SoilData:
+	ensure_loaded()
+	return soils.get(id, soils.get("common"))
+
+
+static func biome(id: String) -> BiomeData:
+	ensure_loaded()
+	return biomes.get(id, biomes.get("plains"))
+
+
+## Categoria (fruit, vegetable...) do item colhido, ou "" se não for de planta.
+static func category_of(item_id: String) -> String:
+	ensure_loaded()
+	for id in crops:
+		if crops[id].produce_id() == item_id:
+			return crops[id].category
+	return ""
 
 
 static func weather(id: String) -> WeatherData:

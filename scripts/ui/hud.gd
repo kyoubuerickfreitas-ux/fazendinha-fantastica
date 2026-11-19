@@ -629,6 +629,36 @@ func _refresh_crafting() -> void:
 			_refresh_crafting())
 		row.add_child(b)
 		_craft_list.add_child(row)
+	# melhorias de ferramenta
+	_craft_list.add_child(UIStyle.label("Melhorar ferramentas", 13, UIStyle.WOOD))
+	for tool in ItemDB.TOOL_UPGRADES:
+		var lvl := Game.tool_level(tool)
+		var ups: Array = ItemDB.TOOL_UPGRADES[tool]
+		if lvl > ups.size():
+			_craft_list.add_child(_shop_row(tool, "%s — nível máximo (área 3×3)" % ItemDB.item_name(tool)))
+			continue
+		var cost: Dictionary = ups[lvl - 1]
+		var effect := "3 canteiros em linha" if lvl == 1 else "área 3×3"
+		if tool == "watering_can":
+			effect += ", %d de água" % (Game.WATER_CAPACITY * (lvl + 1))
+		var row := _shop_row(tool, "%s → nível %d (%s)\n%s" % [ItemDB.item_name(tool), lvl + 1, effect, ItemDB.cost_text(cost)])
+		var ub := Button.new()
+		ub.text = "Melhorar"
+		ub.disabled = not ItemDB.can_afford(cost)
+		ub.pressed.connect(func():
+			if not ItemDB.can_afford(cost):
+				return
+			for k in cost:
+				if k == "money":
+					Game.add_money(-int(cost[k]))
+				else:
+					Game.remove_item(k, int(cost[k]))
+			Game.tool_levels[tool] = lvl + 1
+			Game.inventory_changed.emit()
+			show_toast("%s agora é nível %d!" % [ItemDB.item_name(tool), lvl + 1])
+			_refresh_crafting())
+		row.add_child(ub)
+		_craft_list.add_child(row)
 
 
 func _build_confirm() -> void:

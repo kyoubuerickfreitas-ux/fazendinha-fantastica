@@ -11,12 +11,22 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ferramentas: regador (enche no lago), enxada, machado, picareta e foice
 - **Agricultura com estações** (20 dias cada): 13 culturas em `data/crops/*.tres`, de colheita única ou recorrente, com dormência, sobrevivência ou morte no fim da estação
 - **Umidade do solo**: a terra seca durante a noite conforme a temperatura; abaixo do mínimo da planta o crescimento pausa, e só morre depois de vários dias sem água
+- **Clima** (`data/weather/*.tres`): sol, chuva, chuva forte, tempestade, neve, neblina, vento, onda de calor e frio intenso — cada um muda a umidade, a temperatura, as plantas frágeis e os animais
+- **Solo e biomas**: solo comum, fértil, arenoso (seca rápido), argiloso (segura água) e pedregoso; beira do lago, borda da floresta e planície — plantas nativas crescem 15% mais rápido
+- **Adubos** (bancada): básico, de crescimento, retém-água e de qualidade; colheitas têm qualidade (comum → lendária) pelo cuidado, fertilidade e adubo
+- **Ferramentas melhoráveis** na bancada (enxada e regador: 3 em linha, depois 3×3) e **aspersores** (4, 8 ou 24 canteiros) que regam toda manhã
+- **Máquinas**: prensa de queijo, batedeira (manteiga), roca (novelo), tear, prensa de óleo (trufa), pote de conserva (fruta → geleia, resto → conserva); o produto herda a qualidade
+- **Toque num canteiro com a mão vazia** para ver solo, umidade, adubo e quantos dias faltam
 - **Calendário** (toque no relógio): estação, dias restantes, previsão de 3 dias e o que dá tempo de plantar
 - Sinais no canteiro: gota (precisa de água), brilho (pronta), z (dormindo), planta seca (morreu — colha com a mão/foice para limpar)
 - Limpeza do terreno: mato, pedras, tocos e árvores dão fibra, pedra e madeira
 - **Animais** (fichas em `data/animals/*.tres`): cada um tem nome, personalidade, idade (filhote → jovem → adulto), amizade (5 corações), felicidade e saúde
   - Moombor dá leite e Piuplum ovos todo dia; a lã da Fofrança cresce em 3 dias e é tosquiada com a Tesoura; o Catarrápio fareja trufas e achados no pasto (fora do inverno, com tempo bom)
-  - Comem 1 feno por dia do comedouro; sem comer não produzem, e com 3 dias de fome ficam indispostos (melhoram comendo)
+  - Comem capim no pasto durante o dia, ou feno do comedouro/silo; comida favorita na mão dá muito mais amizade
+  - Saúde simples: indisposto (fome), resfriado (dormir sem abrigo em tempo severo, passa em 2 dias), sujo (use a escova); Chá de Ervas cura
+  - Celeiro e galinheiro com 3 níveis (mais vagas, comedouro automático do silo, aquecedor e coletor automático)
+  - Reprodução opcional: filhotes no celeiro, ovo fértil na incubadora; filhotes herdam cor e personalidade
+  - Personalidades com comportamento próprio e sons de cada espécie
   - Produtos têm qualidade (comum, prata, ouro, lendário) pela amizade e felicidade; vale mais na venda
   - À noite vão para o celeiro/galinheiro (ou dormem no pasto); ícones mostram o que precisam
   - Toque num animal já cuidado para ver o cartão (e mudar o nome); toque no celeiro/galinheiro para ver a lista
@@ -105,8 +115,8 @@ godot --path . -s tests/smoke_test.gd -- /caminho/para/capturas
 
 ## Próximos passos sugeridos
 
-1. Arte definitiva do personagem e dos tiles
-2. Animais: filhotes e reprodução
-3. Criação de personagem (espécie, cores, chapéus, roupas)
-4. Construções (celeiro, abrigos) e expansão do terreno
-5. Pesca, mineração e novas regiões
+1. Arte definitiva (filhotes, estágios das plantas, máquinas, construções)
+2. Novas regiões do mundo (floresta, vilarejo, montanha) usando os biomas já prontos
+3. Criação de personagem (corpo base + roupas)
+4. Missões e moradores
+5. Mineração

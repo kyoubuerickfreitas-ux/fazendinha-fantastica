@@ -14,8 +14,38 @@ const RAIN_MOISTURE := 1.0
 
 
 # ------------------------------------------------------------------ solo
-static func new_cell(raining: bool) -> Dictionary:
-	return {"moist": RAIN_MOISTURE if raining else 0.1, "fert": 1.0, "soil": "common", "fertilizer": "", "crop": {}}
+static func new_cell(raining: bool, soil_id: String = "common", biome_id: String = "plains") -> Dictionary:
+	var sd := CropDB.soil(soil_id)
+	return {"moist": RAIN_MOISTURE if raining else 0.1, "fert": sd.fertility, "soil": sd.id,
+		"biome": biome_id, "fertilizer": "", "crop": {}}
+
+
+## Adubo no canteiro. Retorna "" ou o motivo.
+static func apply_fertilizer(cell: Dictionary, fert_id: String) -> String:
+	if cell.get("fertilizer", "") != "":
+		return "Esse canteiro já tem %s." % ItemDB.item_name(cell["fertilizer"])
+	cell["fertilizer"] = fert_id
+	var f: Dictionary = ItemDB.FERTILIZERS.get(fert_id, {})
+	cell["fert"] = minf(1.4, float(cell.get("fert", 1.0)) + float(f.get("fert", 0.0)))
+	return ""
+
+
+static func _fert_effect(cell: Dictionary, key: String, default: float) -> float:
+	return float(ItemDB.FERTILIZERS.get(cell.get("fertilizer", ""), {}).get(key, default))
+
+
+## Qualidade da colheita: cuidado (dias bem regados), fertilidade, adubo e sorte.
+static func roll_quality(cell: Dictionary) -> int:
+	var cr: Dictionary = cell["crop"]
+	var care := float(cr.get("care", 0)) / maxf(1.0, float(cr.get("days", 1)))
+	var score := care * 0.4 + (float(cell.get("fert", 1.0)) - 0.9) * 0.8 + _fert_effect(cell, "quality", 0.0) + randf() * 0.3
+	if score >= 0.97:
+		return 3
+	if score >= 0.72:
+		return 2
+	if score >= 0.52:
+		return 1
+	return 0
 
 
 static func moisture_label(m: float) -> String:
@@ -94,6 +124,11 @@ static func harvest(cell: Dictionary) -> Dictionary:
 	var qty := randi_range(c.yield_min, c.yield_max)
 	var seeds := 1 if randf() < c.extra_seed_chance else 0
 	cr["harvests"] += 1
+	var q := roll_quality(cell)
+	# a terra cansa um pouco a cada colheita (adubo devolve); o adubo acaba na colheita
+	var base := CropDB.soil(cell.get("soil", "common")).fertility
+	cell["fert"] = maxf(base * 0.85, float(cell.get("fert", 1.0)) - 0.03 - _fert_effect(cell, "fert", 0.0))
+	cell["fertilizer"] = ""
 	if c.harvest_type == "regrow" and (c.max_harvests == 0 or cr["harvests"] < c.max_harvests):
 		cr["state"] = "growing"
 		cr["regrow"] = true
@@ -101,7 +136,7 @@ static func harvest(cell: Dictionary) -> Dictionary:
 		cr["prog"] = 0.0
 	else:
 		cell["crop"] = {}
-	return {"item": c.produce_id(), "qty": qty, "seeds": seeds, "seed_item": c.seed_id()}
+	return {"item": c.produce_id(), "qty": qty, "seeds": seeds, "seed_item": c.seed_id(), "q": q}
 
 
 ## Remove planta morta (ou qualquer planta, com a picareta).
@@ -137,7 +172,8 @@ static func process_day(soil: Dictionary, prev_day: int, day: int, temp_yesterda
 		if has_crop(cell):
 			_grow(cell, season_y, temp_yesterday, summary)
 		# evaporação e o clima de hoje
-		cell["moist"] = maxf(0.0, cell["moist"] - evap * cell.get("evap_mult", 1.0))
+		var keep := CropDB.soil(cell.get("soil", "common")).evap_mult * _fert_effect(cell, "retention", 1.0)
+		cell["moist"] = maxf(0.0, cell["moist"] - evap * keep)
 		if wd.soil_water >= 0.0:
 			cell["moist"] = maxf(cell["moist"], wd.soil_water)
 		# tempestade: plantas frágeis podem perder o progresso do estágio
@@ -173,9 +209,11 @@ static func _grow(cell: Dictionary, season: String, temp: float, summary: Dictio
 	if temp < c.temp_min or temp > c.temp_max:
 		var off := maxf(c.temp_min - temp, temp - c.temp_max)
 		temp_f = 0.5 if off <= 5.0 else 0.0
-	var points: float = water_f * temp_f * float(cell.get("fert", 1.0))
-	if points >= 1.0:
-		cr["care"] += 1
+	var native := CropDB.biome(cell.get("biome", "plains")).native_bonus if c.biomes.has(cell.get("biome", "plains")) else 1.0
+	var points: float = water_f * temp_f * float(cell.get("fert", 1.0)) * native * _fert_effect(cell, "speed", 1.0)
+	cr["days"] = int(cr.get("days", 0)) + 1
+	if water_f >= 1.0 and temp_f >= 1.0:
+		cr["care"] += 1   # dia bem cuidado (conta para a qualidade)
 	if cr["stress"] > c.drought_tolerance:
 		cr["state"] = "dead"
 		summary["died"] += 1
@@ -218,6 +256,37 @@ static func _season_change(cell: Dictionary, season: String, summary: Dictionary
 		_:
 			cr["state"] = "dead"
 			summary["died"] += 1
+
+
+# ------------------------------------------------------------------ informação
+## Texto curto do canteiro (tocar com a mão vazia).
+static func describe(cell: Dictionary) -> String:
+	var parts := ["Solo %s" % CropDB.soil(cell.get("soil", "common")).name.to_lower(),
+		moisture_label(cell["moist"]).to_lower()]
+	if cell.get("fertilizer", "") != "":
+		parts.append(ItemDB.item_name(cell["fertilizer"]).to_lower())
+	if has_crop(cell):
+		var c := crop_data(cell)
+		var cr: Dictionary = cell["crop"]
+		var txt := c.name
+		match cr["state"]:
+			"dormant":
+				txt += ": dormindo até %s" % CropDB._season_names(c)
+			"dead":
+				txt += ": morreu (limpe com a mão)"
+			"ready":
+				txt += ": pronta!"
+			_:
+				var left: float = float(c.regrow_days) - float(cr["prog"]) if cr["regrow"] else 0.0
+				if not cr["regrow"]:
+					for i in range(int(cr["stage"]), c.stage_days.size()):
+						left += c.stage_days[i]
+					left -= cr["prog"]
+				txt += ": pronta em ~%d dia(s)" % ceili(left)
+				if cell["moist"] < c.water_min:
+					txt += " (precisa de água)"
+		parts.append(txt)
+	return " · ".join(parts)
 
 
 # ------------------------------------------------------------------ save antigo

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SoilData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/soil_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "clay"
+name = "Argiloso"
+description = "Segura bem a água: seca bem devagar."
+evap_mult = 0.6
+fertility = 1.0

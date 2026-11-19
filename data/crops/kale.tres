@@ -19,3 +19,4 @@ water_min = 0.35
 drought_tolerance = 4
 temp_min = -8
 temp_max = 26
+biomes = PackedStringArray("riverbank", "plains")

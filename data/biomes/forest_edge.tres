@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="BiomeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/biome_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "forest_edge"
+name = "Borda da floresta"
+description = "Sombra e solo rico em folhas."
+temp_offset = -2.0
+default_soil = "fertile"
+native_bonus = 1.15

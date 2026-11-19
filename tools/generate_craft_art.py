@@ -329,6 +329,89 @@ def icon_herbal_tea():
     return outline(img)
 
 
+def butter_churn():
+    img, d = canvas(30, 44)
+    d.polygon([(6, 14), (24, 14), (26, 40), (4, 40)], fill=WOOD_L)
+    for y in (20, 30):
+        d.line((5, y, 25, y), fill=WOOD_D, width=2)
+    ell(d, 15, 14, 9, 3, WOOD)
+    d.rectangle((14, 2, 16, 14), fill=WOOD_D)
+    d.rectangle((10, 2, 20, 4), fill=WOOD)
+    return finish(img, (2, 38, 28, 44))
+
+
+def spinning_wheel():
+    img, d = canvas(40, 44)
+    d.ellipse((8, 4, 32, 28), outline=WOOD, width=3)
+    for a in range(0, 360, 45):
+        import math
+        x = 20 + 11 * math.cos(math.radians(a))
+        y = 16 + 11 * math.sin(math.radians(a))
+        d.line((20, 16, x, y), fill=WOOD_L)
+    ell(d, 20, 16, 2, 2, WOOD_D)
+    d.line((20, 16, 12, 40), fill=WOOD_D, width=3)
+    d.line((20, 16, 30, 40), fill=WOOD_D, width=3)
+    d.rectangle((6, 36, 34, 40), fill=WOOD)
+    ell(d, 33, 30, 4, 3, hx("F2E6CF"))
+    return finish(img, (4, 38, 36, 44))
+
+
+def oil_press():
+    img, d = canvas(36, 44)
+    d.rectangle((6, 18, 30, 40), fill=STONE_L)
+    for y in (24, 32):
+        d.line((6, y, 30, y), fill=STONE)
+    d.rectangle((16, 4, 20, 18), fill=WOOD_D)
+    d.rectangle((6, 4, 30, 8), fill=WOOD)
+    ell(d, 18, 30, 5, 3, hx("C9A23A"))
+    d.rectangle((2, 38, 34, 42), fill=STONE_D)
+    return finish(img, (2, 40, 34, 44))
+
+
+def sprinkler(level):
+    col = {1: STONE_L, 2: hx("C98A4F"), 3: hx("9BE0E8")}[level]
+    img, d = canvas(24, 30)
+    d.rectangle((10, 12, 14, 26), fill=STONE_D)
+    ell(d, 12, 12, 7, 4, col)
+    ell(d, 12, 10, 4, 2, hx("FFFFFF") if level == 3 else STONE)
+    for dx in (-6, 0, 6):
+        d.point((12 + dx, 6), fill=hx("7DB4C9"))
+    ell(d, 12, 27, 7, 2, STONE)
+    return finish(img)
+
+
+def small_icon(kind):
+    img, d = canvas(32, 32)
+    if kind == "butter":
+        d.polygon([(5, 16), (20, 10), (28, 14), (13, 21)], fill=hx("F6E39A"))
+        d.polygon([(5, 16), (13, 21), (13, 26), (5, 21)], fill=hx("E8CC6E"))
+        d.polygon([(13, 21), (28, 14), (28, 19), (13, 26)], fill=hx("D9B85A"))
+    elif kind == "yarn":
+        ell(d, 16, 17, 11, 11, hx("F2E6CF"))
+        for k in range(-8, 9, 4):
+            d.arc((5 + k // 2, 6, 27 + k // 2, 28), 200, 340, fill=hx("D8C8A8"))
+        d.line((24, 24, 30, 30), fill=hx("F2E6CF"), width=2)
+    elif kind == "truffle_oil":
+        d.rounded_rectangle((9, 10, 23, 29), radius=4, fill=hx("C9A23A"))
+        d.rectangle((13, 4, 19, 10), fill=hx("C9E3DA"))
+        d.rectangle((12, 2, 20, 4), fill=WOOD)
+        ell(d, 16, 20, 4, 4, hx("4A3426"))
+        d.rectangle((11, 12, 13, 26), fill=hx("E8CC6E"))
+    elif kind == "pickles":
+        d.rectangle((7, 10, 25, 29), fill=hx("C9E3DA"))
+        for x, y in ((11, 16), (17, 14), (13, 22), (20, 21)):
+            ell(d, x, y, 3, 4, MOSS)
+        d.rectangle((5, 6, 27, 10), fill=WOOD)
+    elif kind.startswith("fert_"):
+        col = {"fert_basic": hx("A8784F"), "fert_growth": hx("8FD16B"), "fert_water": hx("7DB4C9"), "fert_quality": hx("F2C14E")}[kind]
+        d.polygon([(7, 9), (25, 9), (27, 29), (5, 29)], fill=hx("D9C49A"))
+        d.rectangle((9, 6, 23, 9), fill=hx("BBA97F"))
+        ell(d, 16, 19, 6, 6, col)
+        for x, y in ((14, 17), (18, 21), (16, 18)):
+            d.point((x, y), fill=hx("FFFFFF"))
+    return outline(img)
+
+
 def fit_icon(img):
     w, h = img.size
     s = 30 / max(w, h)
@@ -353,6 +436,12 @@ if __name__ == "__main__":
         "barn": building(128, 112, hx("8E3F2B"), RED_D, 30, 8),
         "silo": silo(),
         "incubator": incubator(),
+        "butter_churn": butter_churn(),
+        "spinning_wheel": spinning_wheel(),
+        "oil_press": oil_press(),
+        "sprinkler": sprinkler(1),
+        "sprinkler_q": sprinkler(2),
+        "sprinkler_c": sprinkler(3),
         "grass_a": pasture_grass(1),
         "grass_b": pasture_grass(2),
         "grass_c": pasture_grass(3),
@@ -363,6 +452,8 @@ if __name__ == "__main__":
         if name != "feeder_full" and not name.startswith("grass_"):
             fit_icon(img).save(os.path.join(OUT, "icon_" + name + ".png"))
     for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears(), "fertile_egg": icon_fertile_egg(), "brush": icon_brush(),
-                     "herbal_tea": icon_herbal_tea()}.items():
+                     "herbal_tea": icon_herbal_tea(),
+                     **{k: small_icon(k) for k in ["butter", "yarn", "truffle_oil", "pickles", "fert_basic",
+                                                   "fert_growth", "fert_water", "fert_quality"]}}.items():
         img.save(os.path.join(OUT, "icon_" + name + ".png"))
     print("arte de fabricação gerada em", OUT)

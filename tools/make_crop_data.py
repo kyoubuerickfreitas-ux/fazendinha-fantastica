@@ -10,7 +10,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 OUT = os.path.join(ROOT, "data", "crops")
 FIELDS = ["id", "name", "description", "category", "seed_item", "seed_name", "seed_price", "produce_item",
           "produce_name", "sell_price", "produce_icon_hd", "stage_days", "seasons", "season_end",
-          "water_min", "water_max", "drought_tolerance", "temp_min", "temp_max", "fragile", "harvest_type", "regrow_days",
+          "water_min", "water_max", "drought_tolerance", "temp_min", "temp_max", "fragile", "biomes", "harvest_type", "regrow_days",
           "max_harvests", "yield_min", "yield_max", "extra_seed_chance", "rarity", "sprite_height"]
 
 

@@ -17,6 +17,7 @@ water_min = 0.25
 drought_tolerance = 5
 temp_min = 2
 temp_max = 26
+biomes = PackedStringArray("plains")
 yield_min = 1
 yield_max = 3
 extra_seed_chance = 0.15
