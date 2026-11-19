@@ -19,6 +19,14 @@ func _shot(name: String) -> void:
 	print("captura: ", name)
 
 
+## Usa a ferramenta e espera a animação terminar.
+func _use(p) -> void:
+	p._busy = 0
+	p.use_tool()
+	while not p._action.is_empty():
+		await process_frame
+
+
 func _wait(sec: float) -> void:
 	await create_timer(sec).timeout
 
@@ -45,9 +53,9 @@ func _run() -> void:
 		var prop = w.props.get(c)
 		if prop:
 			prop.queue_free(); w.props.erase(c)
-		game.select_slot(1); p._busy = 0; p.use_tool()
-		game.select_slot(5); p._busy = 0; p.use_tool()
-		game.select_slot(0); p._busy = 0; p.use_tool()
+		game.select_slot(1); await _use(p)
+		game.select_slot(5); await _use(p)
+		game.select_slot(0); await _use(p)
 		if i == 1:
 			await _wait(0.15)
 			await _shot("02b_efeito")
@@ -57,6 +65,22 @@ func _run() -> void:
 		await _wait(0.05)
 		game.joystick_vector = Vector2.ZERO
 		await _wait(0.1)
+	# animação de ferramenta (de frente): captura no meio do golpe
+	var back: Vector2 = p.position
+	p.position = w.player_start + Vector2(64, 40)
+	main.camera.reset_smoothing()
+	await _wait(0.1)
+	p.facing = Vector2.DOWN
+	p._dir = Player.Dir.DOWN
+	game.select_slot(2)
+	p._busy = 0
+	p.use_tool()
+	await _wait(0.33)
+	await _shot("02c_golpe")
+	while not p._action.is_empty():
+		await process_frame
+	p.position = back
+	main.camera.reset_smoothing()
 	await _shot("02_plantando")
 	# avança dias regando tudo
 	for d in 3:
@@ -103,8 +127,7 @@ func _run() -> void:
 	p.facing = Vector2.RIGHT
 	game.select_slot(3)   # picareta
 	var hp0: int = rock.hp
-	p._busy = 0
-	p.use_tool()
+	await _use(p)
 	print("mira automática na pedra: hp ", hp0, " -> ", rock.hp)
 	assert(rock.hp == hp0 - 1, "a mira automática deveria acertar a pedra")
 
@@ -122,6 +145,8 @@ func _run() -> void:
 	var hp1: int = tree.hp
 	var screen: Vector2 = main.get_viewport().get_canvas_transform() * (tree.position + Vector2(0, -40))
 	main._on_world_tap(screen)
+	while not p._action.is_empty():
+		await process_frame
 	print("toque na árvore: hp ", hp1, " -> ", tree.hp)
 	assert(tree.hp == hp1 - 1, "tocar na árvore deveria usar o machado nela")
 	await _wait(0.1)
@@ -141,7 +166,7 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	game.inventory[0] = {"id": "bait_cricket", "qty": 3}
 	game.inventory[1] = {"id": "fishing_rod", "qty": 1}
-	game.select_slot(0); p._busy = 0; p.use_tool()
+	game.select_slot(0); await _use(p)
 	assert(game.equipped_bait == "bait_cricket", "a isca deveria ir para a vara")
 	game.select_slot(1); p._busy = 0
 	print("alvo da vara: ", p.target_cell(), " água: ", water_cell)

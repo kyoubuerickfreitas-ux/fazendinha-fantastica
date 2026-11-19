@@ -5,6 +5,20 @@ extends CharacterBody2D
 ## Coluna 0 = parado, colunas 1..8 = caminhada (gerada por tools/import_protagonist.py).
 
 const SHEET := preload("res://assets/sprites/player.png")
+const ACTIONS := preload("res://assets/sprites/player_actions.png")
+## Animações de ferramenta (player_actions.png): linha = ferramenta * 4 + direção.
+## impact = quadro em que a ação acontece de verdade (árvore treme, terra é arada...).
+const ACTION_ANIMS := {
+	"axe": {"tool": 0, "impact": 5},
+	"hoe": {"tool": 1, "impact": 5},
+	"pickaxe": {"tool": 2, "impact": 5},
+	"watering_can": {"tool": 3, "impact": 4},
+	"scythe": {"tool": 4, "impact": 4},
+}
+const ACTION_FPS := 16.0
+const ACTION_FRAMES := 9
+## Direções que já têm animação desenhada, por ferramenta (as outras usam o golpe simples)
+static var _has_dir := {}
 const SPEED := 85.0
 const REACH := 20.0
 const AUTO_REACH := 52.0    # alcance da mira automática (~1,6 célula)
@@ -23,6 +37,7 @@ var _dir := Dir.DOWN
 var _anim_t := 0.0
 var _busy := 0.0
 var _sprite: Sprite2D
+var _action := {}   # animação de ferramenta em andamento
 
 
 func _ready() -> void:
@@ -49,8 +64,10 @@ func _physics_process(delta: float) -> void:
 		v = key
 	if v.length() > 1.0:
 		v = v.normalized()
-	if Game.ui_lock > 0 or _busy > 0.0:
+	if Game.ui_lock > 0 or _busy > 0.0 or not _action.is_empty():
 		v = Vector2.ZERO
+	if not _action.is_empty():
+		_step_action(delta)
 	if fishing and fishing.is_active():
 		if fishing.blocks_movement():
 			v = Vector2.ZERO
@@ -61,7 +78,9 @@ func _physics_process(delta: float) -> void:
 	velocity = v * SPEED
 	move_and_slide()
 
-	if v.length() > 0.15:
+	if not _action.is_empty():
+		pass
+	elif v.length() > 0.15:
 		facing = v.normalized()
 		if abs(v.x) > abs(v.y) * 1.1:
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
@@ -142,7 +161,7 @@ func use_at(c: Vector2i) -> void:
 		else:
 			fishing.cancel("Você recolheu a linha.")
 		return
-	if _busy > 0.0:
+	if _busy > 0.0 or not _action.is_empty():
 		return
 	# isca na mão: coloca na vara
 	if ItemDB.get_item(id).get("type", "") == "bait":
@@ -156,8 +175,14 @@ func use_at(c: Vector2i) -> void:
 		_report(fishing.on_use(c))
 		return
 	_face(world.target_anchor(c))
+	if _start_action(id, c):
+		return
 	_busy = ACTION_TIME
 	_play_action_anim()
+	_apply_tool(id, c)
+
+
+func _apply_tool(id: String, c: Vector2i) -> void:
 	var msg: String
 	if id != "" and not world.would_act(id, c) and world.can_interact_cell(c):
 		msg = world.interact_cell(c)   # ex.: tocar numa colheita pronta com o machado na mão
@@ -165,6 +190,47 @@ func use_at(c: Vector2i) -> void:
 		msg = world.use_item(id, c)
 	if msg != "":
 		Game.toast.emit(msg)
+
+
+# ------------------------------------------------------------------ animações de ferramenta
+func _anim_available(id: String) -> bool:
+	if not ACTION_ANIMS.has(id):
+		return false
+	var key := "%s/%d" % [id, _dir]
+	if not _has_dir.has(key):
+		var row: int = ACTION_ANIMS[id]["tool"] * 4 + _dir
+		var img := ACTIONS.get_image()
+		_has_dir[key] = not img.get_region(Rect2i(0, row * 64, 64 * ACTION_FRAMES, 64)).is_invisible()
+	return _has_dir[key]
+
+
+func _start_action(id: String, c: Vector2i) -> bool:
+	if not _anim_available(id):
+		return false
+	_action = {"id": id, "cell": c, "t": 0.0, "done": false}
+	_sprite.texture = ACTIONS
+	_sprite.hframes = ACTION_FRAMES
+	_sprite.vframes = ACTIONS.get_height() / 64
+	_sprite.frame = (ACTION_ANIMS[id]["tool"] * 4 + _dir) * ACTION_FRAMES
+	return true
+
+
+func _step_action(delta: float) -> void:
+	var a := _action
+	a["t"] += delta * ACTION_FPS
+	var f := int(a["t"])
+	var def: Dictionary = ACTION_ANIMS[a["id"]]
+	if not a["done"] and f >= int(def["impact"]):
+		a["done"] = true
+		_apply_tool(a["id"], a["cell"])
+	if f >= ACTION_FRAMES:
+		_action = {}
+		_sprite.texture = SHEET
+		_sprite.hframes = COLS
+		_sprite.vframes = 4
+		_sprite.frame = _dir * COLS
+		return
+	_sprite.frame = (int(def["tool"]) * 4 + _dir) * ACTION_FRAMES + f
 
 
 func _report(msg: String) -> void:

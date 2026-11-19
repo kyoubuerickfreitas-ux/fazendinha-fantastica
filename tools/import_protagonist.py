@@ -23,9 +23,15 @@ from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SOURCES = [
-    ("protagonist", "player.png"),
-    ("base_body", "player_base.png"),
+    ("protagonist", "player_farmer.png"),   # fazendeiro de chapéu (skin guardada)
+    ("base_body", "player.png"),            # jogador atual: corpo base
 ]
+
+# Animações de ferramenta do jogador (assets/source/base_body/<Pasta>/<direção>/0..8.png)
+# Saída: assets/sprites/player_actions.png, 9 colunas x (5 ferramentas x 4 direções) de 64x64.
+# Linha = ferramenta * 4 + direção (0 baixo, 1 esquerda, 2 direita, 3 cima); direção ausente fica vazia.
+ACTION_TOOLS = ["Axe", "Hoe", "Pickaxe", "Water", "Scythe"]
+ACTION_FRAMES = 9
 CELL = 64
 FEET_Y = 58
 TARGET_H = 48
@@ -74,7 +80,44 @@ def build(src, out_name):
     print("ok:", out, sheet.size, f"escala {scale:.3f}")
 
 
+def shrink(f, scale):
+    canvas = round(256 * scale)
+    small = f.resize((canvas, canvas), Image.LANCZOS)
+    px = small.load()
+    for y in range(canvas):
+        for x in range(canvas):
+            rr, gg, bb, a = px[x, y]
+            px[x, y] = (rr, gg, bb, 255) if a >= 110 else (0, 0, 0, 0)
+    return small
+
+
+def build_actions():
+    base = os.path.join(ROOT, "assets", "source", "base_body")
+    canvas = round(256 * SCALE)
+    ox = (CELL - canvas) // 2
+    oy = FEET_Y - round(FEET_SRC * SCALE)
+    sheet = Image.new("RGBA", (CELL * ACTION_FRAMES, CELL * 4 * len(ACTION_TOOLS)), (0, 0, 0, 0))
+    found = []
+    for t, tool in enumerate(ACTION_TOOLS):
+        frames = {}
+        for d in ("south", "east", "north"):
+            folder = os.path.join(base, tool, d)
+            if os.path.isdir(folder):
+                frames[d] = [Image.open(os.path.join(folder, f"{i}.png")).convert("RGBA") for i in range(ACTION_FRAMES)]
+        if "east" in frames:
+            frames["west"] = [f.transpose(Image.FLIP_LEFT_RIGHT) for f in frames["east"]]
+        for r, d in enumerate(("south", "west", "east", "north")):
+            for c, f in enumerate(frames.get(d, [])):
+                sheet.alpha_composite(shrink(f, SCALE), (c * CELL + ox, (t * 4 + r) * CELL + oy))
+            if d in frames:
+                found.append(f"{tool}/{d}")
+    out = os.path.join(ROOT, "assets", "sprites", "player_actions.png")
+    sheet.save(out)
+    print("ok:", out, sheet.size, "->", ", ".join(found))
+
+
 if __name__ == "__main__":
+    build_actions()
     for src, out_name in SOURCES:
         if os.path.isdir(os.path.join(ROOT, "assets", "source", src, "Walk")):
             build(src, out_name)
