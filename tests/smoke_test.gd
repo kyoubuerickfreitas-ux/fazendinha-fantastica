@@ -405,6 +405,56 @@ func _run() -> void:
 		assert(barn_pl.storage.size() > 0)
 	var got: int = w.collect_storage(barn_pl)
 	print("coletado do celeiro: ", got)
+	# reprodução: gestação no celeiro e nascimento
+	var mom: AnimalRecord = null
+	for an in w.animals:
+		if an.record.home == w._key(barn_pl) and an.record.is_adult():
+			mom = an.record
+			break
+	var before_n: int = w.animals.size()
+	mom.pregnant_days = 1
+	var born: int = w._process_breeding()
+	var baby_rec: AnimalRecord = w.animals.back().record
+	print("nasceu: %d | filhote %s (%s) de %s, casa=%s, estágio=%s" % [born, baby_rec.name, baby_rec.species, mom.name, baby_rec.home, baby_rec.stage()])
+	assert(born == 1 and w.animals.size() == before_n + 1 and baby_rec.stage() == "baby" and baby_rec.home == mom.home)
+	var preg := 0
+	for i in 300:
+		mom.pregnant_days = 0
+		mom.happiness = 90
+		for x in w.records():
+			x.pregnant_days = 0
+		w._process_breeding()
+		if w.records().any(func(x): return x.pregnant_days > 0):
+			preg += 1
+	print("gestações em 300 noites: ", preg)
+	for x in w.records():
+		x.pregnant_days = 0
+	# ovo fértil + incubadora
+	var hen := AnimalRecord.create("piuplum", true)
+	var fertile := 0
+	for i in 400:
+		hen.product_ready = false
+		AnimalSystem.process_day([hen], func(_r): return true, func(_r): return true, "sunny", 18.0, "spring")
+		if hen.product_item == "fertile_egg":
+			fertile += 1
+	print("ovos férteis em 400: ", fertile)
+	assert(fertile > 20 and fertile < 120)
+	var inc: Placeable = w.place("incubator", Vector2i(27, 17), true)
+	game.add_item("fertile_egg", 1)
+	var fs: int = game.inventory.find(game.inventory.filter(func(x): return x != null and x["id"] == "fertile_egg")[0])
+	game.swap_slots(fs, 0)
+	game.select_slot(0)
+	w._on_placeable_used(inc)
+	assert(not inc.job.is_empty())
+	game.day += 4
+	var coop: Placeable = w.place("coop", Vector2i(20, 24), true)
+	w.assign_homes()
+	var chicks0: int = w.count_animals("bird")
+	w._on_placeable_used(inc)
+	print("pintinhos: %d -> %d" % [chicks0, w.count_animals("bird")])
+	assert(w.count_animals("bird") == chicks0 + 1)
+	game.day -= 4
+	main.hud.close_panel()
 	main.hud.open_animal_list(w.records().filter(func(r): return r.home == w._key(barn_pl)), "Celeiro", barn_pl)
 	await _wait(0.2)
 	await _shot("18_celeiro_painel")

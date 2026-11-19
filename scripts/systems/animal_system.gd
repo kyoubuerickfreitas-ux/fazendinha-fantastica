@@ -127,6 +127,7 @@ static func _produce(r: AnimalRecord, s: SpeciesData, raining: bool, season: Str
 				r.prod_days = 0
 				r.product_ready = true
 				r.product_quality = roll_quality(r)
+				r.product_item = s.fertile_item if s.fertile_item != "" and randf() < s.fertile_egg_chance else ""
 
 
 static func _pick(items: PackedStringArray, weights: PackedFloat32Array) -> String:
@@ -149,10 +150,12 @@ static func collect(r: AnimalRecord) -> Dictionary:
 	if s.produce_mode == "shears" and Game.count_item("shears") == 0:
 		return {"error": "Precisa de uma Tesoura de Tosquia (barraca do Fungo)."}
 	var qty := randi_range(s.product_min, s.product_max)
+	var item := r.product_item if r.product_item != "" else s.product
+	r.product_item = ""
 	r.product_ready = false
 	r.produced_total += qty
 	r.best_quality = maxi(r.best_quality, r.product_quality)
-	return {"item": s.product, "qty": qty, "q": r.product_quality}
+	return {"item": item, "qty": qty, "q": r.product_quality if item == s.product else 0}
 
 
 ## Texto de humor para o cartão.
@@ -178,6 +181,8 @@ static func need_text(r: AnimalRecord) -> String:
 			else "A lã está pronta: tosquie (precisa da tesoura)."
 	if not r.petted_today:
 		return "Quer carinho hoje."
+	if r.pregnant_days > 0:
+		return "Esperando um filhote! Nasce em %d dia(s)." % r.pregnant_days
 	if not r.is_adult():
 		var left := s.baby_days + s.young_days - r.age
 		return "Crescendo: adulto em %d dia(s)." % left

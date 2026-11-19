@@ -29,6 +29,7 @@ signal house_door_used
 signal shop_requested
 signal bin_used
 signal workbench_used
+signal baby_born(record: AnimalRecord)
 signal animal_card_requested(record: AnimalRecord)
 signal animal_list_requested(records: Array, title: String, building: Placeable)
 
@@ -429,6 +430,42 @@ func _spawn_animals(saved: Array) -> void:
 	assign_homes()
 
 
+## Uma noite de reprodução. Retorna quantos nasceram.
+func _process_breeding() -> int:
+	var born := 0
+	# gestações em andamento
+	for an in animals.duplicate():
+		var r: AnimalRecord = an.record
+		if r.pregnant_days <= 0:
+			continue
+		r.pregnant_days -= 1
+		if r.pregnant_days == 0:
+			var baby := AnimalRecord.born_from(r)
+			var a := _spawn_actor(baby)
+			a.position = r.pos + Vector2(12, 4)
+			baby_born.emit(baby)
+			born += 1
+	# novas gestações: uma chance por construção por noite
+	for b in placeables:
+		if not (b.kind in ["barn", "coop"]) or not b.allow_babies:
+			continue
+		var k := _key(b)
+		var residents := records().filter(func(x): return x.home == k)
+		if residents.size() >= ItemDB.building_capacity(b.kind, b.level):
+			continue
+		if residents.any(func(x): return x.pregnant_days > 0):
+			continue
+		var candidates := residents.filter(func(x): return x.is_adult() and x.happiness >= 60 \
+			and x.health == "ok" and x.data().breed_chance > 0.0)
+		if candidates.is_empty():
+			continue
+		var mom: AnimalRecord = candidates[randi() % candidates.size()]
+		if randf() < mom.data().breed_chance:
+			mom.pregnant_days = mom.data().gestation_days
+	assign_homes()
+	return born
+
+
 func _store_in(b: Placeable, id: String, qty: int, q: int) -> void:
 	for it in b.storage:
 		if it["id"] == id and int(it.get("q", 0)) == q:
@@ -646,7 +683,19 @@ func _on_placeable_used(p: Placeable) -> void:
 			else:
 				msg = "Comedouro: %d feno. Segure feno e toque para encher." % p.hay
 		_:
-			if p.job_ready():
+			if p.job_ready() and str(p.job["output"]).begins_with("hatch:"):
+				var sp: String = str(p.job["output"]).trim_prefix("hatch:")
+				var grp: String = AnimalSystem.species(sp).group
+				if count_animals(grp) >= capacity(grp):
+					msg = "O ovo está pronto para chocar, mas falta vaga no galinheiro."
+				else:
+					p.job = {}
+					p.refresh()
+					var chick := add_animal(sp, false)
+					FX.spawn(self, "harvest", p.position + Vector2(0, -16))
+					baby_born.emit(chick.record)
+					msg = "Nasceu um filhote de %s!" % AnimalSystem.species(sp).name
+			elif p.job_ready():
 				msg = p.collect()
 				FX.spawn(self, "harvest", p.position + Vector2(0, -16))
 			elif not p.job.is_empty():
@@ -1054,6 +1103,10 @@ func on_new_day() -> String:
 				collected += res["qty"]
 	if collected > 0:
 		notes.append("coletor guardou %d produto(s)" % collected)
+	# reprodução: gestação nos alojamentos (opcional por construção)
+	var births := _process_breeding()
+	if births > 0:
+		notes.append("nasceu(ram) %d filhote(s)!" % births)
 	if ar["grown"] > 0:
 		notes.append("%d animal(is) cresceu(ram)" % ar["grown"])
 	for an in animals:

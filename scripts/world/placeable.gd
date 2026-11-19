@@ -18,6 +18,7 @@ var hay := 0
 ## celeiro/galinheiro: nível (1..3) e produtos guardados pelo coletor automático
 var level := 1
 var storage: Array = []
+var allow_babies := true
 
 var _sprite: Sprite2D
 var _bubble: Sprite2D
@@ -120,7 +121,8 @@ func refresh() -> void:
 				_interact.label = "Trabalhando..."
 	_bubble.visible = is_machine() and job_ready()
 	if _bubble.visible:
-		_bubble.texture = ItemDB.icon(job["output"])
+		var out: String = job["output"]
+		_bubble.texture = ItemDB.icon("fertile_egg" if out.begins_with("hatch:") else out)
 		_bubble.scale = Vector2.ONE * (16.0 / _bubble.texture.get_width())
 		_bubble.position = Vector2(0, _sprite.offset.y - 8)
 
@@ -160,7 +162,7 @@ func collect() -> String:
 
 # ------------------------------------------------------------------ salvar
 func serialize() -> Dictionary:
-	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay, "level": level, "storage": storage}
+	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay, "level": level, "storage": storage, "babies": allow_babies}
 
 
 func restore(d: Dictionary) -> void:
@@ -168,6 +170,7 @@ func restore(d: Dictionary) -> void:
 	job = j if j is Dictionary else {}
 	hay = int(d.get("hay", 0))
 	level = int(d.get("level", 1))
+	allow_babies = bool(d.get("babies", true))
 	var st = d.get("storage", [])
 	storage = st if st is Array else []
 	refresh()

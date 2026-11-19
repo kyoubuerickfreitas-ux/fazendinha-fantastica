@@ -23,3 +23,6 @@ speed = 34.0
 anim_fps = 8.0
 body = Vector2(12, 6)
 default_names = PackedStringArray("Piu", "Pipoca", "Pena", "Bolinha", "Pintada")
+breed_chance = 0.0
+fertile_egg_chance = 0.15
+fertile_item = "fertile_egg"

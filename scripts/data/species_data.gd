@@ -37,6 +37,14 @@ extends Resource
 @export var forage_weights := PackedFloat32Array()
 @export_range(0.0, 1.0) var forage_chance := 0.35
 
+@export_group("Reprodução")
+## mamíferos: chance por noite de ficar prenhe (no alojamento, feliz e com vaga) e dias de gestação
+@export_range(0.0, 1.0) var breed_chance := 0.06
+@export var gestation_days := 6
+## aves: chance de o ovo vir fértil (vai para a incubadora)
+@export_range(0.0, 1.0) var fertile_egg_chance := 0.0
+@export var fertile_item := ""
+
 @export_group("Conforto")
 @export var temp_min := 0
 @export var temp_max := 32

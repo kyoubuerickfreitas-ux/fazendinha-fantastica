@@ -26,6 +26,9 @@ var product_quality := 0
 var produced_total := 0
 var best_quality := 0
 var pos := Vector2.ZERO
+var pregnant_days := 0       # > 0: filhote nasce quando chegar a 0
+var variant := 0.0           # -1..1: variação de cor (herdada)
+var product_item := ""       # produto especial desta vez (ex.: ovo fértil)
 
 
 static func create(p_species: String, adult: bool) -> AnimalRecord:
@@ -38,7 +41,26 @@ static func create(p_species: String, adult: bool) -> AnimalRecord:
 	r.name = s.default_names[randi() % s.default_names.size()] if s.default_names.size() > 0 else s.name
 	r.born_day = Game.day
 	r.age = s.baby_days + s.young_days if adult else 0
+	r.variant = randf_range(-1.0, 1.0)
 	return r
+
+
+## Filhote de `parent`: mesma espécie, herda (às vezes) personalidade e a cor.
+static func born_from(parent: AnimalRecord) -> AnimalRecord:
+	var r := create(parent.species, false)
+	if randf() < 0.5:
+		r.personality = parent.personality
+	r.variant = clampf(parent.variant + randf_range(-0.3, 0.3), -1.0, 1.0)
+	r.home = parent.home
+	r.pos = parent.pos
+	return r
+
+
+## Cor do animal pela variante (de levemente quente a levemente fria).
+func tint() -> Color:
+	if variant >= 0.0:
+		return Color(1, 1, 1).lerp(Color(1.12, 0.98, 0.84), variant)
+	return Color(1, 1, 1).lerp(Color(0.86, 0.92, 1.06), -variant)
 
 
 func data() -> SpeciesData:
@@ -68,7 +90,8 @@ func serialize() -> Dictionary:
 		"age": age, "friendship": friendship, "happiness": happiness, "health": health,
 		"hunger": hunger_days, "fed": fed_today, "petted": petted_today, "grass": ate_grass, "hand": hand_fed, "home": home,
 		"prod_days": prod_days, "ready": product_ready, "quality": product_quality,
-		"total": produced_total, "best": best_quality, "x": pos.x, "y": pos.y}
+		"total": produced_total, "best": best_quality, "x": pos.x, "y": pos.y,
+		"pregnant": pregnant_days, "variant": variant, "pitem": product_item}
 
 
 static func restore(d: Dictionary) -> AnimalRecord:
@@ -94,6 +117,9 @@ static func restore(d: Dictionary) -> AnimalRecord:
 		r.product_quality = int(d.get("quality", 0))
 		r.produced_total = int(d.get("total", 0))
 		r.best_quality = int(d.get("best", 0))
+		r.pregnant_days = int(d.get("pregnant", 0))
+		r.variant = float(d.get("variant", 0.0))
+		r.product_item = str(d.get("pitem", ""))
 	else:
 		# save de antes da etapa 2: animal adulto, amizade 0..10 vira 0..1000
 		var fresh := AnimalRecord.create(r.species, true)

@@ -468,6 +468,12 @@ func open_animal_list(records: Array, title: String, building: Placeable = null)
 				show_toast("Pegou %d produto(s) do coletor." % n)
 				close_panel())
 			bar.add_child(cb)
+		var babies := CheckButton.new()
+		babies.text = "Permitir filhotes"
+		babies.button_pressed = building.allow_babies
+		babies.add_theme_color_override("font_color", UIStyle.WOOD_DARK)
+		babies.toggled.connect(func(on): building.allow_babies = on)
+		_card_body.add_child(babies)
 		var levels: Array = ItemDB.BUILDING_LEVELS[building.kind]
 		if building.level < levels.size():
 			var nxt: Dictionary = levels[building.level]
@@ -911,11 +917,14 @@ func show_toast(text: String) -> void:
 
 
 ## Escurece a tela, executa `mid` e clareia de novo.
-func fade_through(mid: Callable) -> void:
+func fade_through(mid: Callable, after: Callable = Callable()) -> void:
 	Game.ui_lock = 1
 	var tw := create_tween()
 	tw.tween_property(_fade, "modulate:a", 1.0, 0.6)
 	tw.tween_callback(mid)
 	tw.tween_interval(0.4)
 	tw.tween_property(_fade, "modulate:a", 0.0, 0.6)
-	tw.tween_callback(func(): Game.ui_lock = 0)
+	tw.tween_callback(func():
+		Game.ui_lock = 0
+		if after.is_valid():
+			after.call())

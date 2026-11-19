@@ -8,6 +8,7 @@ var hud: HUD
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
+var _new_babies: Array = []
 
 
 func _ready() -> void:
@@ -56,6 +57,11 @@ func _ready() -> void:
 	world.shop_requested.connect(_on_shop)
 	world.bin_used.connect(_sell_all)
 	world.workbench_used.connect(func(): hud.open_crafting())
+	world.baby_born.connect(func(r):
+		if Game.ui_lock == 0:
+			hud.ask_animal_name(r)   # chocou agora (incubadora)
+		else:
+			_new_babies.append(r))   # nasceu de noite: pergunta ao acordar
 	world.animal_card_requested.connect(func(r): hud.open_animal_card(r))
 	world.animal_list_requested.connect(func(list, title, b): hud.open_animal_list(list, title, b))
 	hud.world = world
@@ -148,7 +154,12 @@ func _sleep(rested: bool) -> void:
 		save_now()
 		var head := "%s · %d°C%s" % [Calendar.short_text(Game.day), int(Game.temperature),
 			" · " + Game.weather_data().name.to_lower() if Game.weather != "sunny" else ""]
-		Game.toast.emit(head + ("\n" + notes if notes != "" else "")))
+		Game.toast.emit(head + ("\n" + notes if notes != "" else "")),
+		func():
+			# filhotes que nasceram de noite: pede o nome do último
+			if not _new_babies.is_empty():
+				hud.ask_animal_name(_new_babies.back())
+				_new_babies.clear())
 
 
 func save_now() -> void:

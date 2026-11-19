@@ -108,6 +108,7 @@ func refresh() -> void:
 		"young":
 			sc = s.young_scale
 	_sprite.scale = Vector2.ONE * sc
+	_sprite.modulate = record.tint()
 	_sprite.position = Vector2(0, 32.0 - 58.0 * sc)   # pés sempre no chão
 	_bubble.position = Vector2(0, (32.0 - 58.0 * sc) - 24.0 * sc - 6)
 	_zzz.position = Vector2(4, _bubble.position.y - 6)
@@ -116,7 +117,7 @@ func refresh() -> void:
 	if mode == Mode.SLEEP or mode == Mode.INSIDE:
 		tex = null
 	elif record.product_ready:
-		tex = ItemDB.icon(s.product)
+		tex = ItemDB.icon(record.product_item if record.product_item != "" else s.product)
 	elif (record.hunger_days > 0 or record.health != "ok") and not record.ate_grass and not record.hand_fed:
 		tex = ItemDB.icon("hay")
 	elif not record.petted_today:

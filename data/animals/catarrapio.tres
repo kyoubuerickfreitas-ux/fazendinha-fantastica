@@ -25,3 +25,5 @@ speed = 30.0
 anim_fps = 7.0
 body = Vector2(20, 8)
 default_names = PackedStringArray("Trufa", "Focinho", "Fuça", "Raiz", "Bisbilho")
+breed_chance = 0.06
+gestation_days = 5

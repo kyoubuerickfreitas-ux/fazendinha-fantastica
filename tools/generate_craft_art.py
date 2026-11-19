@@ -284,6 +284,30 @@ def silo():
     return finish(img)
 
 
+def incubator():
+    img, d = canvas(36, 40)
+    d.rectangle((4, 16, 32, 36), fill=WOOD_L)
+    for x in range(10, 32, 6):
+        d.line((x, 17, x, 35), fill=WOOD)
+    d.rectangle((2, 12, 34, 16), fill=WOOD)
+    ell(d, 18, 12, 12, 9, hx("C9E3DA"))
+    ell(d, 18, 13, 10, 7, hx("E9F4EE"))
+    for x, c in ((13, hx("F3E2C4")), (20, hx("F3E2C4")), (16, hx("E9C59A"))):
+        ell(d, x, 14, 3, 3, c)
+    ell(d, 28, 26, 2, 2, hx("F2933B"))
+    return finish(img, (2, 34, 34, 40))
+
+
+def icon_fertile_egg():
+    img, d = canvas(32, 32)
+    ell(d, 16, 17, 10, 12, hx("F3E2C4"))
+    ell(d, 12, 12, 2, 4, hx("FFF8EA"))
+    for x, y in ((19, 13), (13, 21), (20, 22), (17, 18)):
+        ell(d, x, y, 2, 2, hx("F2933B"))
+    d.line((21, 6, 25, 3), fill=MOSS, width=2)
+    return outline(img)
+
+
 def fit_icon(img):
     w, h = img.size
     s = 30 / max(w, h)
@@ -307,6 +331,7 @@ if __name__ == "__main__":
         "stone_path": stone_path(),
         "barn": building(128, 112, hx("8E3F2B"), RED_D, 30, 8),
         "silo": silo(),
+        "incubator": incubator(),
         "grass_a": pasture_grass(1),
         "grass_b": pasture_grass(2),
         "grass_c": pasture_grass(3),
@@ -316,6 +341,6 @@ if __name__ == "__main__":
         img.save(os.path.join(OUT, name + ".png"))
         if name != "feeder_full" and not name.startswith("grass_"):
             fit_icon(img).save(os.path.join(OUT, "icon_" + name + ".png"))
-    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears()}.items():
+    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears(), "fertile_egg": icon_fertile_egg()}.items():
         img.save(os.path.join(OUT, "icon_" + name + ".png"))
     print("arte de fabricação gerada em", OUT)

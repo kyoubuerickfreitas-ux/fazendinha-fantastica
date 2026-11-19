@@ -23,3 +23,5 @@ speed = 22.0
 anim_fps = 5.0
 body = Vector2(26, 10)
 default_names = PackedStringArray("Mumu", "Bolota", "Musgoso", "Pudim", "Nata")
+breed_chance = 0.06
+gestation_days = 6
