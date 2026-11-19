@@ -1,0 +1,36 @@
+{
+  "group_id": "a9ac8b29-4a80-45ad-9057-f7bc66d2827b",
+  "states": [
+    {
+      "character": {
+        "id": "c35cd2c1-458e-4016-8189-16457e65524d",
+        "name": "Idle",
+        "prompt": "small cute forest spirit farmer, chibi proportions, round dark gray-brown head, huge round black eyes with thin white rim and tiny highlight, rosy cheeks, wide-brim hat made of moss and leaves with a small sprout on top, short green leafy cape over the shoulders, brown knitted sweater, mustard patched pants, small brown boots, cozy fantasy rural style, natural colors moss green, beige, wood brown, terracotta",
+        "size": {
+          "width": 256,
+          "height": 256
+        },
+        "template_id": "mannequin",
+        "directions": 8,
+        "view": "low top-down",
+        "created_at": "2026-11-19T00:17:10.386108+00:00"
+      },
+      "folder": "Idle",
+      "frames": {
+        "rotations": {
+          "south": "Idle/rotations/south.png",
+          "south-east": "Idle/rotations/south-east.png",
+          "east": "Idle/rotations/east.png",
+          "north-east": "Idle/rotations/north-east.png",
+          "north": "Idle/rotations/north.png",
+          "north-west": "Idle/rotations/north-west.png",
+          "west": "Idle/rotations/west.png",
+          "south-west": "Idle/rotations/south-west.png"
+        },
+        "animations": {}
+      }
+    }
+  ],
+  "export_version": "3.1",
+  "export_date": "2026-11-19T00:24:06.386076"
+}
