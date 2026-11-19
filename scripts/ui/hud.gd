@@ -436,7 +436,9 @@ func open_animal_card(r: AnimalRecord) -> void:
 	happy.add_theme_stylebox_override("fill", UIStyle.bar_fill(Color("78945b")))
 	_card_body.add_child(UIStyle.label("Felicidade", 10, UIStyle.WOOD))
 	_card_body.add_child(happy)
-	var status := "Saudável" if r.health == "ok" else "Indisposto"
+	var status: String = {"ok": "Saudável", "indisposto": "Indisposto", "resfriado": "Resfriado"}.get(r.health, r.health)
+	if r.hygiene < 30:
+		status += " · sujo"
 	var fed := "comeu ontem" if r.fed_today else "ficou com fome"
 	var where := "dorme no %s" % ("celeiro" if s.housing == "barn" else "galinheiro") if r.home != "" else "dorme no pasto"
 	_card_body.add_child(UIStyle.label("%s · %s · %s" % [status, fed, where], 10, UIStyle.WOOD_DARK))

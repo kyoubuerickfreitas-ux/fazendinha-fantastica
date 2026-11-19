@@ -168,6 +168,10 @@ func use_at(c: Vector2i) -> void:
 		return
 	if _busy > 0.0 or not _action.is_empty():
 		return
+	# itens de cuidar de animais: o botão de usar age no animal mais próximo
+	if id in ["brush", "herbal_tea", "shears"]:
+		interact()
+		return
 	# isca na mão: coloca na vara
 	if ItemDB.get_item(id).get("type", "") == "bait":
 		Game.equip_bait(id)

@@ -308,6 +308,27 @@ def icon_fertile_egg():
     return outline(img)
 
 
+def icon_brush():
+    img, d = canvas(32, 32)
+    d.rounded_rectangle((5, 12, 25, 20), radius=3, fill=WOOD_L)
+    d.line((25, 16, 30, 16), fill=WOOD, width=3)
+    for x in range(7, 24, 3):
+        d.line((x, 20, x, 26), fill=hx("D9C49A"), width=2)
+    d.line((7, 14, 23, 14), fill=hx("C99A6A"))
+    return outline(img)
+
+
+def icon_herbal_tea():
+    img, d = canvas(32, 32)
+    d.rounded_rectangle((6, 12, 22, 27), radius=4, fill=CREAM)
+    d.arc((19, 14, 28, 23), 270, 90, fill=CREAM, width=3)
+    ell(d, 14, 13, 8, 2, hx("8FB36B"))
+    for x, y in ((10, 6), (16, 4), (13, 8)):
+        d.line((x, y + 4, x + 2, y), fill=hx("DCE6D2"))
+    d.polygon([(11, 18), (16, 16), (15, 22)], fill=LEAF)
+    return outline(img)
+
+
 def fit_icon(img):
     w, h = img.size
     s = 30 / max(w, h)
@@ -341,6 +362,7 @@ if __name__ == "__main__":
         img.save(os.path.join(OUT, name + ".png"))
         if name != "feeder_full" and not name.startswith("grass_"):
             fit_icon(img).save(os.path.join(OUT, "icon_" + name + ".png"))
-    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears(), "fertile_egg": icon_fertile_egg()}.items():
+    for name, img in {"cheese": icon_cheese(), "cloth": icon_cloth(), "jam": icon_jam(), "hay": icon_hay(), "shears": icon_shears(), "fertile_egg": icon_fertile_egg(), "brush": icon_brush(),
+                     "herbal_tea": icon_herbal_tea()}.items():
         img.save(os.path.join(OUT, "icon_" + name + ".png"))
     print("arte de fabricação gerada em", OUT)

@@ -104,6 +104,7 @@ func _run() -> void:
 	for pl in w.placeables:
 		if pl.kind == "feeder":
 			pl.hay = 20
+	game.weather = "sunny"   # tempo bom: sem resfriados no teste de produção
 	# animais: carinho, novo dia, coleta (com qualidade)
 	var cow = null
 	for an in w.animals:
@@ -111,6 +112,8 @@ func _run() -> void:
 			cow = an
 	cow.record.product_ready = false
 	cow.record.petted_today = false
+	for an in w.animals:
+		an.record.health = "ok"
 	cow._on_interact(p)
 	assert(cow.record.petted_today, "carinho deveria marcar o dia")
 	var f0: int = cow.record.friendship
@@ -127,6 +130,7 @@ func _run() -> void:
 			sheep = an
 	sheep.record.product_ready = false
 	sheep.record.prod_days = 0
+	sheep.record.health = "ok"
 	for i in 3:
 		for pl in w.placeables:
 			if pl.kind == "feeder":
@@ -194,6 +198,27 @@ func _run() -> void:
 	w._destroy_prop(w.props[gcell2])
 	print("silo depois da foice: ", silo_pl.hay)
 	assert(silo_pl.hay == 1)
+	# saúde: resfriado ao dormir na chuva sem abrigo; cura abrigado; escova
+	var cold := AnimalRecord.create("moombor", true)
+	var nights := 0
+	while cold.health != "resfriado" and nights < 50:
+		AnimalSystem.process_day([cold], func(_r): return true, func(_r): return false, "storm", 12.0, "spring")
+		nights += 1
+	print("resfriou depois de %d noite(s) na chuva sem abrigo" % nights)
+	assert(cold.health == "resfriado")
+	AnimalSystem.process_day([cold], func(_r): return true, func(_r): return true, "rain", 12.0, "spring")
+	print("depois de uma noite abrigado: ", cold.health)
+	assert(cold.health == "ok")
+	cow.record.hygiene = 10
+	cow.record.brushed_today = false
+	game.add_item("brush", 1)
+	var bs: int = game.inventory.find(game.inventory.filter(func(x): return x != null and x["id"] == "brush")[0])
+	game.swap_slots(bs, 0)
+	game.select_slot(0)
+	cow.record.product_ready = false
+	cow._on_interact(p)
+	print("escovado: higiene ", cow.record.hygiene)
+	assert(cow.record.hygiene == 100)
 	# filhote cresce até adulto
 	var baby = w.add_animal("piuplum", false)
 	assert(baby.record.stage() == "baby")

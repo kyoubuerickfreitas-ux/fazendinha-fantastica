@@ -13,7 +13,10 @@ var born_day := 1            # dia em que nasceu/chegou
 var age := 0                 # dias de vida na fazenda
 var friendship := 0          # 0..1000 (5 corações = 200 cada)
 var happiness := 60          # 0..100, humor de agora
-var health := "ok"           # ok | indisposto
+var health := "ok"           # ok | indisposto (fome) | resfriado (dormiu no frio/chuva)
+var hygiene := 100           # 0..100; abaixo de 30 está sujo
+var brushed_today := false
+var sick_days := 0
 var hunger_days := 0         # dias seguidos sem comer
 var fed_today := false       # comeu na última noite
 var petted_today := false
@@ -91,7 +94,7 @@ func serialize() -> Dictionary:
 		"hunger": hunger_days, "fed": fed_today, "petted": petted_today, "grass": ate_grass, "hand": hand_fed, "home": home,
 		"prod_days": prod_days, "ready": product_ready, "quality": product_quality,
 		"total": produced_total, "best": best_quality, "x": pos.x, "y": pos.y,
-		"pregnant": pregnant_days, "variant": variant, "pitem": product_item}
+		"pregnant": pregnant_days, "hygiene": hygiene, "brushed": brushed_today, "sick": sick_days, "variant": variant, "pitem": product_item}
 
 
 static func restore(d: Dictionary) -> AnimalRecord:
@@ -118,6 +121,9 @@ static func restore(d: Dictionary) -> AnimalRecord:
 		r.produced_total = int(d.get("total", 0))
 		r.best_quality = int(d.get("best", 0))
 		r.pregnant_days = int(d.get("pregnant", 0))
+		r.hygiene = int(d.get("hygiene", 100))
+		r.brushed_today = bool(d.get("brushed", false))
+		r.sick_days = int(d.get("sick", 0))
 		r.variant = float(d.get("variant", 0.0))
 		r.product_item = str(d.get("pitem", ""))
 	else:

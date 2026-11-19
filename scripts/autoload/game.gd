@@ -75,7 +75,7 @@ func reset_new_game() -> void:
 	selected_slot = 0
 	equipped_bait = ""
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
-			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1]]:
+			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
 
 
@@ -335,6 +335,8 @@ func load_game() -> Dictionary:
 	# saves de antes dos animais F1 ganham a tesoura de tosquia
 	if count_item("shears") == 0:
 		add_item("shears", 1)
+	if count_item("brush") == 0:
+		add_item("brush", 1)
 	# saves de antes da pesca ganham a vara e algumas minhocas
 	if count_item("fishing_rod") == 0:
 		add_item("fishing_rod", 1)

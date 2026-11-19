@@ -56,7 +56,13 @@ static func roll_quality(r: AnimalRecord) -> int:
 static func process_day(records: Array, food: Callable, sheltered: Callable, weather: Variant,
 		temp: float, season: String) -> Dictionary:
 	ensure_loaded()
-	var wd: WeatherData = weather if weather is WeatherData else CropDB.weather("rain" if weather else "sunny")
+	var wd: WeatherData
+	if weather is WeatherData:
+		wd = weather
+	elif weather is String:
+		wd = CropDB.weather(weather)
+	else:
+		wd = CropDB.weather("rain" if weather else "sunny")
 	var raining := wd.wet or wd.id == "snow"
 	var result := {"forage": [], "hungry": 0, "grown": 0}
 	for r: AnimalRecord in records:
@@ -94,11 +100,29 @@ static func process_day(records: Array, food: Callable, sheltered: Callable, wea
 		r.friendship = clampi(r.friendship, 0, 1000)
 		# humor puxa devagar para 60, mais os efeitos do dia
 		r.happiness = clampi(int(lerpf(r.happiness, 60.0, 0.2)) + mood, 0, 100)
-		# saúde: só fica indisposto por fome continuada; melhora comendo
+		# higiene: cai um pouco por dia; sujo deixa menos feliz
+		r.hygiene = maxi(0, r.hygiene - (14 if not inside and raining else 8))
+		if r.hygiene < 30:
+			mood -= 6
+		if r.brushed_today:
+			mood += 6
+		r.brushed_today = false
+		# saúde (sem sorteio injusto: só por causas claras)
 		if r.hunger_days >= 3:
 			r.health = "indisposto"
-		elif r.fed_today:
+		elif r.health == "indisposto" and r.fed_today:
 			r.health = "ok"
+		var severe := wd.animals_inside or temp < s.temp_min
+		if r.health == "resfriado":
+			r.sick_days += 1
+			if inside or r.sick_days >= 2:
+				r.health = "ok"             # abrigado, ou passa sozinho em 2 dias
+				r.sick_days = 0
+		elif not inside and severe and r.health == "ok" and randf() < 0.3:
+			r.health = "resfriado"          # dormiu sem abrigo em tempo severo
+			r.sick_days = 0
+		if r.health != "ok":
+			mood -= 8
 		r.petted_today = false
 		r.ate_grass = false
 		r.hand_fed = false
@@ -173,7 +197,11 @@ static func mood_text(r: AnimalRecord) -> String:
 static func need_text(r: AnimalRecord) -> String:
 	var s := r.data()
 	if r.health == "indisposto":
-		return "Está indisposto: precisa comer bem (feno no comedouro)."
+		return "Está indisposto: precisa comer bem (capim ou feno). Chá de Ervas cura na hora."
+	if r.health == "resfriado":
+		return "Resfriado de dormir no tempo ruim: passa em 2 dias, ou na hora com abrigo/Chá de Ervas."
+	if r.hygiene < 30:
+		return "Está sujinho: use a Escova."
 	if r.hunger_days > 0:
 		return "Ficou com fome ontem. Deixe capim no pasto ou feno no comedouro."
 	if r.product_ready:

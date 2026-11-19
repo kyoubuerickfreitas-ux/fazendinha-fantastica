@@ -32,6 +32,10 @@ var _rng := RandomNumberGenerator.new()
 var _speed_mul := 1.0
 var _rest_mul := 1.0
 var _range := 120.0
+var _voice: AudioStreamPlayer2D
+var _sfx: AudioStreamPlayer2D
+var _talk_t := 0.0
+var _hop := 0.0
 
 
 func setup(r: AnimalRecord, p_area: Rect2, pos: Vector2) -> void:
@@ -88,6 +92,16 @@ func _ready() -> void:
 	_zzz.visible = false
 	add_child(_zzz)
 
+	_voice = AudioStreamPlayer2D.new()
+	_voice.stream = load("res://assets/sounds/%s.wav" % record.species)
+	_voice.max_distance = 420.0
+	_voice.pitch_scale = 1.25 if record.stage() == "baby" else 1.0
+	add_child(_voice)
+	_sfx = AudioStreamPlayer2D.new()
+	_sfx.max_distance = 420.0
+	add_child(_sfx)
+	_talk_t = _rng.randf_range(15.0, 50.0)
+
 	_interact = Interactable.new()
 	_interact.reach = 30.0
 	_interact.position = Vector2(0, -6)
@@ -118,8 +132,12 @@ func refresh() -> void:
 		tex = null
 	elif record.product_ready:
 		tex = ItemDB.icon(record.product_item if record.product_item != "" else s.product)
+	elif record.health == "resfriado":
+		tex = ItemDB.icon("herbal_tea")
 	elif (record.hunger_days > 0 or record.health != "ok") and not record.ate_grass and not record.hand_fed:
 		tex = ItemDB.icon("hay")
+	elif record.hygiene < 30 and not record.brushed_today:
+		tex = ItemDB.icon("brush")
 	elif not record.petted_today:
 		tex = ItemDB.ui_icon("heart")
 	_bubble.visible = tex != null
@@ -180,6 +198,17 @@ func _physics_process(delta: float) -> void:
 		else:
 			_wait = _rng.randf_range(0.5, 2.0)
 
+	# personalidade: o brincalhão dá pulinhos; os outros sons/curiosidade
+	if record.personality == "brincalhão" and v.length() > 0.1:
+		_hop += delta * 12.0
+		_sprite.offset.y = -absf(sin(_hop)) * 3.0
+	else:
+		_sprite.offset.y = 0.0
+	if mode == Mode.WANDER and visible:
+		_talk_t -= delta
+		if _talk_t <= 0.0:
+			_talk_t = _rng.randf_range(25.0, 70.0)
+			speak()
 	if v.length() > 0.1:
 		if abs(v.x) > abs(v.y):
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
@@ -214,6 +243,12 @@ func _try_graze() -> bool:
 func _pick_target() -> void:
 	if _try_graze():
 		return
+	# curioso: às vezes vem ver o jogador de perto
+	if record.personality == "curioso" and world and world.player and _rng.randf() < 0.35:
+		var pp: Vector2 = world.player.position
+		if pp.distance_to(position) < 220.0 and area.grow(40).has_point(pp):
+			_target = pp + Vector2(_rng.randf_range(-28, 28), 18)
+			return
 	var t := Vector2(_rng.randf_range(area.position.x, area.end.x), _rng.randf_range(area.position.y, area.end.y))
 	if record.personality == "sociável":
 		var others := get_tree().get_nodes_in_group("animals")
@@ -221,6 +256,8 @@ func _pick_target() -> void:
 			var o: Node2D = others[_rng.randi() % others.size()]
 			if o != self:
 				t = o.position + Vector2(_rng.randf_range(-24, 24), _rng.randf_range(-12, 12))
+				if o.position.distance_to(position) < 40.0 and _rng.randf() < 0.3:
+					_float_heart()   # sociável: carinho entre amigos
 	if position.distance_to(t) > _range:
 		t = position + (t - position).limit_length(_range)
 	_target = t.clamp(area.position, area.end)
@@ -263,17 +300,61 @@ func _on_interact(_who: Node) -> void:
 			else:
 				var qn := "" if res["q"] == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[res["q"]]
 				_float_text("+%d %s%s" % [res["qty"], ItemDB.item_name(res["item"]), qn])
+				_play("collect")
 				FX.spawn(get_parent(), "harvest", position + Vector2(0, -20))
+	elif _cure():
+		pass
+	elif _brush():
+		pass
 	elif _hand_feed():
 		pass
 	elif not record.petted_today:
 		record.petted_today = true
 		record.happiness = mini(100, record.happiness + 5)
 		_float_heart()
+		speak()
 		Game.toast.emit("%s adorou o carinho!" % record.name)
 	else:
 		card_requested.emit(self)
 	refresh()
+
+
+func speak() -> void:
+	if _voice and is_inside_tree():
+		_voice.pitch_scale = (1.25 if record.stage() == "baby" else 1.0) * _rng.randf_range(0.92, 1.08)
+		_voice.play()
+
+
+func _play(name: String) -> void:
+	_sfx.stream = load("res://assets/sounds/%s.wav" % name)
+	_sfx.play()
+
+
+## Chá de Ervas na mão cura resfriado/indisposição.
+func _cure() -> bool:
+	if Game.selected_item_id() != "herbal_tea" or record.health == "ok":
+		return false
+	Game.remove_from_slot(Game.selected_slot, 1)
+	record.health = "ok"
+	record.hunger_days = 0
+	record.happiness = mini(100, record.happiness + 10)
+	_float_heart()
+	Game.toast.emit("%s já está melhor!" % record.name)
+	return true
+
+
+## Escova na mão: 1x por dia.
+func _brush() -> bool:
+	if Game.selected_item_id() != "brush" or record.brushed_today:
+		return false
+	record.brushed_today = true
+	record.hygiene = 100
+	record.friendship = mini(1000, record.friendship + 10)
+	record.happiness = mini(100, record.happiness + 8)
+	_play("brush")
+	FX.spawn(get_parent(), "harvest", position + Vector2(0, -18))
+	Game.toast.emit("%s ficou limpinho e feliz!" % record.name)
+	return true
 
 
 ## Comida na mão: uma vez por dia; a favorita dá muito mais amizade.
@@ -292,6 +373,7 @@ func _hand_feed() -> bool:
 	record.friendship = mini(1000, record.friendship + (40 if fav else 10))
 	record.happiness = mini(100, record.happiness + (15 if fav else 5))
 	_float_heart()
+	speak()
 	Game.toast.emit("%s %s %s!" % [record.name, "ADOROU" if fav else "comeu", ItemDB.item_name(held)])
 	return true
 

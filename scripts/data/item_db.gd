@@ -66,6 +66,8 @@ const ITEMS := {
 	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
+	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
+	"herbal_tea": {"name": "Chá de Ervas", "tex": "res://assets/sprites/craft/icon_herbal_tea.png", "type": "resource", "sell": 20, "desc": "Segure e toque num animal doente ou indisposto para curá-lo."},
 	"shears": {"name": "Tesoura de Tosquia", "tex": "res://assets/sprites/craft/icon_shears.png", "type": "tool", "buy": 150, "desc": "Com ela na mochila, toque na Fofrança de lã crescida para tosquiar."},
 	"fishing_rod": {"name": "Vara de Pesca", "icon": 0, "hd": 7, "type": "tool", "buy": 100, "desc": "Use na água do lago. Coloque uma isca para pescar melhor."},
 
@@ -126,6 +128,7 @@ const MACHINES := {
 const RECIPES := [
 	{"result": "hay", "qty": 3, "cost": {"fiber": 2}},
 	{"result": "feeder", "qty": 1, "cost": {"wood": 10}},
+	{"result": "herbal_tea", "qty": 2, "cost": {"fiber": 3, "mushroom": 1}},
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
 	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
@@ -202,7 +205,7 @@ const RARITY_NAMES := ["comum", "incomum", "raro", "lendário"]
 const RARITY_WEIGHT := [60.0, 25.0, 10.0, 2.0]
 
 const SHOP_ITEMS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower",
-	"fishing_rod", "bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
+	"fishing_rod", "brush", "shears", "bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
 
 const MAX_STACK := 99
 
