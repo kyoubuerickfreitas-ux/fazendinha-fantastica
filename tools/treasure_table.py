@@ -1,0 +1,28 @@
+"""Tesouros da pesca. Gera data/treasures/<id>.tres (python3 tools/make_treasure_data.py).
+Os ícones ficam em assets/sprites/fishing/<id>.png (tools/generate_fishing_art.py)."""
+TREASURES = [
+    dict(id="old_boot", name="Bota Velha", kind="junk", rarity=0, weight=30, sell=1,
+         description="Alguém perdeu o pé... digo, a bota. Serve para reciclar na bancada."),
+    dict(id="driftwood", name="Madeira Flutuante", kind="material", rarity=0, weight=28, gives="wood", gives_qty=3,
+         description="Lisinha de tanto rolar na água. Vira 3 madeiras."),
+    dict(id="chest_small", name="Baú Pequeno", kind="chest", rarity=1, weight=22,
+         description="Um baú enferrujado. Sempre tem alguma coisa útil dentro."),
+    dict(id="old_coin", name="Moeda Antiga", kind="item", rarity=1, weight=20, sell=60,
+         description="Cunhada antes de existir o vilarejo. Colecionadores pagam bem."),
+    dict(id="message_bottle", name="Garrafa com Mensagem", kind="message", rarity=1, weight=14,
+         description="Tem um papel enrolado lá dentro."),
+    dict(id="relic_shell", name="Concha Ancestral", kind="item", rarity=2, weight=8, sell=150, waters=["lake", "river"],
+         description="Uma concha de quando o lago ainda era mar."),
+    dict(id="map_piece", name="Pedaço de Mapa", kind="map", rarity=2, weight=8, min_level=2,
+         description="Parte de um mapa antigo do lago. Junte 4 pedaços."),
+    dict(id="fungo_glasses", name="Óculos do Fungo", kind="item", rarity=2, weight=10, unique=True,
+         description="O Fungo vive dizendo que perdeu os óculos pescando. Devolva a ele!"),
+    dict(id="chest_gold", name="Baú Dourado", kind="chest", rarity=3, weight=5, waters=["lake"], depth="deep", min_level=4,
+         description="Pesado e brilhante. Só no fundo do lago."),
+    dict(id="relic_statue", name="Estatueta de Musgo", kind="item", rarity=3, weight=4, sell=300, waters=["lake"], min_level=3,
+         description="Uma figura de pedra coberta de musgo. Parece o Rei-Musgo."),
+    dict(id="relic_compass", name="Bússola Encantada", kind="item", rarity=3, weight=3, sell=260, waters=["river"], min_level=5,
+         description="O ponteiro aponta sempre para a água mais funda."),
+    dict(id="pearl", name="Pérola do Lago", kind="item", rarity=3, weight=4, sell=420, waters=["lake", "pond"], min_level=3,
+         description="Redondinha e perfeita. Vale muito na barraca do Fungo."),
+]

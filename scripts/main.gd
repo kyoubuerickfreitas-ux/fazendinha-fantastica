@@ -123,6 +123,14 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ ações do mundo
 func _on_shop() -> void:
+	if Game.count_item("fungo_glasses") > 0:
+		Game.remove_item("fungo_glasses", 1)
+		Game.money += 500
+		Game.add_item("bait_treasure", 5)
+		Game.fish_flags["fungo_glasses_returned"] = true
+		Game.toast.emit("Fungo: MEUS ÓCULOS! Agora enxergo as sementes de novo! Tome 500 moedas e 5 Iscas Reluzentes.")
+		hud.open_shop()
+		return
 	Game.toast.emit("Fungo: Sementes fresquinhas! Vendo e compro de tudo.")
 	hud.open_shop()
 

@@ -36,6 +36,9 @@ const WATER_NAMES := {"lake": "Lago", "river": "Rio", "pond": "Laguinho", "sea":
 @export var weight_max := 1.0
 @export var xp := 0              # 0 = calculado pela raridade
 @export var uses := PackedStringArray(["Venda", "Defumador", "Aquário", "Adubo de peixe"])
+## preço e ícone para peixes que não estão fixos no ItemDB (os lendários): o FishDB registra o item
+@export var sell := 0
+@export_file("*.png") var icon := ""
 
 
 func rarity_name() -> String:

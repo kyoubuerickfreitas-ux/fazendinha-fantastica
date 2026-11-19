@@ -594,7 +594,7 @@ func open_fish_book(filter: String = "") -> void:
 		ids.size(), lvl, "" if lvl >= FishDB.MAX_LEVEL else " (%d/%d XP)" % [Game.fishing_xp, nxt]], 12, UIStyle.WOOD_DARK))
 	# filtros
 	var tabs := HBoxContainer.new()
-	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"]]:
+	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"], ["treasure", "Tesouros"]]:
 		var b := Button.new()
 		b.text = f[1]
 		b.toggle_mode = true
@@ -603,6 +603,9 @@ func open_fish_book(filter: String = "") -> void:
 		b.pressed.connect(func(): open_fish_book(key))
 		tabs.add_child(b)
 	_book_body.add_child(tabs)
+	if _book_filter == "treasure":
+		_fill_treasures()
+		return
 	var shown := ids.filter(func(id):
 		var fd: FishData = FishDB.get_fish(id)
 		match _book_filter:
@@ -634,14 +637,85 @@ func open_fish_book(filter: String = "") -> void:
 	_book_body.add_child(grid)
 
 
+func _fill_treasures() -> void:
+	var ids := TreasureDB.all_ids()
+	var found := ids.filter(func(id): return TreasureDB.found_count(id) > 0).size()
+	_book_body.add_child(UIStyle.label("Tesouros encontrados: %d/%d · Mapa: %d/%d%s · Mensagens: %d/%d" % [found, ids.size(),
+		TreasureDB.map_pieces(), TreasureDB.MAP_PIECES, " (completo!)" if Game.fish_flags.get("map_complete", false) else "",
+		TreasureDB.messages_read(), TreasureDB.MESSAGES.size()], 10, UIStyle.EARTH))
+	var grid := GridContainer.new()
+	grid.columns = 8
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 6)
+	for id in ids:
+		var b := Button.new()
+		var tex: Texture2D = load(TreasureDB.icon_path(id))
+		b.icon = tex if TreasureDB.found_count(id) > 0 else _silhouette(id, tex)
+		b.expand_icon = true
+		b.custom_minimum_size = Vector2(46, 46)
+		var tid: String = id
+		b.pressed.connect(func(): _open_treasure_card(tid))
+		grid.add_child(b)
+	_book_body.add_child(grid)
+	if TreasureDB.messages_read() > 0:
+		_book_body.add_child(UIStyle.label("Mensagens das garrafas", 13, UIStyle.WOOD_DARK))
+		for i in TreasureDB.messages_read():
+			var lab := UIStyle.label("%d. %s" % [i + 1, TreasureDB.MESSAGES[i]], 10, UIStyle.WOOD_DARK)
+			lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			lab.custom_minimum_size = Vector2(420, 0)
+			_book_body.add_child(lab)
+
+
+func _open_treasure_card(id: String) -> void:
+	for c in _book_body.get_children():
+		c.queue_free()
+	var t := TreasureDB.get_treasure(id)
+	var n := TreasureDB.found_count(id)
+	var back := Button.new()
+	back.text = "← Voltar"
+	back.pressed.connect(func(): open_fish_book("treasure"))
+	_book_body.add_child(back)
+	var top := HBoxContainer.new()
+	var ic := TextureRect.new()
+	var tex: Texture2D = load(TreasureDB.icon_path(id))
+	ic.texture = tex if n > 0 else _silhouette(id, tex)
+	ic.custom_minimum_size = Vector2(64, 64)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	top.add_child(ic)
+	var info := VBoxContainer.new()
+	info.add_child(UIStyle.label(t.name if n > 0 else "???", 16, UIStyle.WOOD_DARK))
+	var sub := t.rarity_name()
+	if n > 0 and t.sell > 0:
+		sub += " · vende %d" % t.sell
+	info.add_child(UIStyle.label(sub, 11, UIStyle.EARTH))
+	top.add_child(info)
+	_book_body.add_child(top)
+	var lines := []
+	if n > 0:
+		lines.append(t.description)
+		lines.append("Encontrado %d vez(es)." % n)
+	else:
+		lines.append("Ainda não encontrado. Às vezes a linha fisga outra coisa além de peixe...")
+	var w := []
+	for x in t.waters:
+		w.append(FishData.WATER_NAMES.get(x, x))
+	lines.append("Onde: " + ", ".join(w) + (" (fundo)" if t.depth == "deep" else "") + ("" if t.min_level <= 1 else " · nível %d+" % t.min_level))
+	for l in lines:
+		var lab := UIStyle.label(l, 11, UIStyle.WOOD_DARK)
+		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lab.custom_minimum_size = Vector2(420, 0)
+		_book_body.add_child(lab)
+
+
 static var _sil_cache := {}
 
 
-## Silhueta escura do peixe (espécie ainda não descoberta).
-func _silhouette(id: String) -> Texture2D:
+## Silhueta escura (peixe ou tesouro ainda não descoberto).
+func _silhouette(id: String, from: Texture2D = null) -> Texture2D:
 	if _sil_cache.has(id):
 		return _sil_cache[id]
-	var tex := ItemDB.icon(id)
+	var tex := from if from != null else ItemDB.icon(id)
 	var img: Image
 	if tex is AtlasTexture:
 		var full: Image = tex.atlas.get_image()

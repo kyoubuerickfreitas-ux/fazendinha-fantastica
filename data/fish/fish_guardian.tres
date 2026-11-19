@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_guardian"
+name = "Guardião do Lago"
+description = "Escamas douradas do tamanho de moedas. Os olhos parecem entender tudo."
+lore = "O mapa antigo marcava um X no meio do lago: é onde o Guardião dorme. Ele protege o lago desde antes do vilarejo."
+rarity = 5
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("night", "dawn")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 8
+difficulty = 0.95
+special = "map_complete"
+hint = "Um mapa rasgado em 4 pedaços leva até ele. Fundo do lago, à noite. Nível 8."
+size_min = 150.0
+size_max = 260.0
+weight_min = 40.0
+weight_max = 120.0
+sell = 3500
+icon = "res://assets/sprites/fishing/fish_guardian.png"

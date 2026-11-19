@@ -319,6 +319,9 @@ func _run() -> void:
 	fishing._timer = 0.01
 	await _wait(0.1)
 	assert(fishing.state == Fishing.State.BITE, "deveria ter fisgada")
+	if fishing._treasure != "":   # este teste quer um peixe; tesouros são testados mais abaixo
+		fishing._treasure = ""
+		fishing._fish = "fish_silver"
 	await _shot("09_fisgada")
 	p.use_tool()
 	assert(fishing.state == Fishing.State.REELING)
@@ -368,6 +371,81 @@ func _run() -> void:
 	await _wait(0.2)
 	await _shot("21_ficha_desconhecido")
 	main.hud.close_panel()
+
+	# ---- tesouros: chance, sorteio por isca, cada tipo
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	for bait in ["", "bait_treasure"]:
+		var tc := {"water": "lake", "depth": "deep", "season": "summer", "time": "afternoon", "weather": "sunny",
+			"level": 5, "bait": bait, "region": "farm"}
+		var hits := 0
+		var kinds := {}
+		for i in 3000:
+			var tid := TreasureDB.maybe_roll(tc)
+			if tid != "":
+				hits += 1
+				kinds[tid] = int(kinds.get(tid, 0)) + 1
+		print("tesouros com isca '%s': %.1f%% das fisgadas · %s" % [bait, hits * 100.0 / 3000.0, kinds])
+	assert(TreasureDB.chance({"bait": "bait_treasure", "level": 1}) > TreasureDB.chance({"bait": "", "level": 1}) * 3.0)
+	var money_t: int = game.money
+	for tid in ["chest_small", "old_coin", "message_bottle", "message_bottle", "driftwood", "old_boot", "fungo_glasses", "chest_gold"]:
+		print("  pescou ", tid, ": ", TreasureDB.collect(tid).replace("\n", " / "))
+	assert(game.money > money_t, "o baú deveria dar moedas")
+	assert(game.count_item("old_coin") >= 1 and game.count_item("fungo_glasses") == 1)
+	assert(TreasureDB.messages_read() == 2)
+	assert(not TreasureDB.available(TreasureDB.get_treasure("fungo_glasses"), {"water": "lake", "depth": "deep", "level": 9}),
+		"os óculos só aparecem uma vez")
+	# o tesouro também vem pela vara (mesma mecânica de fisgar e puxar)
+	fishing.state = Fishing.State.REELING
+	fishing._treasure = "relic_shell"
+	fishing._fish = ""
+	fishing._progress = 99.0
+	fishing.on_use(Vector2i.ZERO)
+	assert(game.count_item("relic_shell") == 1 and fishing.last_catch.get("treasure", false), "a concha deveria vir na linha")
+	# mapa: 4 pedaços liberam o Guardião
+	var gctx := {"water": "lake", "depth": "deep", "season": "summer", "time": "night", "weather": "sunny",
+		"level": 8, "bait": "", "region": "farm"}
+	assert(not FishDB.available(FishDB.get_fish("fish_guardian"), gctx))
+	game.fish_flags["map_pieces"] = 3
+	print("  mapa: ", TreasureDB.collect("map_piece").replace("\n", " / "))
+	assert(game.fish_flags.get("map_complete", false))
+	assert(FishDB.available(FishDB.get_fish("fish_guardian"), gctx), "com o mapa completo o Guardião aparece")
+	var legend_hits := 0
+	for i in 1000:
+		if FishDB.roll(gctx) == "fish_guardian":
+			legend_hits += 1
+	print("  Guardião: %d em 1000 fisgadas com tudo certo" % legend_hits)
+	assert(legend_hits > 60 and legend_hits < 200)
+	# devolver os óculos ao Fungo
+	var money_f: int = game.money
+	main._on_shop()
+	main.hud.close_panel()
+	assert(game.count_item("fungo_glasses") == 0 and game.money == money_f + 500, "o Fungo deveria recompensar")
+	# ---- lendário: pescar dá o troféu, que vira decoração
+	fishing.state = Fishing.State.REELING
+	fishing._treasure = ""
+	fishing._fish = "fish_moss_king"
+	fishing._progress = 99.0
+	fishing.on_use(Vector2i.ZERO)
+	print("  lendário: ", fishing.last_catch)
+	assert(game.count_item("fish_moss_king", 3) == 1, "lendário vem com qualidade lendária")
+	assert(game.count_item("trophy_moss_king") == 1, "deveria ganhar o troféu")
+	assert(ItemDB.sell_price("fish_moss_king", 3) == 3000)
+	var trophy_pl: Placeable = w.place("trophy_moss_king", Vector2i(30, 12), true)
+	assert(trophy_pl != null, "o troféu deveria poder ser colocado")
+	main.hud.open_fish_book("treasure")
+	await _wait(0.3)
+	await _shot("22_tesouros")
+	main.hud._open_fish_card("fish_moss_king")
+	await _wait(0.2)
+	await _shot("23_ficha_lendario")
+	main.hud.close_panel()
+	p.position = Vector2(30 * 32 + 16, 13 * 32 + 20)
+	main.camera.reset_smoothing()
+	await _wait(0.2)
+	await _shot("24_trofeu")
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
 
 	# bancada: fabricar, construir, máquina, feno, celeiro e compra de animal
 	game.add_item("wood", 200)

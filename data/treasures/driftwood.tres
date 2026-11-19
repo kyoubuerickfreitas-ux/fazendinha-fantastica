@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TreasureData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/treasure_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "driftwood"
+name = "Madeira Flutuante"
+description = "Lisinha de tanto rolar na água. Vira 3 madeiras."
+kind = "material"
+rarity = 0
+weight = 28.0
+waters = PackedStringArray("lake", "river", "pond")
+depth = "any"
+min_level = 1
+unique = false
+sell = 0
+gives = "wood"
+gives_qty = 3

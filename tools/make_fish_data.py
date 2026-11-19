@@ -34,6 +34,10 @@ if __name__ == "__main__":
              "hint = " + q(f.get("hint", "")),
              "size_min = %s" % float(f["size"][0]), "size_max = %s" % float(f["size"][1]),
              "weight_min = %s" % float(f["weight"][0]), "weight_max = %s" % float(f["weight"][1])]
+        if "sell" in f:
+            L.append("sell = %d" % f["sell"])
+        if "icon" in f:
+            L.append("icon = " + q(f["icon"]))
         if "uses" in f:
             L.append("uses = " + arr(f["uses"]))
         open(os.path.join(OUT, f["id"] + ".tres"), "w").write("\n".join(L) + "\n")

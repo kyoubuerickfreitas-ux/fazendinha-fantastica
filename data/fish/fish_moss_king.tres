@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_moss_king"
+name = "Rei-Musgo"
+description = "Um peixe enorme coberto de musgo, com uma coroa de algas."
+lore = "Contam que o Rei-Musgo plantou as primeiras algas do lago e ainda cuida delas. Só sobe quando a chuva de primavera acorda o fundo."
+rarity = 5
+waters = PackedStringArray("lake")
+depth = "deep"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("spring")
+times = PackedStringArray()
+weathers = PackedStringArray("rain", "heavy_rain")
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 5
+difficulty = 0.82
+special = ""
+hint = "Algo grande se mexe no fundo do lago quando chove na primavera. Nível 5."
+size_min = 90.0
+size_max = 160.0
+weight_min = 12.0
+weight_max = 30.0
+sell = 1500
+icon = "res://assets/sprites/fishing/fish_moss_king.png"

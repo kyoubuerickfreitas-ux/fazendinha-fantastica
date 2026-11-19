@@ -10,6 +10,7 @@ extends Node2D
 enum State { IDLE, WAITING, BITE, REELING }
 
 signal caught(fish_id: String, measures: Dictionary)
+signal treasure_found(treasure_id: String)
 
 const ENERGY_COST := 2.0
 ## por raridade (comum, incomum, raro, muito raro, épico, lendário, secreto)
@@ -26,6 +27,8 @@ var _bobber_pos := Vector2.ZERO
 var _timer := 0.0
 var _bait := ""
 var _fish := ""
+## tesouro fisgado no lugar de um peixe ("" = é peixe)
+var _treasure := ""
 var _water := "lake"
 var _depth := "shallow"
 ## último resultado (para testes e a interface): {"id", "size", "weight", "q", "new", "record"}
@@ -113,6 +116,9 @@ func _catch() -> void:
 	state = State.IDLE
 	_panel.visible = false
 	queue_redraw()
+	if _treasure != "":
+		_catch_treasure()
+		return
 	var f := FishDB.get_fish(_fish)
 	var m := FishDB.measure(f)
 	if Game.add_item(_fish, 1, m["q"]) > 0:
@@ -125,10 +131,36 @@ func _catch() -> void:
 		text = "NOVA ESPÉCIE! " + text + " (registrada no Livro de Pesca)"
 	elif reg["record"]:
 		text += " · novo recorde!"
+	var trophy := FishDB.trophy_of(_fish)
+	if f.is_legendary() and (reg["new"] or not Game.fish_flags.get("got_" + trophy, false)):
+		text = "%s! Você pescou %s (%.0f cm)!" % ["SEGREDO" if f.rarity >= 6 else "LENDÁRIO", f.name, m["size"]]
+		if trophy != "":
+			if Game.add_item(trophy, 1) == 0:
+				Game.fish_flags["got_" + trophy] = true
+				text += "\nGanhou o %s!" % ItemDB.item_name(trophy)
+			else:
+				text += "\nO troféu não coube na mochila: abra espaço e pesque de novo."
 	if reg["level_up"] > 0:
 		text += "\nNível de pesca %d!" % reg["level_up"]
 	Game.toast.emit(text)
 	caught.emit(_fish, m)
+
+
+func _catch_treasure() -> void:
+	var id := _treasure
+	_treasure = ""
+	var text := TreasureDB.collect(id)
+	if text == "":
+		Game.toast.emit("A mochila está cheia! O tesouro voltou para a água.")
+		return
+	var t := TreasureDB.get_treasure(id)
+	last_catch = {"id": id, "treasure": true}
+	var lvl_up := FishDB.add_xp(4 + 6 * t.rarity)
+	if lvl_up > 0:
+		text += "\nNível de pesca %d!" % lvl_up
+	FX.spawn(world, "harvest", _bobber_pos)
+	Game.toast.emit(text)
+	treasure_found.emit(id)
 
 
 ## Contexto do lance atual (lugar + momento).
@@ -145,18 +177,25 @@ func _process(delta: float) -> void:
 		State.WAITING:
 			_timer -= delta
 			if _timer <= 0.0:
-				_fish = FishDB.roll(context())
+				var ctx := context()
+				_treasure = TreasureDB.maybe_roll(ctx)
+				_fish = "" if _treasure != "" else FishDB.roll(ctx)
 				state = State.BITE
 				var lvl := FishDB.level()
-				_timer = BITE_WINDOW[FishDB.get_fish(_fish).rarity] * (1.0 + 0.04 * (lvl - 1))
+				var win: float = 1.1 if _treasure != "" else BITE_WINDOW[FishDB.get_fish(_fish).rarity]
+				_timer = win * (1.0 + 0.04 * (lvl - 1))
 				FX.spawn(world, "water", _bobber_pos)
 		State.BITE:
 			_timer -= delta
 			if _timer <= 0.0:
 				cancel("O peixe levou a isca...")
 		State.REELING:
-			var fd := FishDB.get_fish(_fish)
-			var pull: float = PULL[fd.rarity] if fd.difficulty <= 0.0 else lerpf(10.0, 40.0, fd.difficulty)
+			var pull := 0.0
+			if _treasure != "":
+				pull = 8.0 + 4.0 * TreasureDB.get_treasure(_treasure).rarity   # tesouro é pesado, mas não briga
+			else:
+				var fd := FishDB.get_fish(_fish)
+				pull = PULL[fd.rarity] if fd.difficulty <= 0.0 else lerpf(10.0, 40.0, fd.difficulty)
 			pull *= 1.0 - 0.035 * (FishDB.level() - 1)     # o nível deixa mais fácil puxar
 			_progress -= pull * delta
 			_timer -= delta

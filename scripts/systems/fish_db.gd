@@ -27,6 +27,12 @@ static func ensure_loaded() -> void:
 			var fd: FishData = load(DIR + f)
 			if fd and fd.id != "":
 				fish[fd.id] = fd
+				# peixes só de dados (lendários): vira item da mochila
+				if not ItemDB.ITEMS.has(fd.id):
+					var item := {"name": fd.name, "type": "fish", "sell": fd.sell, "desc": fd.description}
+					if fd.icon != "":
+						item["tex"] = fd.icon
+					ItemDB.register(fd.id, item)
 
 
 static func get_fish(id: String) -> FishData:
@@ -84,7 +90,7 @@ static func available(f: FishData, ctx: Dictionary) -> bool:
 static func special_met(cond: String) -> bool:
 	match cond:
 		"map_complete":
-			return Game.count_item("map_piece") >= 4 or Game.fish_flags.get("map_complete", false)
+			return bool(Game.fish_flags.get("map_complete", false))
 		"species_15":
 			return discovered_count() >= 15
 	return true
@@ -161,6 +167,12 @@ static func is_discovered(id: String) -> bool:
 
 static func discovered_count() -> int:
 	return Game.fish_log.size()
+
+
+## Troféu de um lendário ("" se o peixe não tem)
+static func trophy_of(id: String) -> String:
+	var t := "trophy_" + id.trim_prefix("fish_")
+	return t if ItemDB.PLACEABLES.has(t) else ""
 
 
 ## Registra a captura. Retorna {"new": bool, "record": bool, "xp": int, "level_up": int}

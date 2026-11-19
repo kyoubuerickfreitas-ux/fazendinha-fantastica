@@ -78,6 +78,11 @@ const ITEMS := {
 	"sprinkler_c": {"name": "Aspersor de Cristal", "tex": "res://assets/sprites/craft/icon_sprinkler_c.png", "type": "placeable", "desc": "Rega toda manhã um quadrado 5×5 (24 canteiros)."},
 	"silo": {"name": "Silo", "tex": "res://assets/sprites/craft/icon_silo.png", "type": "placeable", "desc": "Guarda até 240 feno. O capim cortado com a foice vai direto para cá."},
 	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
+	"trophy_moss_king": {"name": "Troféu do Rei-Musgo", "tex": "res://assets/sprites/craft/icon_trophy_moss_king.png", "type": "placeable", "desc": "Prova de que você pescou o Rei-Musgo. Decoração."},
+	"trophy_silver_moon": {"name": "Troféu da Lua-de-Prata", "tex": "res://assets/sprites/craft/icon_trophy_silver_moon.png", "type": "placeable", "desc": "Prova de que você pescou a Lua-de-Prata. Decoração."},
+	"trophy_winter_heart": {"name": "Troféu do Coração-de-Inverno", "tex": "res://assets/sprites/craft/icon_trophy_winter_heart.png", "type": "placeable", "desc": "Prova de que você pescou o Coração-de-Inverno. Decoração."},
+	"trophy_guardian": {"name": "Troféu do Guardião do Lago", "tex": "res://assets/sprites/craft/icon_trophy_guardian.png", "type": "placeable", "desc": "Prova de que você pescou o Guardião do Lago. Decoração."},
+	"trophy_dream": {"name": "Troféu do Peixe-Sonho", "tex": "res://assets/sprites/craft/icon_trophy_dream.png", "type": "placeable", "desc": "Ninguém vai acreditar. Mas o troféu está aí. Decoração."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
@@ -110,6 +115,7 @@ const ITEMS := {
 	"bait_corn": {"name": "Bolinha de Milho", "icon": 0, "hd": 62, "type": "bait", "buy": 6, "desc": "Os peixes mordem bem rápido."},
 	"bait_cricket": {"name": "Grilo Saltador", "icon": 0, "hd": 63, "type": "bait", "buy": 12, "desc": "Atrai peixes incomuns."},
 	"bait_mushroom": {"name": "Cogumelo Brilhante", "icon": 0, "hd": 64, "type": "bait", "buy": 25, "desc": "Brilha no escuro. Ótima à noite e para peixes raros."},
+	"bait_treasure": {"name": "Isca Reluzente", "tex": "res://assets/sprites/fishing/bait_treasure.png", "type": "bait", "buy": 80, "desc": "Brilha como moeda. Fisga muito mais tesouros (e menos peixes)."},
 	"bait_fly": {"name": "Mosca de Fibra", "icon": 0, "hd": 65, "type": "bait", "buy": 40, "desc": "Isca artesanal. A melhor para peixes raros e lendários."},
 }
 
@@ -132,6 +138,11 @@ const PLACEABLES := {
 	"sprinkler": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 1},
 	"sprinkler_q": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 2},
 	"sprinkler_c": {"size": Vector2i(1, 1), "solid": true, "pad": 4, "sprinkler": 3},
+	"trophy_moss_king": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"trophy_silver_moon": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"trophy_winter_heart": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"trophy_guardian": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"trophy_dream": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -175,6 +186,8 @@ const RECIPES := [
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
 	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
+	{"result": "bait_treasure", "qty": 3, "cost": {"old_coin": 1, "fiber": 3}},
+	{"result": "fiber", "qty": 4, "cost": {"old_boot": 1}},
 	{"result": "scarecrow", "qty": 1, "cost": {"wood": 15, "fiber": 10}},
 	{"result": "cheese_press", "qty": 1, "cost": {"wood": 20, "stone": 10}},
 	{"result": "loom", "qty": 1, "cost": {"wood": 25, "fiber": 15}},
@@ -224,11 +237,12 @@ const BAITS := {
 	"bait_cricket": {"speed": 1.1, "bonus": [0.8, 2.0, 1.1, 0.5]},
 	"bait_mushroom": {"speed": 1.0, "bonus": [0.7, 1.0, 1.8, 1.2], "night": 2.0},
 	"bait_fly": {"speed": 0.9, "bonus": [0.5, 1.2, 2.2, 2.5]},
+	"bait_treasure": {"speed": 1.0, "bonus": [1.0, 1.0, 1.0, 1.0], "treasure": 0.3},
 }
 
 
 const SHOP_ITEMS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower",
-	"fishing_rod", "brush", "shears", "bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
+	"fishing_rod", "brush", "shears", "bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly", "bait_treasure"]
 
 const MAX_STACK := 99
 
@@ -272,18 +286,24 @@ static func cost_text(cost: Dictionary) -> String:
 
 
 static func has(id: String) -> bool:
-	CropDB.ensure_loaded()
+	_ensure_dynamic()
 	return _extra.has(id) or ITEMS.has(id)
+
+
+## Registra os itens que vêm de dados (plantas, peixes lendários, tesouros).
+static func _ensure_dynamic() -> void:
+	CropDB.ensure_loaded()
+	FishDB.ensure_loaded()
+	TreasureDB.ensure_loaded()
 
 
 static func get_item(id: String) -> Dictionary:
 	if _extra.has(id):
 		return _extra[id]
-	if not CropDB._loaded:
-		CropDB.ensure_loaded()
-		if _extra.has(id):
-			return _extra[id]
-	return ITEMS.get(id, {})
+	if ITEMS.has(id):
+		return ITEMS[id]
+	_ensure_dynamic()
+	return _extra.get(id, {})
 
 
 static func item_name(id: String) -> String:

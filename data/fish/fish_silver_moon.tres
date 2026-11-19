@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_silver_moon"
+name = "Lua-de-Prata"
+description = "Brilha como o reflexo da lua na correnteza."
+lore = "Dizem que é o reflexo da lua que caiu no rio e não conseguiu voltar. Só aparece em noites de outono de céu limpo."
+rarity = 5
+waters = PackedStringArray("river")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("autumn")
+times = PackedStringArray("night")
+weathers = PackedStringArray("sunny")
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 6
+difficulty = 0.86
+special = ""
+hint = "O rio brilha diferente em noites limpas de outono. Nível 6."
+size_min = 70.0
+size_max = 120.0
+weight_min = 4.0
+weight_max = 12.0
+sell = 1800
+icon = "res://assets/sprites/fishing/fish_silver_moon.png"

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TreasureData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/treasure_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "relic_compass"
+name = "Bússola Encantada"
+description = "O ponteiro aponta sempre para a água mais funda."
+kind = "item"
+rarity = 3
+weight = 3.0
+waters = PackedStringArray("river")
+depth = "any"
+min_level = 5
+unique = false
+sell = 260
+gives = ""
+gives_qty = 1

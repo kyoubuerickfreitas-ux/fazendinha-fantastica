@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_dream"
+name = "Peixe-Sonho"
+description = "Ninguém sabe se ele existe mesmo ou se você está sonhando."
+lore = "Aparece só para quem já conhece os peixes de verdade. Quem pesca o Peixe-Sonho acorda com a sensação de ter visto o lago inteiro de cima."
+rarity = 6
+waters = PackedStringArray("pond")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray()
+times = PackedStringArray("dawn")
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 9
+difficulty = 0.9
+special = "species_15"
+hint = "???"
+size_min = 15.0
+size_max = 30.0
+weight_min = 0.1
+weight_max = 0.5
+sell = 5000
+icon = "res://assets/sprites/fishing/fish_dream.png"

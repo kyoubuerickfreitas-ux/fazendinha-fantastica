@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TreasureData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/treasure_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "message_bottle"
+name = "Garrafa com Mensagem"
+description = "Tem um papel enrolado lá dentro."
+kind = "message"
+rarity = 1
+weight = 14.0
+waters = PackedStringArray("lake", "river", "pond")
+depth = "any"
+min_level = 1
+unique = false
+sell = 0
+gives = ""
+gives_qty = 1

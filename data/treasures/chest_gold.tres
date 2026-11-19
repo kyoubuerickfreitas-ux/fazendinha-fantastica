@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="TreasureData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/treasure_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "chest_gold"
+name = "Baú Dourado"
+description = "Pesado e brilhante. Só no fundo do lago."
+kind = "chest"
+rarity = 3
+weight = 5.0
+waters = PackedStringArray("lake")
+depth = "deep"
+min_level = 4
+unique = false
+sell = 0
+gives = ""
+gives_qty = 1

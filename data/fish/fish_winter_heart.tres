@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_winter_heart"
+name = "Coração-de-Inverno"
+description = "Frio ao toque, com um brilho azul que pulsa como um coração."
+lore = "Nasce de um floco de neve que caiu no laguinho na noite mais longa do ano. Some quando a neve para."
+rarity = 5
+waters = PackedStringArray("pond")
+depth = "any"
+regions = PackedStringArray("farm")
+seasons = PackedStringArray("winter")
+times = PackedStringArray("dawn", "morning")
+weathers = PackedStringArray("snow")
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 7
+difficulty = 0.88
+special = ""
+hint = "Na neve, o laguinho guarda um coração gelado. Manhãs de inverno. Nível 7."
+size_min = 20.0
+size_max = 40.0
+weight_min = 0.5
+weight_max = 2.0
+sell = 2000
+icon = "res://assets/sprites/fishing/fish_winter_heart.png"
