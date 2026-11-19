@@ -35,6 +35,10 @@ PRODUCE = ["apple", "pear", "grape", "strawberry", "blueberry", "cherry",
            "carrot", "radish", "beet", "tomato", "potato", "mushroom"]
 ORDER += PRODUCE
 
+# produtos dos animais (animal_products.webp, 1 linha)
+ANIMAL_PRODUCTS = ["milk", "wool", "egg"]
+ORDER += ANIMAL_PRODUCTS
+
 # selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
 SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
 
@@ -115,6 +119,7 @@ if __name__ == "__main__":
                         ["pickaxe", "watering_can", "hoe", "scythe", "fishing_rod", "axe"], white=True, rows=2))
     icons.update(pieces(os.path.join(SRC, "seed_bag.webp"), ["seed_bag"], white=True))
     icons.update(pieces(os.path.join(SRC, "produce.webp"), PRODUCE, white=True, rows=4))
+    icons.update(pieces(os.path.join(SRC, "animal_products.webp"), ANIMAL_PRODUCTS, white=True))
     small_icons = Image.open(os.path.join(ROOT, "assets", "sprites", "icons.png")).convert("RGBA")
     per_row = 16
     atlas = Image.new("RGBA", (CELL * per_row, CELL * ((len(ORDER) + per_row - 1) // per_row)), (0, 0, 0, 0))
