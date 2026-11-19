@@ -55,6 +55,11 @@ func _ready() -> void:
 	hud.interact_pressed.connect(player.interact)
 	world.house_door_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 	world.shop_requested.connect(_on_shop)
+	Game.time_changed.connect(func(_d: int, m: int):
+		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():
+			var res := FishQuests.finish_tournament()
+			if res != "":
+				Game.toast.emit(res))
 	world.bin_used.connect(_sell_all)
 	world.workbench_used.connect(func(): hud.open_crafting())
 	world.baby_born.connect(func(r):
@@ -123,6 +128,11 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ ações do mundo
 func _on_shop() -> void:
+	var delivered := FishQuests.try_deliver()
+	if delivered != "":
+		Game.toast.emit(delivered)
+		hud.open_shop()
+		return
 	if Game.count_item("fungo_glasses") > 0:
 		Game.remove_item("fungo_glasses", 1)
 		Game.money += 500
@@ -131,7 +141,11 @@ func _on_shop() -> void:
 		Game.toast.emit("Fungo: MEUS ÓCULOS! Agora enxergo as sementes de novo! Tome 500 moedas e 5 Iscas Reluzentes.")
 		hud.open_shop()
 		return
-	Game.toast.emit("Fungo: Sementes fresquinhas! Vendo e compro de tudo.")
+	var asked := FishQuests.ensure_request()
+	if asked != "":
+		Game.toast.emit("Fungo: Sementes fresquinhas! E tenho um pedido de pesca: " + FishQuests.request()["text"])
+	else:
+		Game.toast.emit("Fungo: Sementes fresquinhas! Vendo e compro de tudo.")
 	hud.open_shop()
 
 
@@ -154,9 +168,13 @@ func _sell_all() -> void:
 
 func _sleep(rested: bool) -> void:
 	player.fishing.cancel()
+	var tour_result := FishQuests.finish_tournament()   # dormiu antes das 16h no dia do torneio
 	hud.fade_through(func():
 		Game.start_new_day(rested)
 		var notes := world.on_new_day()
+		for extra in [FishQuests.on_new_day(), tour_result]:
+			if extra != "":
+				notes = extra if notes == "" else notes + "\n" + extra
 		player.position = world.player_start
 		camera.reset_smoothing()
 		save_now()

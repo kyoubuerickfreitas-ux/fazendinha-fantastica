@@ -396,12 +396,13 @@ func _run() -> void:
 	assert(not TreasureDB.available(TreasureDB.get_treasure("fungo_glasses"), {"water": "lake", "depth": "deep", "level": 9}),
 		"os óculos só aparecem uma vez")
 	# o tesouro também vem pela vara (mesma mecânica de fisgar e puxar)
+	var shells0: int = game.count_item("relic_shell")
 	fishing.state = Fishing.State.REELING
 	fishing._treasure = "relic_shell"
 	fishing._fish = ""
 	fishing._progress = 99.0
 	fishing.on_use(Vector2i.ZERO)
-	assert(game.count_item("relic_shell") == 1 and fishing.last_catch.get("treasure", false), "a concha deveria vir na linha")
+	assert(game.count_item("relic_shell") == shells0 + 1 and fishing.last_catch.get("treasure", false), "a concha deveria vir na linha")
 	# mapa: 4 pedaços liberam o Guardião
 	var gctx := {"water": "lake", "depth": "deep", "season": "summer", "time": "night", "weather": "sunny",
 		"level": 8, "bait": "", "region": "farm"}
@@ -444,6 +445,58 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	await _wait(0.2)
 	await _shot("24_trofeu")
+	# ---- pedidos do Fungo
+	var kinds_seen := {}
+	for i in 40:
+		game.fish_flags["request"] = {}
+		FishQuests.ensure_request()
+		kinds_seen[FishQuests.request()["type"]] = FishQuests.request()["text"]
+	print("tipos de pedido: ", kinds_seen.keys())
+	assert(kinds_seen.size() >= 4, "deveria haver vários tipos de pedido")
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	game.fish_flags["request"] = {"type": "deliver", "fish": "fish_silver", "qty": 2, "money": 100, "xp": 20,
+		"deadline": game.day + 5, "progress": 0, "text": "Traga 2 Prateadinho."}
+	game.add_item("fish_silver", 2)
+	assert(FishQuests.is_ready())
+	var money_q: int = game.money
+	main._on_shop()
+	main.hud.close_panel()
+	assert(game.money == money_q + 100 and game.count_item("fish_silver") == 0 and FishQuests.requests_done() == 1,
+		"entregar o pedido deveria pagar e levar os peixes")
+	game.fish_flags["request"] = {"type": "big", "fish": "fish_perch", "qty": 1, "size": 20.0, "money": 90, "xp": 20,
+		"deadline": game.day + 5, "progress": 0, "text": "Pesque uma Perca-Musgo de 20 cm."}
+	print("  pedido de tamanho (pequeno): '", FishQuests.on_catch("fish_perch", {"size": 15.0}), "'")
+	assert(not FishQuests.is_ready())
+	print("  pedido de tamanho (grande): ", FishQuests.on_catch("fish_perch", {"size": 24.0}))
+	assert(FishQuests.is_ready())
+	assert(FishQuests.try_deliver() != "" and FishQuests.requests_done() == 2)
+	game.fish_flags["request"] = {"type": "rare", "rarity": 2, "qty": 1, "money": 1, "xp": 1, "deadline": game.day - 1, "progress": 0, "text": "x"}
+	print("  novo dia: ", FishQuests.on_new_day().replace("\n", " / "))
+	assert(FishQuests.request().is_empty() or int(FishQuests.request()["deadline"]) >= game.day, "pedido vencido deveria sumir")
+	# ---- Torneio do Lago
+	var day_t: int = game.day
+	var min_t: int = game.minutes
+	game.day = FishQuests.TOURNAMENT_DAY
+	game.minutes = 9 * 60
+	assert(FishQuests.tournament_active())
+	print("  rivais: ", FishQuests.rival_scores())
+	print("  ", FishQuests.on_catch("fish_perch", {"size": 20.0}))
+	print("  ", FishQuests.on_catch("fish_shark", {"size": 100.0}))
+	assert(FishQuests.rank_of(200) == 1)
+	main.hud.open_fish_book("quests")
+	await _wait(0.3)
+	await _shot("25_pedidos_torneio")
+	main.hud.close_panel()
+	var money_tour: int = game.money
+	game.minutes = FishQuests.TOUR_END
+	game.time_changed.emit(game.day, game.minutes)
+	assert(game.money == money_tour + 800 and game.count_item("trophy_tournament") == 1, "1º lugar: prêmio e taça")
+	assert(not FishQuests.tournament_active() and FishQuests.finish_tournament() == "", "o torneio só fecha uma vez")
+	print("  torneio: ", game.fish_flags["tour_last"])
+	game.day = day_t
+	game.minutes = min_t
+	game.time_changed.emit(game.day, game.minutes)
 	for i in range(12, game.INV_SIZE):
 		game.inventory[i] = null
 

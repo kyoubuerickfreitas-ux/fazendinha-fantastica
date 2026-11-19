@@ -594,9 +594,10 @@ func open_fish_book(filter: String = "") -> void:
 		ids.size(), lvl, "" if lvl >= FishDB.MAX_LEVEL else " (%d/%d XP)" % [Game.fishing_xp, nxt]], 12, UIStyle.WOOD_DARK))
 	# filtros
 	var tabs := HBoxContainer.new()
-	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"], ["treasure", "Tesouros"]]:
+	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"], ["treasure", "Tesouros"], ["quests", "Pedidos"]]:
 		var b := Button.new()
 		b.text = f[1]
+		b.add_theme_font_size_override("font_size", 10)
 		b.toggle_mode = true
 		b.button_pressed = _book_filter == f[0]
 		var key: String = f[0]
@@ -605,6 +606,9 @@ func open_fish_book(filter: String = "") -> void:
 	_book_body.add_child(tabs)
 	if _book_filter == "treasure":
 		_fill_treasures()
+		return
+	if _book_filter == "quests":
+		_fill_quests()
 		return
 	var shown := ids.filter(func(id):
 		var fd: FishData = FishDB.get_fish(id)
@@ -664,6 +668,42 @@ func _fill_treasures() -> void:
 			lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 			lab.custom_minimum_size = Vector2(420, 0)
 			_book_body.add_child(lab)
+
+
+func _fill_quests() -> void:
+	var lines := []
+	var r := FishQuests.request()
+	lines.append(["Pedido do Fungo", 13])
+	if r.is_empty():
+		lines.append(["Nenhum pedido agora. Fale com o Fungo na barraca para ver se ele precisa de algo.", 11])
+	else:
+		lines.append([r["text"], 11])
+		lines.append(["Progresso: %s · prazo: %d dia(s)" % [FishQuests.progress_text(), maxi(FishQuests.days_left(), 0)], 11])
+		lines.append(["Recompensa: " + FishQuests.reward_text(r), 11])
+	lines.append(["Pedidos entregues: %d" % FishQuests.requests_done(), 10])
+	lines.append(["Torneio do Lago", 13])
+	var dos := Calendar.day_of_season(Game.day)
+	if FishQuests.tournament_active():
+		var t = Game.fish_flags.get("tour", {})
+		var best := int(t.get("best", 0)) if t is Dictionary and int(t.get("day", -1)) == Game.day else 0
+		lines.append(["ACONTECENDO AGORA (até as 16h)! Seu melhor: %d pts%s." % [best,
+			" (%dº lugar)" % FishQuests.rank_of(best) if best > 0 else ""], 11])
+		var rv := FishQuests.rival_scores()
+		lines.append(["Rivais: %s %d · %s %d · %s %d" % [FishQuests.RIVALS[0], rv[0], FishQuests.RIVALS[1], rv[1], FishQuests.RIVALS[2], rv[2]], 11])
+	elif dos == FishQuests.TOURNAMENT_DAY and Game.minutes < FishQuests.TOUR_START:
+		lines.append(["É hoje! Começa às 8h e vai até as 16h.", 11])
+	else:
+		var wait := FishQuests.TOURNAMENT_DAY - dos
+		if wait <= 0:
+			wait += Calendar.SEASON_LENGTH
+		lines.append(["Todo dia %d de cada estação, das 8h às 16h. Próximo: em %d dia(s)." % [FishQuests.TOURNAMENT_DAY, wait], 11])
+	lines.append(["Pontos = tamanho do peixe (cm) × bônus da raridade. Vale o seu melhor peixe do dia.", 10])
+	lines.append(["Vitórias: %d de %d torneios" % [int(Game.fish_flags.get("tour_wins", 0)), int(Game.fish_flags.get("tour_played", 0))], 10])
+	for l in lines:
+		var lab := UIStyle.label(l[0], l[1], UIStyle.WOOD if l[1] == 13 else UIStyle.WOOD_DARK)
+		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		lab.custom_minimum_size = Vector2(420, 0)
+		_book_body.add_child(lab)
 
 
 func _open_treasure_card(id: String) -> void:
@@ -828,6 +868,13 @@ func open_calendar() -> void:
 			CropDB.weather(f["weather"]).name, int(f["temp"])], 10, UIStyle.WOOD_DARK))
 		row.add_child(box)
 	_cal_body.add_child(row)
+	# eventos
+	var dos := Calendar.day_of_season(d)
+	var ev := "Torneio do Lago: dia %d (%s)" % [FishQuests.TOURNAMENT_DAY,
+		"HOJE, 8h às 16h!" if dos == FishQuests.TOURNAMENT_DAY else ("já passou nesta estação" if dos > FishQuests.TOURNAMENT_DAY
+		else "daqui a %d dia(s)" % (FishQuests.TOURNAMENT_DAY - dos))]
+	_cal_body.add_child(UIStyle.label("Eventos", 13, UIStyle.WOOD))
+	_cal_body.add_child(UIStyle.label(ev, 11, UIStyle.WOOD_DARK))
 	# o que plantar agora
 	_cal_body.add_child(UIStyle.label("Plante agora", 13, UIStyle.WOOD))
 	for seed_id in CropDB.seeds_for(Calendar.season_id(d)):

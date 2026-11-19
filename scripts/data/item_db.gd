@@ -83,6 +83,7 @@ const ITEMS := {
 	"trophy_winter_heart": {"name": "Troféu do Coração-de-Inverno", "tex": "res://assets/sprites/craft/icon_trophy_winter_heart.png", "type": "placeable", "desc": "Prova de que você pescou o Coração-de-Inverno. Decoração."},
 	"trophy_guardian": {"name": "Troféu do Guardião do Lago", "tex": "res://assets/sprites/craft/icon_trophy_guardian.png", "type": "placeable", "desc": "Prova de que você pescou o Guardião do Lago. Decoração."},
 	"trophy_dream": {"name": "Troféu do Peixe-Sonho", "tex": "res://assets/sprites/craft/icon_trophy_dream.png", "type": "placeable", "desc": "Ninguém vai acreditar. Mas o troféu está aí. Decoração."},
+	"trophy_tournament": {"name": "Taça do Lago", "tex": "res://assets/sprites/craft/icon_trophy_tournament.png", "type": "placeable", "desc": "Campeão do Torneio do Lago! Decoração."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
@@ -143,6 +144,7 @@ const PLACEABLES := {
 	"trophy_winter_heart": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"trophy_guardian": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"trophy_dream": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"trophy_tournament": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }

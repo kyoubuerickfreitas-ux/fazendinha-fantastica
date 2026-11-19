@@ -175,6 +175,20 @@ def trophy(fish_icon):
     return outline(img)
 
 
+def cup():
+    img = Image.new("RGBA", (30, 40), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle((6, 33, 23, 38), fill=WOOD)
+    d.rectangle((12, 24, 17, 33), fill=GOLD_D)
+    d.pieslice((4, -6, 25, 26), 0, 180, fill=GOLD)
+    d.rectangle((4, 3, 25, 10), fill=GOLD)
+    d.arc((0, 5, 9, 16), 90, 270, fill=GOLD_D, width=2)
+    d.arc((20, 5, 29, 16), 270, 90, fill=GOLD_D, width=2)
+    d.rectangle((8, 5, 10, 16), fill=GOLD_L)
+    d.rectangle((10, 34, 19, 36), fill=GOLD_L)
+    return outline(img)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     for fid, (base, hue, sat, val, glow) in LEGENDS.items():
@@ -187,6 +201,11 @@ if __name__ == "__main__":
         small = tr.resize((26, 32), Image.NEAREST)
         ic.alpha_composite(small, (3, 0))
         ic.save(os.path.join(CRAFT, "icon_" + name + ".png"))
+    c = cup()
+    c.save(os.path.join(CRAFT, "trophy_tournament.png"))
+    ic = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    ic.alpha_composite(c.resize((24, 32), Image.NEAREST), (4, 0))
+    ic.save(os.path.join(CRAFT, "icon_trophy_tournament.png"))
     for t in TREASURES:
         treasure(t).save(os.path.join(OUT, t + ".png"))
     print("arte da pesca gerada em", OUT)

@@ -142,6 +142,9 @@ func _catch() -> void:
 				text += "\nO troféu não coube na mochila: abra espaço e pesque de novo."
 	if reg["level_up"] > 0:
 		text += "\nNível de pesca %d!" % reg["level_up"]
+	var extra := FishQuests.on_catch(_fish, m)
+	if extra != "":
+		text += "\n" + extra
 	Game.toast.emit(text)
 	caught.emit(_fish, m)
 
