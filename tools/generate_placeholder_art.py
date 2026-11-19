@@ -717,3 +717,7 @@ if __name__ == "__main__":
     icons_sheet()
     app_icon()
     print("Arte provisória gerada em", OUT)
+    # a terra arada usa a arte definitiva quando ela existe
+    if os.path.exists(os.path.join(ROOT, "assets", "source", "tiles", "tilled.webp")):
+        import subprocess, sys
+        subprocess.run([sys.executable, os.path.join(ROOT, "tools", "import_soil.py")], check=True)
