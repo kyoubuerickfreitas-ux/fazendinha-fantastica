@@ -491,12 +491,67 @@ func _run() -> void:
 	var money_tour: int = game.money
 	game.minutes = FishQuests.TOUR_END
 	game.time_changed.emit(game.day, game.minutes)
-	assert(game.money == money_tour + 800 and game.count_item("trophy_tournament") == 1, "1º lugar: prêmio e taça")
+	assert(game.money >= money_tour + 800 and game.count_item("trophy_tournament") == 1, "1º lugar: prêmio e taça")
 	assert(not FishQuests.tournament_active() and FishQuests.finish_tournament() == "", "o torneio só fecha uma vez")
 	print("  torneio: ", game.fish_flags["tour_last"])
 	game.day = day_t
 	game.minutes = min_t
 	game.time_changed.emit(game.day, game.minutes)
+	# ---- defumador, adubo de peixe, aquário, vara melhorada e títulos
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	var smoker: Placeable = w.place("smoker", Vector2i(32, 12), true)
+	game.inventory[0] = {"id": "fish_perch", "qty": 2, "q": 1}
+	game.select_slot(0)
+	w._on_placeable_used(smoker)
+	assert(not smoker.job.is_empty() and smoker.job["output"] == "smoked_fish_perch", "o defumador deveria aceitar peixe")
+	smoker.job["ready"] = game.day
+	w._on_placeable_used(smoker)
+	print("  defumado: ", game.count_item("smoked_fish_perch"), " · vende ", ItemDB.sell_price("smoked_fish_perch", 1),
+		" (peixe cru ", ItemDB.sell_price("fish_perch", 1), ")")
+	assert(game.count_item("smoked_fish_perch", 1) == 1, "o peixe defumado mantém a qualidade")
+	game.add_item("fish_silver", 1)
+	var fert_cost: Dictionary = {"any_fish": 1, "fiber": 2}
+	game.add_item("fiber", 2)
+	assert(ItemDB.can_afford(fert_cost))
+	ItemDB.pay(fert_cost)
+	assert(game.count_item("fish_silver") == 0 and game.count_item("fish_perch") == 1, "o adubo gasta o peixe mais barato")
+	var aq: Placeable = w.place("aquarium_large", Vector2i(34, 12), true)
+	assert(aq != null)
+	for fid in ["fish_orange", "fish_yellow", "fish_clown"]:
+		game.inventory[0] = {"id": fid, "qty": 1, "q": 0}
+		game.select_slot(0)
+		w._on_placeable_used(aq)
+	assert(aq.fish.size() == 3)
+	game.inventory[0] = {"id": "fish_perch", "qty": 1, "q": 0}
+	w._on_placeable_used(aq)
+	assert(aq.fish.size() == 3 and game.count_item("fish_perch") >= 1, "aquário cheio não aceita mais")
+	assert(not aq.can_pick_up(), "não se desmonta aquário com peixe")
+	var pond: Placeable = w.place("fish_pond", Vector2i(37, 13), true)
+	for fid in ["fish_goldfish", "fish_betta", "fish_axolotl"]:
+		game.inventory[0] = {"id": fid, "qty": 1, "q": 0}
+		w._on_placeable_used(pond)
+	print("  espécies nos aquários: ", w.aquarium_species(), " · títulos: ", FishDB.titles())
+	assert(FishDB.titles().has("aquarist") and FishDB.titles().has("legend_hunter") and FishDB.titles().has("champion"))
+	var saved_aq: Dictionary = aq.serialize()
+	assert(saved_aq["fish"].size() == 3)
+	game.inventory[0] = null
+	game.select_slot(0)
+	w._on_placeable_used(aq)
+	assert(aq.fish.size() == 2, "mão vazia tira o peixe")
+	p.position = Vector2(35 * 32, 14 * 32 + 10)
+	main.camera.reset_smoothing()
+	await _wait(0.4)
+	await _shot("26_aquarios")
+	game.tool_levels["fishing_rod"] = 3
+	assert(fishing.rod_level() == 3)
+	game.tool_levels["fishing_rod"] = 1
+	main.hud.open_fish_book("quests")
+	await _wait(0.3)
+	await _shot("27_titulos")
+	main.hud.close_panel()
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
 	for i in range(12, game.INV_SIZE):
 		game.inventory[i] = null
 

@@ -189,7 +189,85 @@ def cup():
     return outline(img)
 
 
+def aquarium(w, h):
+    """Aquário de vidro numa base de madeira. A água fica em AQUA_RECT (o jogo desenha os peixes ali)."""
+    img = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle((1, h - 9, w - 2, h - 1), fill=WOOD)
+    d.rectangle((1, h - 9, w - 2, h - 7), fill=WOOD_L)
+    d.rectangle((2, 2, w - 3, h - 10), fill=hx("CFE6EC"))
+    d.rectangle((3, 6, w - 4, h - 11), fill=hx("4C88A3"))
+    d.rectangle((3, 6, w - 4, 8), fill=hx("7DB4C9"))
+    d.rectangle((3, h - 14, w - 4, h - 11), fill=hx("D9C49A"))     # areia
+    for x in range(6, w - 6, 9):
+        d.line((x, h - 14, x - 1, h - 21), fill=hx("78945B"), width=2)   # plantinhas
+    d.line((5, 10, 5, h - 16), fill=(255, 255, 255, 140))
+    return outline(img)
+
+
+def fish_pond():
+    img = Image.new("RGBA", (64, 52), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.ellipse((1, 4, 62, 50), fill=hx("8B8A7C"))
+    for i, (x, y) in enumerate([(6, 14), (16, 6), (30, 4), (44, 6), (55, 14), (58, 30), (50, 44), (32, 48), (14, 44), (4, 30)]):
+        d.ellipse((x - 5, y - 4, x + 5, y + 4), fill=hx("AAA898") if i % 2 else hx("6B6A5E"))
+    d.ellipse((8, 11, 55, 43), fill=hx("4C88A3"))
+    d.ellipse((12, 14, 40, 26), fill=hx("7DB4C9"))
+    d.ellipse((40, 30, 50, 37), fill=hx("78945B"))   # vitória-régia
+    d.point((44, 32), fill=hx("F2C9B8"))
+    return outline(img)
+
+
+def smoker():
+    img = Image.new("RGBA", (32, 44), (0, 0, 0, 0))
+    d = ImageDraw.Draw(img)
+    d.rectangle((5, 14, 26, 41), fill=hx("6B6A5E"))
+    d.rectangle((5, 14, 26, 17), fill=hx("8B8A7C"))
+    d.polygon([(3, 14), (16, 4), (28, 14)], fill=WOOD_D)
+    d.rectangle((13, 0, 18, 8), fill=hx("6B6A5E"))
+    d.rectangle((9, 22, 22, 34), fill=hx("2B2118"))
+    d.rectangle((10, 30, 21, 33), fill=hx("C8382E"))
+    d.rectangle((12, 29, 19, 30), fill=hx("F2C14E"))
+    for x in (11, 15, 19):
+        d.line((x, 23, x, 27), fill=hx("A8784F"))
+    return outline(img)
+
+
+def smoked_fish():
+    img, d = canvas()
+    d.polygon([(4, 16), (10, 10), (22, 9), (27, 13), (31, 8), (31, 24), (27, 19), (22, 23), (10, 22)], fill=hx("9A5A2E"))
+    d.polygon([(10, 11), (22, 10), (24, 14), (10, 15)], fill=hx("C8843E"))
+    for x in (13, 17, 21):
+        d.line((x, 11, x - 1, 21), fill=hx("6E3B1C"))
+    d.point((8, 15), fill=hx("2B2118"))
+    d.line((3, 26, 29, 26), fill=WOOD_D, width=2)
+    return outline(img)
+
+
+def fert_fish():
+    img, d = canvas()
+    d.polygon([(7, 9), (25, 9), (27, 29), (5, 29)], fill=hx("D9C49A"))
+    d.rectangle((9, 6, 23, 9), fill=hx("BBA97F"))
+    d.polygon([(10, 19), (15, 15), (20, 15), (23, 18), (26, 15), (26, 23), (23, 20), (20, 23), (15, 23)], fill=hx("4C88A3"))
+    d.point((13, 18), fill=hx("2B2118"))
+    return outline(img)
+
+
+def fit_icon(img):
+    s = 30 / max(img.size)
+    small = img.resize((max(1, round(img.width * s)), max(1, round(img.height * s))), Image.NEAREST)
+    out = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
+    out.alpha_composite(small, ((32 - small.width) // 2, (32 - small.height) // 2))
+    return out
+
+
 if __name__ == "__main__":
+    for name, img in {"aquarium_small": aquarium(32, 36), "aquarium_large": aquarium(64, 40),
+                      "fish_pond": fish_pond(), "smoker": smoker()}.items():
+        img.save(os.path.join(CRAFT, name + ".png"))
+        fit_icon(img).save(os.path.join(CRAFT, "icon_" + name + ".png"))
+    smoked_fish().save(os.path.join(OUT, "smoked_fish.png"))
+    fert_fish().save(os.path.join(CRAFT, "icon_fert_fish.png"))
     os.makedirs(OUT, exist_ok=True)
     for fid, (base, hue, sat, val, glow) in LEGENDS.items():
         icon = aura(recolor(atlas_cell(base), hue, sat, val), glow)

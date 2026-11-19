@@ -19,6 +19,9 @@ var hay := 0
 var level := 1
 var storage: Array = []
 var allow_babies := true
+## aquário: peixes dentro [{"id", "q"}]
+var fish: Array = []
+var _swimmers: Array = []
 
 var _sprite: Sprite2D
 var _bubble: Sprite2D
@@ -67,7 +70,15 @@ func setup(p_kind: String, p_origin: Vector2i, tile: int) -> void:
 
 
 func is_interactive() -> bool:
-	return kind in ["workbench", "feeder", "barn", "coop", "silo"] or is_machine()
+	return kind in ["workbench", "feeder", "barn", "coop", "silo"] or is_machine() or is_aquarium()
+
+
+func is_aquarium() -> bool:
+	return ItemDB.PLACEABLES[kind].has("aquarium")
+
+
+func aquarium_capacity() -> int:
+	return int(ItemDB.PLACEABLES[kind].get("aquarium", 0))
 
 
 func is_machine() -> bool:
@@ -77,7 +88,7 @@ func is_machine() -> bool:
 func can_pick_up() -> bool:
 	if ItemDB.PLACEABLES[kind].get("fixed", false):
 		return false
-	return job.is_empty() and hay == 0
+	return job.is_empty() and hay == 0 and fish.is_empty()
 
 
 func job_ready() -> bool:
@@ -112,6 +123,9 @@ func refresh() -> void:
 			_interact.label = "Silo (%d)" % hay
 		"feeder":
 			_interact.label = "Comedouro (%d)" % hay
+		"aquarium_small", "aquarium_large", "fish_pond":
+			_interact.label = "%s (%d/%d)" % [ItemDB.item_name(kind), fish.size(), aquarium_capacity()]
+			_build_swimmers()
 		_:
 			if job_ready():
 				_interact.label = "Coletar"
@@ -128,6 +142,8 @@ func refresh() -> void:
 
 
 func _process(_d: float) -> void:
+	if not _swimmers.is_empty():
+		_animate_swimmers()
 	if _bubble and _bubble.visible:
 		_bubble.position.y = _sprite.offset.y - 8 + sin(Time.get_ticks_msec() / 300.0) * 1.5
 
@@ -142,7 +158,7 @@ func insert(item_id: String) -> String:
 	elif m.has("input_type"):
 		ok = ItemDB.get_item(item_id).get("type", "") == m["input_type"]
 	if not ok:
-		var need: String = ItemDB.item_name(m["input"]) if m.has("input") else "uma colheita"
+		var need: String = ItemDB.item_name(m["input"]) if m.has("input") else ("um peixe" if m["input_type"] == "fish" else "uma colheita")
 		return "Precisa de %s na mão." % need
 	var slot = Game.inventory[Game.selected_slot]
 	var q: int = int(slot.get("q", 0)) if slot != null and slot["id"] == item_id else 0
@@ -164,9 +180,60 @@ func collect() -> String:
 	return "+1 %s" % ItemDB.item_name(out)
 
 
+# ------------------------------------------------------------------ aquário
+## Segurando um peixe: coloca. Senão: tira o último. Retorna mensagem.
+func aquarium_use(held: String) -> String:
+	if held != "" and ItemDB.get_item(held).get("type", "") == "fish":
+		if fish.size() >= aquarium_capacity():
+			return "%s está cheio (%d/%d)." % [ItemDB.item_name(kind), fish.size(), aquarium_capacity()]
+		var slot = Game.inventory[Game.selected_slot]
+		var q: int = int(slot.get("q", 0)) if slot != null else 0
+		Game.remove_from_slot(Game.selected_slot, 1)
+		fish.append({"id": held, "q": q})
+		refresh()
+		return "Colocou %s no %s." % [ItemDB.item_name(held), ItemDB.item_name(kind).to_lower()]
+	if fish.is_empty():
+		return "Segure um peixe e toque para colocar no %s." % ItemDB.item_name(kind).to_lower()
+	var f: Dictionary = fish.back()
+	if Game.add_item(f["id"], 1, int(f.get("q", 0))) > 0:
+		return "A mochila está cheia."
+	fish.pop_back()
+	refresh()
+	return "Tirou %s do %s." % [ItemDB.item_name(f["id"]), ItemDB.item_name(kind).to_lower()]
+
+
+func _build_swimmers() -> void:
+	for s in _swimmers:
+		s["node"].queue_free()
+	_swimmers.clear()
+	var tank: Rect2 = ItemDB.PLACEABLES[kind]["tank"]
+	for i in fish.size():
+		var spr := Sprite2D.new()
+		spr.texture = ItemDB.icon(fish[i]["id"])
+		var px := 14.0 if kind == "fish_pond" else 11.0
+		spr.scale = Vector2.ONE * (px / spr.texture.get_width())
+		add_child(spr)
+		var lane := tank.position.y + tank.size.y * (0.3 + 0.5 * float(i % 3) / 2.0)
+		_swimmers.append({"node": spr, "phase": randf() * TAU, "speed": randf_range(0.35, 0.7), "lane": lane})
+	_animate_swimmers()
+
+
+func _animate_swimmers() -> void:
+	var tank: Rect2 = ItemDB.PLACEABLES[kind]["tank"]
+	var t := Time.get_ticks_msec() / 1000.0
+	for s in _swimmers:
+		var a: float = t * s["speed"] + s["phase"]
+		var spr: Sprite2D = s["node"]
+		var half := spr.texture.get_width() * spr.scale.x / 2.0
+		spr.position = Vector2(tank.position.x + half + (sin(a) * 0.5 + 0.5) * (tank.size.x - half * 2.0),
+			s["lane"] + sin(a * 3.0) * 1.0)
+		spr.flip_h = cos(a) > 0.0      # vira para o lado em que nada
+
+
 # ------------------------------------------------------------------ salvar
 func serialize() -> Dictionary:
-	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay, "level": level, "storage": storage, "babies": allow_babies}
+	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay, "level": level, "storage": storage,
+		"babies": allow_babies, "fish": fish}
 
 
 func restore(d: Dictionary) -> void:
@@ -177,4 +244,6 @@ func restore(d: Dictionary) -> void:
 	allow_babies = bool(d.get("babies", true))
 	var st = d.get("storage", [])
 	storage = st if st is Array else []
+	var fl = d.get("fish", [])
+	fish = fl if fl is Array else []
 	refresh()

@@ -33,6 +33,10 @@ static func ensure_loaded() -> void:
 					if fd.icon != "":
 						item["tex"] = fd.icon
 					ItemDB.register(fd.id, item)
+				# peixe defumado (Defumador): vale o dobro do peixe + 15
+				var base_sell: int = int(ItemDB.ITEMS[fd.id]["sell"]) if ItemDB.ITEMS.has(fd.id) else fd.sell
+				ItemDB.register("smoked_" + fd.id, {"name": fd.name + " Defumado", "type": "product", "sell": base_sell * 2 + 15,
+					"tex": "res://assets/sprites/fishing/smoked_fish.png", "desc": "Defumado no capricho. Dura muito e vale o dobro."})
 
 
 static func get_fish(id: String) -> FishData:
@@ -248,3 +252,90 @@ static func weather_text(f: FishData) -> String:
 	if not f.favored_weathers.is_empty():
 		parts.append("mais com " + ", ".join(Array(f.favored_weathers).map(func(w): return CropDB.weather(w).name.to_lower())))
 	return "; ".join(parts) if parts.size() > 0 else "qualquer clima"
+
+
+# ------------------------------------------------------------------ títulos (metas de longo prazo)
+## id, nome, meta, recompensa (moedas + item opcional)
+const TITLES := [
+	{"id": "novice", "name": "Pescador Iniciante", "goal": "Descobrir 5 espécies", "money": 200},
+	{"id": "valley", "name": "Pescador do Vale", "goal": "Descobrir 12 espécies", "money": 600, "item": "bait_fly", "qty": 5},
+	{"id": "master", "name": "Mestre Pescador", "goal": "Descobrir 20 espécies", "money": 2000},
+	{"id": "legend_hunter", "name": "Caçador de Lendas", "goal": "Pescar um peixe lendário", "money": 500},
+	{"id": "lake_legend", "name": "Lenda do Lago", "goal": "Pescar os 4 lendários", "money": 5000},
+	{"id": "treasure_hunter", "name": "Caçador de Tesouros", "goal": "Encontrar 8 tipos de tesouro", "money": 800},
+	{"id": "fungo_friend", "name": "Amigo do Fungo", "goal": "Entregar 10 pedidos de pesca", "money": 1000, "item": "bait_treasure", "qty": 5},
+	{"id": "champion", "name": "Campeão do Lago", "goal": "Vencer um Torneio do Lago", "money": 500},
+	{"id": "aquarist", "name": "Aquarista", "goal": "Expor 5 espécies em aquários", "money": 600},
+	{"id": "dreamer", "name": "Sonhador", "goal": "Pescar o peixe secreto", "money": 3000},
+]
+
+
+static func _legends_caught() -> int:
+	var n := 0
+	for id in fish:
+		if fish[id].rarity == 5 and is_discovered(id):
+			n += 1
+	return n
+
+
+static func title_done(id: String) -> bool:
+	match id:
+		"novice":
+			return discovered_count() >= 5
+		"valley":
+			return discovered_count() >= 12
+		"master":
+			return discovered_count() >= 20
+		"legend_hunter":
+			return _legends_caught() >= 1
+		"lake_legend":
+			return _legends_caught() >= 4
+		"treasure_hunter":
+			return Game.treasure_log.size() >= 8
+		"fungo_friend":
+			return int(Game.fish_flags.get("requests_done", 0)) >= 10
+		"champion":
+			return int(Game.fish_flags.get("tour_wins", 0)) >= 1
+		"aquarist":
+			return int(Game.fish_flags.get("aquarium_species", 0)) >= 5
+		"dreamer":
+			return is_discovered("fish_dream")
+	return false
+
+
+static func titles() -> Array:
+	var t = Game.fish_flags.get("titles", [])
+	return t if t is Array else []
+
+
+## Título exibido (o último conquistado) ou "".
+static func current_title() -> String:
+	var t := titles()
+	if t.is_empty():
+		return ""
+	for d in TITLES:
+		if d["id"] == t.back():
+			return d["name"]
+	return ""
+
+
+## Confere metas novas, entrega recompensas e devolve o aviso ("" se nada).
+## aquarium_species >= 0 atualiza a contagem dos aquários.
+static func check_titles(aquarium_species: int = -1) -> String:
+	ensure_loaded()
+	if aquarium_species >= 0:
+		Game.fish_flags["aquarium_species"] = aquarium_species
+	var got := titles()
+	var out := []
+	for d in TITLES:
+		if got.has(d["id"]) or not title_done(d["id"]):
+			continue
+		got.append(d["id"])
+		Game.add_money(int(d["money"]))
+		var reward := "%d moedas" % int(d["money"])
+		if d.has("item"):
+			Game.add_item(d["item"], int(d["qty"]))
+			reward += " e %d %s" % [int(d["qty"]), ItemDB.item_name(d["item"])]
+		out.append("Novo título: %s! (%s) +%s" % [d["name"], d["goal"], reward])
+	Game.fish_flags["titles"] = got
+	return "\n".join(out)

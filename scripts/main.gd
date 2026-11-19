@@ -59,7 +59,8 @@ func _ready() -> void:
 		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():
 			var res := FishQuests.finish_tournament()
 			if res != "":
-				Game.toast.emit(res))
+				var tt := FishDB.check_titles()
+				Game.toast.emit(res + ("\n" + tt if tt != "" else "")))
 	world.bin_used.connect(_sell_all)
 	world.workbench_used.connect(func(): hud.open_crafting())
 	world.baby_born.connect(func(r):
@@ -130,7 +131,8 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 func _on_shop() -> void:
 	var delivered := FishQuests.try_deliver()
 	if delivered != "":
-		Game.toast.emit(delivered)
+		var tt := FishDB.check_titles()
+		Game.toast.emit(delivered + ("\n" + tt if tt != "" else ""))
 		hud.open_shop()
 		return
 	if Game.count_item("fungo_glasses") > 0:

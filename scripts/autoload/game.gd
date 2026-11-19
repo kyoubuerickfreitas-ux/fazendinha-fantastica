@@ -37,7 +37,7 @@ var temperature_yesterday := 16.0
 ## previsão dos próximos dias: [{"weather", "temp"}]
 var forecast: Array = []
 var water := WATER_CAPACITY
-var tool_levels := {"watering_can": 1, "hoe": 1}
+var tool_levels := {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
 ## Pesca: registro do Livro ({id: {n, first, max_size, max_weight}}), XP, tesouros e marcadores
 var fish_log := {}
 var fishing_xp := 0
@@ -80,7 +80,7 @@ func reset_new_game() -> void:
 	inventory.resize(INV_SIZE)
 	selected_slot = 0
 	equipped_bait = ""
-	tool_levels = {"watering_can": 1, "hoe": 1}
+	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
 	fish_log = {}
 	fishing_xp = 0
 	treasure_log = {}
@@ -350,7 +350,10 @@ func load_game() -> Dictionary:
 	var ff = data.get("fish_flags", {})
 	fish_flags = ff if ff is Dictionary else {}
 	var tl = data.get("tools", {})
-	tool_levels = {"watering_can": int(tl.get("watering_can", 1)), "hoe": int(tl.get("hoe", 1))} if tl is Dictionary else {"watering_can": 1, "hoe": 1}
+	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
+	if tl is Dictionary:
+		for k in tool_levels:
+			tool_levels[k] = int(tl.get(k, 1))
 	selected_slot = int(data.get("selected_slot", 0))
 	var inv: Array = data.get("inventory", [])
 	inventory.clear()

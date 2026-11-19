@@ -590,8 +590,10 @@ func open_fish_book(filter: String = "") -> void:
 	var ids := FishDB.all_ids()
 	var lvl := FishDB.level()
 	var nxt := FishDB.xp_for_level(lvl + 1)
-	_book_body.add_child(UIStyle.label("Descobertos %d de %d · Nível de pesca %d%s" % [FishDB.discovered_count(),
-		ids.size(), lvl, "" if lvl >= FishDB.MAX_LEVEL else " (%d/%d XP)" % [Game.fishing_xp, nxt]], 12, UIStyle.WOOD_DARK))
+	var title := FishDB.current_title()
+	_book_body.add_child(UIStyle.label("Descobertos %d de %d · Nível de pesca %d%s%s" % [FishDB.discovered_count(),
+		ids.size(), lvl, "" if lvl >= FishDB.MAX_LEVEL else " (%d/%d XP)" % [Game.fishing_xp, nxt],
+		" · " + title if title != "" else ""], 12, UIStyle.WOOD_DARK))
 	# filtros
 	var tabs := HBoxContainer.new()
 	for f in [["all", "Todos"], ["season", "Esta estação"], ["lake", "Lago"], ["river", "Rio"], ["pond", "Laguinho"], ["legend", "Lendários"], ["treasure", "Tesouros"], ["quests", "Pedidos"]]:
@@ -699,6 +701,10 @@ func _fill_quests() -> void:
 		lines.append(["Todo dia %d de cada estação, das 8h às 16h. Próximo: em %d dia(s)." % [FishQuests.TOURNAMENT_DAY, wait], 11])
 	lines.append(["Pontos = tamanho do peixe (cm) × bônus da raridade. Vale o seu melhor peixe do dia.", 10])
 	lines.append(["Vitórias: %d de %d torneios" % [int(Game.fish_flags.get("tour_wins", 0)), int(Game.fish_flags.get("tour_played", 0))], 10])
+	lines.append(["Títulos (%d/%d)" % [FishDB.titles().size(), FishDB.TITLES.size()], 13])
+	for d in FishDB.TITLES:
+		var done: bool = FishDB.titles().has(d["id"])
+		lines.append(["%s — %s%s" % [d["name"], d["goal"], " (conquistado!)" if done else ""], 10])
 	for l in lines:
 		var lab := UIStyle.label(l[0], l[1], UIStyle.WOOD if l[1] == 13 else UIStyle.WOOD_DARK)
 		lab.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -914,11 +920,7 @@ func _refresh_crafting() -> void:
 				return
 			if Game.add_item(id, int(r["qty"])) > 0:
 				return
-			for k in cost:
-				if k == "money":
-					Game.add_money(-int(cost[k]))
-				else:
-					Game.remove_item(k, int(cost[k]))
+			ItemDB.pay(cost)
 			show_toast("Fabricou %s!" % name)
 			_refresh_crafting())
 		row.add_child(b)
@@ -929,10 +931,12 @@ func _refresh_crafting() -> void:
 		var lvl := Game.tool_level(tool)
 		var ups: Array = ItemDB.TOOL_UPGRADES[tool]
 		if lvl > ups.size():
-			_craft_list.add_child(_shop_row(tool, "%s — nível máximo (área 3×3)" % ItemDB.item_name(tool)))
+			_craft_list.add_child(_shop_row(tool, "%s — nível máximo" % ItemDB.item_name(tool)))
 			continue
 		var cost: Dictionary = ups[lvl - 1]
 		var effect := "3 canteiros em linha" if lvl == 1 else "área 3×3"
+		if tool == "fishing_rod":
+			effect = "fisgada mais longa, puxa com mais força"
 		if tool == "watering_can":
 			effect += ", %d de água" % (Game.WATER_CAPACITY * (lvl + 1))
 		var row := _shop_row(tool, "%s → nível %d (%s)\n%s" % [ItemDB.item_name(tool), lvl + 1, effect, ItemDB.cost_text(cost)])
@@ -942,11 +946,7 @@ func _refresh_crafting() -> void:
 		ub.pressed.connect(func():
 			if not ItemDB.can_afford(cost):
 				return
-			for k in cost:
-				if k == "money":
-					Game.add_money(-int(cost[k]))
-				else:
-					Game.remove_item(k, int(cost[k]))
+			ItemDB.pay(cost)
 			Game.tool_levels[tool] = lvl + 1
 			Game.inventory_changed.emit()
 			show_toast("%s agora é nível %d!" % [ItemDB.item_name(tool), lvl + 1])

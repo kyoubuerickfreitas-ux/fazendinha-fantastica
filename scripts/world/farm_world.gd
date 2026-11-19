@@ -588,6 +588,16 @@ func assign_homes() -> void:
 		a.area = _enclosures[r.home]["rect"] if _enclosures.has(r.home) else _pasture_area()
 
 
+## Espécies diferentes expostas em todos os aquários.
+func aquarium_species() -> int:
+	var seen := {}
+	for p in placeables:
+		if is_instance_valid(p) and p.is_aquarium():
+			for f in p.fish:
+				seen[f["id"]] = true
+	return seen.size()
+
+
 func _key(p: Placeable) -> String:
 	return "%d,%d" % [p.origin.x, p.origin.y]
 
@@ -676,6 +686,11 @@ func _on_placeable_used(p: Placeable) -> void:
 			var list := records().filter(func(r): return r.home == k)
 			animal_list_requested.emit(list, "%s nível %d (%d/%d)" % [ItemDB.item_name(p.kind), p.level, list.size(),
 				ItemDB.building_capacity(p.kind, p.level)], p)
+		"aquarium_small", "aquarium_large", "fish_pond":
+			msg = p.aquarium_use(held)
+			var t := FishDB.check_titles(aquarium_species())
+			if t != "":
+				msg += "\n" + t
 		"silo":
 			if held == "hay":
 				var n := store_hay(Game.count_item("hay"))

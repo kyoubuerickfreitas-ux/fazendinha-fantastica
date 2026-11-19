@@ -66,7 +66,7 @@ func on_use(cell: Vector2i) -> String:
 		State.BITE:
 			_hook()
 		State.REELING:
-			_progress += TAP
+			_progress += TAP + 1.5 * (rod_level() - 1)     # vara melhor puxa mais por toque
 			_bar.value = _progress
 			if _progress >= 100.0:
 				_catch()
@@ -142,9 +142,9 @@ func _catch() -> void:
 				text += "\nO troféu não coube na mochila: abra espaço e pesque de novo."
 	if reg["level_up"] > 0:
 		text += "\nNível de pesca %d!" % reg["level_up"]
-	var extra := FishQuests.on_catch(_fish, m)
-	if extra != "":
-		text += "\n" + extra
+	for extra in [FishQuests.on_catch(_fish, m), FishDB.check_titles()]:
+		if extra != "":
+			text += "\n" + extra
 	Game.toast.emit(text)
 	caught.emit(_fish, m)
 
@@ -161,9 +161,17 @@ func _catch_treasure() -> void:
 	var lvl_up := FishDB.add_xp(4 + 6 * t.rarity)
 	if lvl_up > 0:
 		text += "\nNível de pesca %d!" % lvl_up
+	var tt := FishDB.check_titles()
+	if tt != "":
+		text += "\n" + tt
 	FX.spawn(world, "harvest", _bobber_pos)
 	Game.toast.emit(text)
 	treasure_found.emit(id)
+
+
+## Nível da vara (melhorias na bancada): 1..3
+func rod_level() -> int:
+	return Game.tool_level("fishing_rod")
 
 
 ## Contexto do lance atual (lugar + momento).
@@ -186,7 +194,7 @@ func _process(delta: float) -> void:
 				state = State.BITE
 				var lvl := FishDB.level()
 				var win: float = 1.1 if _treasure != "" else BITE_WINDOW[FishDB.get_fish(_fish).rarity]
-				_timer = win * (1.0 + 0.04 * (lvl - 1))
+				_timer = win * (1.0 + 0.04 * (lvl - 1)) * (1.0 + 0.15 * (rod_level() - 1))
 				FX.spawn(world, "water", _bobber_pos)
 		State.BITE:
 			_timer -= delta
@@ -200,6 +208,7 @@ func _process(delta: float) -> void:
 				var fd := FishDB.get_fish(_fish)
 				pull = PULL[fd.rarity] if fd.difficulty <= 0.0 else lerpf(10.0, 40.0, fd.difficulty)
 			pull *= 1.0 - 0.035 * (FishDB.level() - 1)     # o nível deixa mais fácil puxar
+			pull *= 1.0 - 0.1 * (rod_level() - 1)          # e a vara melhorada também
 			_progress -= pull * delta
 			_timer -= delta
 			_bar.value = _progress

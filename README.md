@@ -35,7 +35,15 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - **Máquinas**: Prensa de Queijo (leite → queijo, 1 dia), Tear (lã → tecido, 1 dia), Pote de Conserva (qualquer colheita → geleia, 2 dias). Segure o item e toque na máquina
 - **Alimentação**: cada animal come 1 feno por dia do comedouro do pasto; sem comer, não produz
 - **Celeiro** (+4 animais grandes) e **Galinheiro** (+6 Piuplum); compre animais na barraca do Fungo
-- **Pesca** com 5 iscas e 20 peixes
+- **Pesca** (botão de usar com a vara: lançar, esperar o "!", fisgar e puxar tocando rápido)
+  - 25 peixes em fichas de dados (`data/fish/*.tres`): lago (raso e fundo), rio e laguinho; estação, horário e clima
+  - 7 raridades (Comum → Secreto); iscas mudam a chance de cada raridade; pistas no livro em vez de pura sorte
+  - Tamanho e peso de cada exemplar (grandes valem mais: qualidade prata/ouro), recordes e **nível de pesca** (1–10)
+  - **Livro de Pesca** (botão do livro): silhuetas dos não descobertos, ficha com onde/quando/clima/recorde/lenda
+  - **Lendários**: Rei-Musgo, Lua-de-Prata, Coração-de-Inverno, Guardião do Lago (precisa do mapa) e o secreto Peixe-Sonho; cada um dá um **troféu** de decoração
+  - **Tesouros** (`data/treasures/*.tres`): baús, moedas antigas, garrafas com mensagens/pistas, 4 pedaços de mapa, relíquias, pérola, objetos perdidos. A Isca Reluzente puxa mais tesouros
+  - **Pedidos do Fungo** (espécie, tamanho, qualidade, raridade, objeto perdido) e o **Torneio do Lago** no dia 13 de cada estação (8h–16h) contra 3 rivais
+  - **Aquário pequeno/grande e laguinho ornamental** (peixes nadando), **Defumador** (peixe → defumado, vale o dobro), **Adubo de Peixe**, **vara melhorada** na bancada e **10 títulos** com recompensas
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -97,9 +105,11 @@ scenes/main.tscn            cena inicial
 scripts/main.gd             monta mundo, câmera, HUD, dia/noite, chuva, sono, save
 scripts/autoload/game.gd    estado global: dinheiro, energia, tempo, inventário, save
 scripts/data/item_db.gd     itens, receitas e preços
-scripts/systems/            calendário, catálogo de plantas e regras da agricultura
+scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests)
 data/crops/*.tres           uma ficha por planta  ← para criar uma planta nova, copie uma ficha
 data/seasons/*.tres         as 4 estações (temperatura, chuva, cor)
+data/fish/*.tres            peixes (FishData)        ← gerados por tools/make_fish_data.py a partir de tools/fish_table.py
+data/treasures/*.tres       tesouros (TreasureData)  ← tools/make_treasure_data.py + tools/treasure_table.py
 scripts/world/              mapa (farm_world), objetos (prop), NPCs, interações
 scripts/player/player.gd    personagem
 scripts/ui/                 HUD, joystick, botões de toque, slots, estilo

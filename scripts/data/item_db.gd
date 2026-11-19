@@ -84,6 +84,11 @@ const ITEMS := {
 	"trophy_guardian": {"name": "Troféu do Guardião do Lago", "tex": "res://assets/sprites/craft/icon_trophy_guardian.png", "type": "placeable", "desc": "Prova de que você pescou o Guardião do Lago. Decoração."},
 	"trophy_dream": {"name": "Troféu do Peixe-Sonho", "tex": "res://assets/sprites/craft/icon_trophy_dream.png", "type": "placeable", "desc": "Ninguém vai acreditar. Mas o troféu está aí. Decoração."},
 	"trophy_tournament": {"name": "Taça do Lago", "tex": "res://assets/sprites/craft/icon_trophy_tournament.png", "type": "placeable", "desc": "Campeão do Torneio do Lago! Decoração."},
+	"aquarium_small": {"name": "Aquário Pequeno", "tex": "res://assets/sprites/craft/icon_aquarium_small.png", "type": "placeable", "desc": "Segure um peixe e toque para colocar (cabe 1). Toque de mão vazia para tirar."},
+	"aquarium_large": {"name": "Aquário Grande", "tex": "res://assets/sprites/craft/icon_aquarium_large.png", "type": "placeable", "desc": "Cabem 3 peixes. Segure um peixe e toque para colocar."},
+	"fish_pond": {"name": "Laguinho Ornamental", "tex": "res://assets/sprites/craft/icon_fish_pond.png", "type": "placeable", "desc": "Cabem 5 peixes, nadando ao ar livre."},
+	"smoker": {"name": "Defumador", "tex": "res://assets/sprites/craft/icon_smoker.png", "type": "placeable", "desc": "Qualquer peixe vira peixe defumado (vale o dobro) em 1 dia."},
+	"fert_fish": {"name": "Adubo de Peixe", "tex": "res://assets/sprites/craft/icon_fert_fish.png", "type": "fertilizer", "sell": 12, "desc": "Use num canteiro: muita fertilidade e cresce 10% mais rápido."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
@@ -145,6 +150,10 @@ const PLACEABLES := {
 	"trophy_guardian": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"trophy_dream": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
 	"trophy_tournament": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"aquarium_small": {"size": Vector2i(1, 1), "solid": true, "pad": 2, "aquarium": 1, "tank": Rect2(-13, -28, 25, 15)},
+	"aquarium_large": {"size": Vector2i(2, 1), "solid": true, "pad": 2, "aquarium": 3, "tank": Rect2(-29, -32, 57, 19)},
+	"fish_pond": {"size": Vector2i(2, 2), "solid": true, "pad": 2, "aquarium": 5, "tank": Rect2(-18, -34, 35, 22)},
+	"smoker": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -159,6 +168,7 @@ const MACHINES := {
 	"spinning_wheel": {"input": "wool", "output": "yarn", "days": 1},
 	"oil_press": {"input": "truffle", "output": "truffle_oil", "days": 2},
 	"incubator": {"input": "fertile_egg", "output": "hatch:piuplum", "days": 4},
+	"smoker": {"input_type": "fish", "prefix": "smoked_", "days": 1},
 }
 
 ## Melhorias de ferramenta (na bancada): custo para o nível 2 e 3.
@@ -166,6 +176,7 @@ const MACHINES := {
 const TOOL_UPGRADES := {
 	"watering_can": [{"stone": 25, "money": 800}, {"stone": 60, "truffle": 1, "money": 2500}],
 	"hoe": [{"stone": 25, "money": 600}, {"stone": 60, "money": 2000}],
+	"fishing_rod": [{"wood": 20, "fiber": 10, "money": 700}, {"stone": 40, "pearl": 1, "money": 2200}],
 }
 
 ## Adubos: efeitos no canteiro (duram até a colheita).
@@ -174,6 +185,7 @@ const FERTILIZERS := {
 	"fert_growth": {"speed": 1.25},
 	"fert_water": {"retention": 0.5},
 	"fert_quality": {"quality": 0.2, "fert": 0.05},
+	"fert_fish": {"fert": 0.25, "speed": 1.1},
 }
 
 ## Receitas da bancada. cost: item -> quantidade ("money" = moedas).
@@ -188,6 +200,11 @@ const RECIPES := [
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
 	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
+	{"result": "fert_fish", "qty": 3, "cost": {"any_fish": 1, "fiber": 2}},
+	{"result": "smoker", "qty": 1, "cost": {"wood": 20, "stone": 15}},
+	{"result": "aquarium_small", "qty": 1, "cost": {"wood": 8, "stone": 4}},
+	{"result": "aquarium_large", "qty": 1, "cost": {"wood": 20, "stone": 12, "relic_shell": 1}},
+	{"result": "fish_pond", "qty": 1, "cost": {"stone": 40, "pearl": 1}},
 	{"result": "bait_treasure", "qty": 3, "cost": {"old_coin": 1, "fiber": 3}},
 	{"result": "fiber", "qty": 4, "cost": {"old_boot": 1}},
 	{"result": "scarecrow", "qty": 1, "cost": {"wood": 15, "fiber": 10}},
@@ -260,6 +277,8 @@ static func register(id: String, data: Dictionary) -> void:
 ## Produto da máquina para esta entrada (regras por categoria, ex.: fruta -> geleia).
 static func machine_output(machine: String, item_id: String) -> String:
 	var m: Dictionary = MACHINES[machine]
+	if m.has("prefix"):
+		return m["prefix"] + item_id
 	for rule in m.get("rules", []):
 		var cat: String = rule.get("category", "*")
 		if cat == "*" or CropDB.category_of(item_id) == cat:
@@ -267,9 +286,13 @@ static func machine_output(machine: String, item_id: String) -> String:
 	return m["output"]
 
 
+## "any_fish" no custo = qualquer peixe comum (gasta os mais baratos primeiro; nunca lendários)
 static func can_afford(cost: Dictionary) -> bool:
 	for k in cost:
-		if k == "money":
+		if k == "any_fish":
+			if _cheap_fish_slots().size() < int(cost[k]):
+				return false
+		elif k == "money":
 			if Game.money < int(cost[k]):
 				return false
 		elif Game.count_item(k) < int(cost[k]):
@@ -277,10 +300,40 @@ static func can_afford(cost: Dictionary) -> bool:
 	return true
 
 
+## Paga um custo (moedas e itens). Use depois de can_afford.
+static func pay(cost: Dictionary) -> void:
+	for k in cost:
+		if k == "money":
+			Game.add_money(-int(cost[k]))
+		elif k == "any_fish":
+			for i in int(cost[k]):
+				var slots := _cheap_fish_slots()
+				if not slots.is_empty():
+					Game.remove_from_slot(slots[0], 1)
+		else:
+			Game.remove_item(k, int(cost[k]))
+
+
+## Índices da mochila com peixes não lendários, do mais barato ao mais caro (um índice por unidade).
+static func _cheap_fish_slots() -> Array:
+	var out := []
+	for i in Game.INV_SIZE:
+		var s = Game.inventory[i]
+		if s != null and get_item(s["id"]).get("type", "") == "fish":
+			var f := FishDB.get_fish(s["id"])
+			if f == null or not f.is_legendary():
+				for n in int(s["qty"]):
+					out.append(i)
+	out.sort_custom(func(a, b): return sell_price(Game.inventory[a]["id"]) < sell_price(Game.inventory[b]["id"]))
+	return out
+
+
 static func cost_text(cost: Dictionary) -> String:
 	var parts := []
 	for k in cost:
-		if k == "money":
+		if k == "any_fish":
+			parts.append("%d peixe(s) qualquer" % int(cost[k]))
+		elif k == "money":
 			parts.append("%d moedas" % int(cost[k]))
 		else:
 			parts.append("%d %s" % [int(cost[k]), item_name(k)])
