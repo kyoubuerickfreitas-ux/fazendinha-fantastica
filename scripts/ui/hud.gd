@@ -11,6 +11,7 @@ signal quit_confirmed
 const PLAYER_SHEET := preload("res://assets/sprites/player.png")
 
 var player: Player
+var world: FarmWorld
 
 var _root: Control
 var _health_bar: ProgressBar
@@ -38,6 +39,9 @@ var _shop: Control
 var _shop_buy: VBoxContainer
 var _shop_sell: VBoxContainer
 var _shop_money: Label
+var _craft: Control
+var _craft_list: VBoxContainer
+var _shop_animals: VBoxContainer
 var _confirm: Control
 var _confirm_label: Label
 var _confirm_action := Callable()
@@ -59,6 +63,7 @@ func _ready() -> void:
 	_build_toast()
 	_build_backpack()
 	_build_shop()
+	_build_crafting()
 	_build_confirm()
 	_build_fade()
 
@@ -344,8 +349,59 @@ func _build_shop() -> void:
 		cols.add_child(col)
 		if which == "buy":
 			_shop_buy = list
+			var animals_title := UIStyle.label("Animais", 13, UIStyle.WOOD)
+			list.add_child(animals_title)
+			_shop_animals = VBoxContainer.new()
+			list.add_child(_shop_animals)
+			list.add_child(UIStyle.label("Itens", 13, UIStyle.WOOD))
 		else:
 			_shop_sell = list
+
+
+func _build_crafting() -> void:
+	var w := _make_window("Bancada de Trabalho", Vector2(420, 0))
+	_craft = w[0]
+	var v: VBoxContainer = w[1]
+	v.add_child(UIStyle.label("Junte madeira, pedra e fibra e fabrique. Objetos vão para a mochila: selecione e toque no chão para construir.", 10, UIStyle.EARTH))
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 220)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_craft_list = VBoxContainer.new()
+	_craft_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_craft_list)
+	v.add_child(scroll)
+
+
+func open_crafting() -> void:
+	_open(_craft)
+	_refresh_crafting()
+
+
+func _refresh_crafting() -> void:
+	for c in _craft_list.get_children():
+		c.queue_free()
+	for r in ItemDB.RECIPES:
+		var id: String = r["result"]
+		var cost: Dictionary = r["cost"]
+		var name := ItemDB.item_name(id) + (" x%d" % int(r["qty"]) if int(r["qty"]) > 1 else "")
+		var row := _shop_row(id, "%s\n%s" % [name, ItemDB.cost_text(cost)])
+		var b := Button.new()
+		b.text = "Fazer"
+		b.disabled = not ItemDB.can_afford(cost)
+		b.pressed.connect(func():
+			if not ItemDB.can_afford(cost):
+				return
+			if Game.add_item(id, int(r["qty"])) > 0:
+				return
+			for k in cost:
+				if k == "money":
+					Game.add_money(-int(cost[k]))
+				else:
+					Game.remove_item(k, int(cost[k]))
+			show_toast("Fabricou %s!" % name)
+			_refresh_crafting())
+		row.add_child(b)
+		_craft_list.add_child(row)
 
 
 func _build_confirm() -> void:
@@ -458,11 +514,47 @@ func _refresh_backpack() -> void:
 func _refresh_shop() -> void:
 	_shop_money.text = "Moedas: %d" % Game.money
 	for c in _shop_buy.get_children():
+		if c is HBoxContainer:
+			c.queue_free()
+	for c in _shop_animals.get_children():
 		c.queue_free()
+	for sp in ItemDB.ANIMAL_SHOP:
+		var price: int = ItemDB.ANIMAL_SHOP[sp]
+		var group := "bird" if sp in ItemDB.BIRDS else "big"
+		var has_room: bool = world != null and world.count_animals(group) < world.capacity(group)
+		var row := HBoxContainer.new()
+		var ic := TextureRect.new()
+		var at := AtlasTexture.new()
+		at.atlas = load("res://assets/sprites/animals/%s.png" % sp)
+		at.region = Rect2(0, 0, 64, 64)
+		ic.texture = at
+		ic.custom_minimum_size = Vector2(28, 28)
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		row.add_child(ic)
+		var info := "%s\n%d moedas" % [Animal.SPECIES[sp]["name"], price]
+		if world and not has_room:
+			info += " · precisa de %s" % ("galinheiro" if group == "bird" else "celeiro")
+		var l := UIStyle.label(info, 10, UIStyle.WOOD_DARK)
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		row.add_child(l)
+		var b := Button.new()
+		b.text = "Comprar"
+		b.disabled = Game.money < price or not has_room
+		b.pressed.connect(func():
+			if Game.money < price or world.count_animals(group) >= world.capacity(group):
+				return
+			Game.add_money(-price)
+			world.add_animal(sp)
+			show_toast("%s chegou ao pasto!" % Animal.SPECIES[sp]["name"])
+			_refresh_shop())
+		row.add_child(b)
+		_shop_animals.add_child(row)
 	for c in _shop_sell.get_children():
 		c.queue_free()
 
 	for id in ItemDB.SHOP_ITEMS:
+		if ItemDB.get_item(id).get("type", "") == "tool" and Game.count_item(id) > 0:
+			continue   # não vende de novo uma ferramenta que você já tem
 		var price: int = ItemDB.get_item(id)["buy"]
 		var row := _shop_row(id, "%s\n%d moedas" % [ItemDB.item_name(id).replace("Sementes de ", ""), price])
 		var b := Button.new()

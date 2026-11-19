@@ -24,6 +24,7 @@ func _ready() -> void:
 	var pos = saved.get("player", null)
 	player.position = Vector2(pos[0], pos[1]) if pos is Array else world.player_start
 	world.entities.add_child(player)
+	world.player = player
 
 	camera = Camera2D.new()
 	camera.limit_left = 0
@@ -54,6 +55,8 @@ func _ready() -> void:
 	world.house_door_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 	world.shop_requested.connect(_on_shop)
 	world.bin_used.connect(_sell_all)
+	world.workbench_used.connect(func(): hud.open_crafting())
+	hud.world = world
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")
 		_sleep(false))

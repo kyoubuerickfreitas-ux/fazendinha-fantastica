@@ -130,10 +130,12 @@ func _on_interact(_who: Node) -> void:
 	_refresh()
 
 
-## Chamado ao começar um novo dia.
-func new_day() -> void:
-	if petted_today and not has_product:
-		has_product = _rng.randf() < float(SPECIES[species]["chance"]) + friendship * 0.04
+## Chamado ao começar um novo dia. Só produz se comeu (feno no comedouro);
+## o carinho aumenta a amizade, que aumenta a chance de produzir.
+func new_day(fed: bool = true) -> void:
+	if fed and not has_product:
+		var chance := float(SPECIES[species]["chance"]) + friendship * 0.04 + (0.15 if petted_today else 0.0)
+		has_product = _rng.randf() < chance
 	petted_today = false
 	_refresh()
 

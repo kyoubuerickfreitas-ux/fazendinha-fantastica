@@ -12,6 +12,12 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Plantações: Couve-Musgo, Cenoura-Lunar, Tomate-Rubi e Flor-Estrela. Arar, plantar, regar, crescer por dia e colher
 - Limpeza do terreno: mato, pedras, tocos e árvores dão fibra, pedra e madeira
 - Animais no pasto (a leste): **Moombor** (leite), **Fofrança** (lã), **Catarrápio** (trufa) e **Piuplum** (ovos). Faça carinho uma vez por dia e no dia seguinte colete o produto
+- **Bancada de trabalho** (ao lado da casa): fabrique feno, comedouro, cercas, caminho de pedra, espantalho, Mosca de Fibra, máquinas, galinheiro e celeiro com madeira, pedra e fibra
+- **Construir**: selecione o objeto na barra; o quadrado verde mostra onde cabe. Toque para construir. Machado ou picareta desmontam (máquinas vazias e objetos pequenos)
+- **Máquinas**: Prensa de Queijo (leite → queijo, 1 dia), Tear (lã → tecido, 1 dia), Pote de Conserva (qualquer colheita → geleia, 2 dias). Segure o item e toque na máquina
+- **Alimentação**: cada animal come 1 feno por dia do comedouro do pasto; sem comer, não produz
+- **Celeiro** (+4 animais grandes) e **Galinheiro** (+6 Piuplum); compre animais na barraca do Fungo
+- **Pesca** com 5 iscas e 20 peixes
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -89,7 +95,7 @@ godot --path . -s tests/smoke_test.gd -- /caminho/para/capturas
 ## Próximos passos sugeridos
 
 1. Arte definitiva do personagem e dos tiles
-2. Animais: alimentação, filhotes, celeiro e galinheiro
+2. Animais: filhotes e reprodução
 3. Criação de personagem (espécie, cores, chapéus, roupas)
 4. Construções (celeiro, abrigos) e expansão do terreno
 5. Pesca, mineração e novas regiões

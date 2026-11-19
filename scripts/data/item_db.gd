@@ -17,7 +17,7 @@ const UI_ICON := {
 	"backpack": 21, "hand": 22, "bubble": 23, "moon": 24, "cloud": 25,
 }
 
-## type: tool | seed | crop | resource | product | fish | bait
+## type: tool | seed | crop | resource | product | fish | bait | placeable
 const ITEMS := {
 	"watering_can": {"name": "Regador", "icon": 0, "hd": 0, "type": "tool", "desc": "Rega a terra arada. Encha na água do lago."},
 	"hoe": {"name": "Enxada", "icon": 1, "hd": 1, "type": "tool", "desc": "Ara a grama para plantar."},
@@ -43,6 +43,24 @@ const ITEMS := {
 	"seed_tomato": {"name": "Sementes de Tomate-Rubi", "icon": 13, "hd": 11, "type": "seed", "crop": "tomato", "buy": 30, "desc": "Cresce em 4 dias."},
 	"seed_kale": {"name": "Sementes de Couve-Musgo", "icon": 14, "hd": 9, "type": "seed", "crop": "kale", "buy": 15, "desc": "Cresce em 2 dias."},
 	"seed_starflower": {"name": "Sementes de Flor-Estrela", "icon": 15, "hd": 12, "type": "seed", "crop": "starflower", "buy": 45, "desc": "Cresce em 5 dias."},
+
+	# produtos fabricados
+	"cheese": {"name": "Queijo de Moombor", "tex": "res://assets/sprites/craft/icon_cheese.png", "type": "product", "sell": 170, "desc": "Feito na prensa com leite de Moombor."},
+	"cloth": {"name": "Tecido de Fofrança", "tex": "res://assets/sprites/craft/icon_cloth.png", "type": "product", "sell": 220, "desc": "Tecido macio feito no tear."},
+	"jam": {"name": "Geleia Caseira", "tex": "res://assets/sprites/craft/icon_jam.png", "type": "product", "sell": 140, "desc": "Feita no pote de conserva com qualquer colheita."},
+	"hay": {"name": "Feno", "tex": "res://assets/sprites/craft/icon_hay.png", "type": "resource", "sell": 1, "desc": "Coloque no comedouro do pasto. Cada animal come 1 por dia."},
+
+	# objetos que dá para construir (type "placeable"; ver PLACEABLES)
+	"workbench": {"name": "Bancada de Trabalho", "tex": "res://assets/sprites/craft/icon_workbench.png", "type": "placeable", "desc": "Onde se fabrica tudo."},
+	"feeder": {"name": "Comedouro", "tex": "res://assets/sprites/craft/icon_feeder.png", "type": "placeable", "desc": "Ponha feno aqui para alimentar os animais."},
+	"cheese_press": {"name": "Prensa de Queijo", "tex": "res://assets/sprites/craft/icon_cheese_press.png", "type": "placeable", "desc": "Leite vira queijo em 1 dia."},
+	"loom": {"name": "Tear", "tex": "res://assets/sprites/craft/icon_loom.png", "type": "placeable", "desc": "Lã vira tecido em 1 dia."},
+	"preserves_jar": {"name": "Pote de Conserva", "tex": "res://assets/sprites/craft/icon_preserves_jar.png", "type": "placeable", "desc": "Qualquer colheita vira geleia em 2 dias."},
+	"fence": {"name": "Cerca de Madeira", "tex": "res://assets/sprites/craft/icon_fence.png", "type": "placeable", "desc": "Decoração. Bloqueia a passagem."},
+	"stone_path": {"name": "Caminho de Pedra", "tex": "res://assets/sprites/craft/icon_stone_path.png", "type": "placeable", "desc": "Chão decorativo."},
+	"scarecrow": {"name": "Espantalho", "tex": "res://assets/sprites/craft/icon_scarecrow.png", "type": "placeable", "desc": "Decoração com cara de amigo."},
+	"barn": {"name": "Celeiro", "tex": "res://assets/sprites/craft/icon_barn.png", "type": "placeable", "desc": "Abriga +4 animais grandes (Moombor, Fofrança, Catarrápio)."},
+	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"fishing_rod": {"name": "Vara de Pesca", "icon": 0, "hd": 7, "type": "tool", "buy": 100, "desc": "Use na água do lago. Coloque uma isca para pescar melhor."},
 
@@ -81,6 +99,50 @@ const CROPS := {
 	"kale": {"row": 2, "days": 2, "produce": "kale", "amount": 1},
 	"starflower": {"row": 3, "days": 5, "produce": "starflower", "amount": 1},
 }
+
+## Objetos construíveis. size = células (largura, altura); a célula mirada é a de baixo, no meio.
+## solid = bloqueia a passagem; floor = desenhado no chão; machine = máquina de produção.
+const PLACEABLES := {
+	"workbench": {"size": Vector2i(2, 1), "solid": true, "pad": 4},
+	"feeder": {"size": Vector2i(1, 1), "solid": true, "pad": 2},
+	"cheese_press": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"loom": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"preserves_jar": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"fence": {"size": Vector2i(1, 1), "solid": true, "pad": 1},
+	"stone_path": {"size": Vector2i(1, 1), "solid": false, "floor": true, "pad": 0},
+	"scarecrow": {"size": Vector2i(1, 1), "solid": true, "pad": 3},
+	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
+	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
+}
+
+## Máquinas: entrada (item ou tipo "crop") -> saída, em dias.
+const MACHINES := {
+	"cheese_press": {"input": "milk", "output": "cheese", "days": 1},
+	"loom": {"input": "wool", "output": "cloth", "days": 1},
+	"preserves_jar": {"input_type": "crop", "output": "jam", "days": 2},
+}
+
+## Receitas da bancada. cost: item -> quantidade ("money" = moedas).
+const RECIPES := [
+	{"result": "hay", "qty": 3, "cost": {"fiber": 2}},
+	{"result": "feeder", "qty": 1, "cost": {"wood": 10}},
+	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
+	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
+	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
+	{"result": "scarecrow", "qty": 1, "cost": {"wood": 15, "fiber": 10}},
+	{"result": "cheese_press", "qty": 1, "cost": {"wood": 20, "stone": 10}},
+	{"result": "loom", "qty": 1, "cost": {"wood": 25, "fiber": 15}},
+	{"result": "preserves_jar", "qty": 1, "cost": {"wood": 15, "stone": 10}},
+	{"result": "workbench", "qty": 1, "cost": {"wood": 30}},
+	{"result": "coop", "qty": 1, "cost": {"wood": 80, "stone": 40, "money": 500}},
+	{"result": "barn", "qty": 1, "cost": {"wood": 120, "stone": 60, "money": 1000}},
+]
+
+## Animais à venda no Fungo: precisam de espaço (celeiro/galinheiro).
+const ANIMAL_SHOP := {"moombor": 800, "fofranca": 900, "catarrapio": 1000, "piuplum": 300}
+const BIRDS := ["piuplum"]
+const BASE_CAPACITY := {"big": 3, "bird": 2}
+const BUILDING_CAPACITY := {"barn": 4, "coop": 6}
 
 const SHOP_SEEDS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower"]
 ## Peixes: raridade 0 comum, 1 incomum, 2 raro, 3 lendário; time: day | night | any; rain: aparece mais na chuva
@@ -126,6 +188,26 @@ const SHOP_ITEMS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower
 const MAX_STACK := 99
 
 
+static func can_afford(cost: Dictionary) -> bool:
+	for k in cost:
+		if k == "money":
+			if Game.money < int(cost[k]):
+				return false
+		elif Game.count_item(k) < int(cost[k]):
+			return false
+	return true
+
+
+static func cost_text(cost: Dictionary) -> String:
+	var parts := []
+	for k in cost:
+		if k == "money":
+			parts.append("%d moedas" % int(cost[k]))
+		else:
+			parts.append("%d %s" % [int(cost[k]), item_name(k)])
+	return ", ".join(parts)
+
+
 static func has(id: String) -> bool:
 	return ITEMS.has(id)
 
@@ -156,8 +238,16 @@ static func icon_index_texture(index: int) -> AtlasTexture:
 	return t
 
 
-static func icon(id: String) -> AtlasTexture:
+static var _tex_cache := {}
+
+
+static func icon(id: String) -> Texture2D:
 	var item := get_item(id)
+	if item.has("tex"):
+		var path: String = item["tex"]
+		if not _tex_cache.has(path):
+			_tex_cache[path] = load(path)
+		return _tex_cache[path]
 	if item.has("hd"):
 		var t := AtlasTexture.new()
 		t.atlas = ICONS_HD

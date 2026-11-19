@@ -29,3 +29,6 @@ São gerados a partir das folhas originais em `assets/source/animals/` por `tool
 
 ## Ícones HD
 `items_hd.png`: ícones 32×32, 16 por linha (ferramentas, fibra, broto, vara de pesca, sacos de sementes, 24 frutas/legumes, produtos dos animais e 20 peixes; a lista completa está em `ORDER`), gerados por `tools/import_icons.py` a partir de `assets/source/icons/`. Itens com o campo `hd` em `item_db.gd` usam este atlas.
+
+## Fabricação e construção
+`craft/`: bancada, prensa de queijo, tear, pote de conserva, comedouro (vazio e cheio), cerca, caminho de pedra, espantalho, celeiro e galinheiro, mais ícones (`icon_*.png`) de queijo, tecido, geleia e feno. Provisórios, gerados por `tools/generate_craft_art.py`. Para trocar, substitua o PNG com o mesmo nome (o tamanho pode mudar; a base da imagem fica na base do objeto).

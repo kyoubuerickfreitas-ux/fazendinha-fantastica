@@ -29,12 +29,16 @@ const ENERGY_COST := {"hoe": 2.0, "watering_can": 1.0, "axe": 3.0, "pickaxe": 3.
 signal house_door_used
 signal shop_requested
 signal bin_used
+signal workbench_used
 
 var ground := PackedByteArray()
 var variant := PackedByteArray()
 var blocked := {}        # células onde não se pode arar (casa, caixa, NPC)
 var soil := {}           # Vector2i -> {"wet": bool, "crop": String, "growth": int}
 var props := {}          # Vector2i -> Prop
+var placeables: Array[Placeable] = []
+var occupied := {}       # Vector2i -> Placeable (células ocupadas por objetos construídos)
+var player: Node2D
 
 var entities: Node2D     # contêiner com Y-sort (jogador, objetos, NPCs)
 var animals: Array[Animal] = []
@@ -50,6 +54,8 @@ var _cursor := Node2D.new()
 var _cursor_cell := Vector2i(-1, -1)
 var _cursor_visible := false
 var _cursor_valid := true
+var _cursor_size := Vector2i.ONE
+var _cursor_origin := Vector2i(-1, -1)
 
 
 func _ready() -> void:
@@ -99,6 +105,20 @@ func generate(saved: Dictionary) -> void:
 
 	_build_static_scenery()
 	_build_world_bounds()
+
+	if saved.has("placeables"):
+		for d in saved["placeables"]:
+			if d is Dictionary and ItemDB.PLACEABLES.has(str(d.get("kind", ""))):
+				var pl := place(str(d["kind"]), Vector2i(int(d["x"]), int(d["y"])), true)
+				if pl:
+					pl.restore(d)
+	else:
+		# começo: bancada perto de casa e comedouro com feno no pasto
+		place("workbench", Vector2i(11, 9), true)
+		var f := place("feeder", Vector2i(PASTURE.position.x + 1, PASTURE.position.y), true)
+		if f:
+			f.hay = 10
+			f.refresh()
 
 	if saved.has("props"):
 		for p in saved["props"]:
@@ -269,16 +289,132 @@ func _generate_props(rng: RandomNumberGenerator) -> void:
 const TALL := ["tree", "old_tree", "pine", "sapling", "mushroom", "boulder", "tent"]
 
 
+func _pasture_area() -> Rect2:
+	return Rect2(PASTURE.position * TILE, PASTURE.size * TILE).grow(-12)
+
+
 func _spawn_animals(saved: Array) -> void:
-	var area := Rect2(PASTURE.position * TILE, PASTURE.size * TILE).grow(-12)
-	for i in STARTING_ANIMALS.size():
-		var a := Animal.new()
-		var pos := area.position + Vector2(area.size.x * (0.15 + 0.18 * i), area.size.y * (0.3 + 0.4 * (i % 2)))
-		a.setup(STARTING_ANIMALS[i], area, pos)
-		entities.add_child(a)
-		if i < saved.size() and saved[i] is Dictionary and saved[i].get("species", "") == STARTING_ANIMALS[i]:
-			a.restore(saved[i])
-		animals.append(a)
+	var area := _pasture_area()
+	var list: Array = []
+	for d in saved:
+		if d is Dictionary and Animal.SPECIES.has(str(d.get("species", ""))):
+			list.append(d)
+	if list.is_empty():
+		for sp in STARTING_ANIMALS:
+			list.append({"species": sp})
+	for i in list.size():
+		var d: Dictionary = list[i]
+		var pos := area.position + Vector2(area.size.x * fmod(0.15 + 0.18 * i, 0.9), area.size.y * (0.3 + 0.4 * (i % 2)))
+		add_animal(str(d["species"]), pos, d)
+
+
+func add_animal(species: String, pos: Vector2 = Vector2.ZERO, saved: Dictionary = {}) -> Animal:
+	var area := _pasture_area()
+	if pos == Vector2.ZERO:
+		pos = area.get_center() + Vector2(randf_range(-60, 60), randf_range(-20, 20))
+	var a := Animal.new()
+	a.setup(species, area, pos)
+	entities.add_child(a)
+	if saved.has("x"):
+		a.restore(saved)
+	animals.append(a)
+	return a
+
+
+## Quantos animais cabem: grupo "big" (Moombor, Fofrança, Catarrápio) ou "bird" (Piuplum).
+func capacity(group: String) -> int:
+	var cap: int = ItemDB.BASE_CAPACITY[group]
+	for p in placeables:
+		if group == "big" and p.kind == "barn":
+			cap += ItemDB.BUILDING_CAPACITY["barn"]
+		elif group == "bird" and p.kind == "coop":
+			cap += ItemDB.BUILDING_CAPACITY["coop"]
+	return cap
+
+
+func count_animals(group: String) -> int:
+	var n := 0
+	for a in animals:
+		if (a.species in ItemDB.BIRDS) == (group == "bird"):
+			n += 1
+	return n
+
+
+# =================================================================== construção
+## Pode construir `kind` mirando a célula `target`? (célula de baixo, no meio)
+func can_place(kind: String, target: Vector2i) -> bool:
+	var r := Placeable.footprint(kind, target)
+	var pc := cell_of(player.position) if player else Vector2i(-99, -99)
+	var floor_obj: bool = ItemDB.PLACEABLES[kind].get("floor", false)
+	for y in range(r.position.y, r.end.y):
+		for x in range(r.position.x, r.end.x):
+			var c := Vector2i(x, y)
+			if not is_inside(c) or ground_at(c) == Ground.WATER:
+				return false
+			if props.has(c) or soil.has(c) or blocked.has(c) or occupied.has(c):
+				return false
+			if not floor_obj and c == pc:
+				return false
+			if x < 2 or y < 2 or x > W - 3 or y > H - 3:
+				return false
+	return true
+
+
+## Constrói na posição de cima à esquerda `origin` (force = sem checar, para carregar o save).
+func place(kind: String, origin: Vector2i, force: bool = false) -> Placeable:
+	var sz: Vector2i = ItemDB.PLACEABLES[kind]["size"]
+	if not force:
+		var target := Vector2i(origin.x + (sz.x - 1) / 2, origin.y + sz.y - 1)
+		if not can_place(kind, target):
+			return null
+	var p := Placeable.new()
+	p.setup(kind, origin, TILE)
+	p.used.connect(_on_placeable_used)
+	entities.add_child(p)
+	placeables.append(p)
+	for y in range(origin.y, origin.y + sz.y):
+		for x in range(origin.x, origin.x + sz.x):
+			occupied[Vector2i(x, y)] = p
+	return p
+
+
+func remove_placeable(p: Placeable) -> void:
+	for c in occupied.keys():
+		if occupied[c] == p:
+			occupied.erase(c)
+	placeables.erase(p)
+	FX.spawn(self, "break_wood", p.position + Vector2(0, -10))
+	p.queue_free()
+
+
+func _on_placeable_used(p: Placeable) -> void:
+	var held := Game.selected_item_id()
+	var msg := ""
+	match p.kind:
+		"workbench":
+			workbench_used.emit()
+		"feeder":
+			if held == "hay":
+				var n: int = mini(Game.count_item("hay"), 30 - p.hay)
+				if n <= 0:
+					msg = "O comedouro está cheio."
+				else:
+					Game.remove_item("hay", n)
+					p.hay += n
+					p.refresh()
+					msg = "Colocou %d feno. (%d no comedouro)" % [n, p.hay]
+			else:
+				msg = "Comedouro: %d feno. Segure feno e toque para encher." % p.hay
+		_:
+			if p.job_ready():
+				msg = p.collect()
+				FX.spawn(self, "harvest", p.position + Vector2(0, -16))
+			elif not p.job.is_empty():
+				msg = "Ainda trabalhando... pronto no dia %d." % int(p.job["ready"])
+			else:
+				msg = p.insert(held)
+	if msg != "":
+		Game.toast.emit(msg)
 
 
 func _can_place_tree(c: Vector2i, spread: int) -> bool:
@@ -324,7 +460,7 @@ func ground_at(c: Vector2i) -> int:
 
 func _is_free_grass(c: Vector2i) -> bool:
 	return is_inside(c) and ground_at(c) == Ground.GRASS and not blocked.has(c) \
-		and not props.has(c) and not soil.has(c)
+		and not props.has(c) and not soil.has(c) and not occupied.has(c)
 
 
 func cell_of(pos: Vector2) -> Vector2i:
@@ -336,10 +472,17 @@ func world_size() -> Vector2:
 
 
 func set_cursor(c: Vector2i, visible_: bool, valid: bool = true) -> void:
-	if c != _cursor_cell or visible_ != _cursor_visible or valid != _cursor_valid:
+	# com um objeto construível na mão, o cursor mostra o tamanho dele
+	var held := Game.selected_item_id()
+	var r := Rect2i(c, Vector2i.ONE)
+	if ItemDB.PLACEABLES.has(held):
+		r = Placeable.footprint(held, c)
+	if c != _cursor_cell or visible_ != _cursor_visible or valid != _cursor_valid or r.position != _cursor_origin or r.size != _cursor_size:
 		_cursor_cell = c
 		_cursor_visible = visible_
 		_cursor_valid = valid
+		_cursor_origin = r.position
+		_cursor_size = r.size
 		_cursor.queue_redraw()
 
 
@@ -347,6 +490,8 @@ func set_cursor(c: Vector2i, visible_: bool, valid: bool = true) -> void:
 func target_anchor(c: Vector2i) -> Vector2:
 	if props.has(c):
 		return props[c].position
+	if occupied.has(c) and not ItemDB.PLACEABLES[occupied[c].kind].get("floor", false):
+		return occupied[c].position
 	return _cell_center(c)
 
 
@@ -356,6 +501,10 @@ func would_act(item_id: String, c: Vector2i) -> bool:
 		return can_interact_cell(c)
 	var item := ItemDB.get_item(item_id)
 	var prop: Prop = props.get(c)
+	if item.get("type", "") == "placeable":
+		return can_place(item_id, c)
+	if item_id in ["axe", "pickaxe"] and occupied.has(c) and occupied[c].can_pick_up():
+		return true
 	if item.get("type", "") == "seed":
 		return soil.has(c) and soil[c]["crop"] == "" and prop == null
 	match item_id:
@@ -400,6 +549,16 @@ func use_item(item_id: String, c: Vector2i) -> String:
 	if item_id == "":
 		return interact_cell(c)
 	var item := ItemDB.get_item(item_id)
+	if item.get("type", "") == "placeable":
+		return _build(item_id, c)
+	if item_id in ["axe", "pickaxe"] and occupied.has(c) and not props.has(c):
+		var p: Placeable = occupied[c]
+		if not p.can_pick_up():
+			return "Esvazie antes de desmontar." if not ItemDB.PLACEABLES[p.kind].get("fixed", false) else "Construções não podem ser desmontadas."
+		if Game.add_item(p.kind, 1) > 0:
+			return ""
+		remove_placeable(p)
+		return "%s guardado na mochila." % ItemDB.item_name(p.kind)
 	if item.get("type", "") == "seed":
 		return _plant(item_id, c)
 	if item.get("type", "") != "tool":
@@ -475,6 +634,18 @@ func can_interact_cell(c: Vector2i) -> bool:
 		return ItemDB.crop_stage(s["crop"], s["growth"]) == 3
 	var prop: Prop = props.get(c)
 	return prop != null and prop.kind == "weed"
+
+
+func _build(kind: String, target: Vector2i) -> String:
+	if not can_place(kind, target):
+		return "Não dá para construir aqui."
+	var r := Placeable.footprint(kind, target)
+	var p := place(kind, r.position)
+	if p == null:
+		return "Não dá para construir aqui."
+	Game.remove_from_slot(Game.selected_slot, 1)
+	FX.spawn(self, "hit", p.position + Vector2(0, -8))
+	return "%s construído!" % ItemDB.item_name(kind) if kind in ["barn", "coop"] else ""
 
 
 func _plant(seed_id: String, c: Vector2i) -> String:
@@ -558,8 +729,25 @@ func on_new_day() -> void:
 	# o mato volta a crescer aos pouquinhos
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
+	# alimentação: cada animal come 1 feno dos comedouros
+	var feeders: Array = placeables.filter(func(p): return p.kind == "feeder")
+	var hungry := 0
 	for a in animals:
-		a.new_day()
+		var fed := false
+		for f in feeders:
+			if f.hay > 0:
+				f.hay -= 1
+				fed = true
+				break
+		if not fed:
+			hungry += 1
+		a.new_day(fed)
+	for f in feeders:
+		f.refresh()
+	for p in placeables:
+		p.refresh()
+	if hungry > 0:
+		Game.toast.emit("%d animal(is) ficaram com fome. Ponha feno no comedouro!" % hungry)
 	for i in 3:
 		var c := Vector2i(rng.randi_range(5, 24), rng.randi_range(14, 30))
 		if _is_free_grass(c):
@@ -580,7 +768,10 @@ func serialize() -> Dictionary:
 	var an := []
 	for a in animals:
 		an.append(a.serialize())
-	return {"props": p, "soil": s, "animals": an}
+	var pl := []
+	for x in placeables:
+		pl.append(x.serialize())
+	return {"props": p, "soil": s, "animals": an, "placeables": pl}
 
 
 # =================================================================== desenho
@@ -622,7 +813,7 @@ func _draw_soil() -> void:
 func _draw_cursor() -> void:
 	if not _cursor_visible:
 		return
-	var r := Rect2(_cursor_cell.x * TILE + 1, _cursor_cell.y * TILE + 1, TILE - 2, TILE - 2)
+	var r := Rect2(_cursor_origin.x * TILE + 1, _cursor_origin.y * TILE + 1, _cursor_size.x * TILE - 2, _cursor_size.y * TILE - 2)
 	if _cursor_valid:
 		_cursor.draw_rect(r, Color(0.71, 0.79, 0.58, 0.28), true)
 		_cursor.draw_rect(r, Color(0.86, 0.95, 0.66, 0.95), false, 2.0)

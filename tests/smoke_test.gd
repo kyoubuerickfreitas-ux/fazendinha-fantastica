@@ -100,8 +100,14 @@ func _run() -> void:
 	main.save_now()
 	var reloaded: Dictionary = game.load_game()
 	print("save ok, canteiros salvos: ", reloaded.get("soil", []).size())
+	# comedouro cheio antes do teste dos animais
+	for pl in w.placeables:
+		if pl.kind == "feeder":
+			pl.hay = 20
 	# animais: carinho, novo dia, coleta
 	var cow = w.animals[0]
+	cow.has_product = false
+	cow.petted_today = false
 	cow._on_interact(p)
 	assert(cow.petted_today, "carinho deveria marcar o dia")
 	w.on_new_day()
@@ -201,6 +207,65 @@ func _run() -> void:
 		for i in 2000:
 			rar[ItemDB.FISH[Fishing.roll_fish(bait, false, false)]["rarity"]] += 1
 		print("isca '%s' -> comum/incomum/raro/lendário: %s" % [bait, rar])
+
+	# bancada: fabricar, construir, máquina, feno, celeiro e compra de animal
+	game.add_item("wood", 200)
+	game.add_item("stone", 100)
+	game.add_item("fiber", 20)
+	game.add_money(2000)
+	main.hud.open_crafting()
+	await _wait(0.2)
+	await _shot("11_bancada")
+	main.hud.close_panel()
+	assert(ItemDB.can_afford({"wood": 20, "stone": 10}))
+	game.add_item("cheese_press", 1)
+	game.add_item("barn", 1)
+	var spot := Vector2i(20, 6)
+	p.position = Vector2(spot.x * 32 + 16, (spot.y + 1) * 32 + 20)
+	main.camera.reset_smoothing()
+	await _wait(0.1)
+	var press_slot: int = game.inventory.find(game.inventory.filter(func(x): return x != null and x["id"] == "cheese_press")[0])
+	game.swap_slots(press_slot, 0)
+	game.select_slot(0)
+	print("prensa pode construir em ", spot, ": ", w.can_place("cheese_press", spot))
+	p.use_at(spot)
+	var press = w.occupied.get(spot)
+	assert(press != null and press.kind == "cheese_press", "a prensa deveria ser construída")
+	game.add_item("milk", 1)
+	var milk_slot: int = game.inventory.find(game.inventory.filter(func(x): return x != null and x["id"] == "milk")[0])
+	game.swap_slots(milk_slot, 0)
+	game.select_slot(0)
+	w._on_placeable_used(press)
+	assert(not press.job.is_empty(), "o leite deveria entrar na prensa")
+	game.start_new_day(true)
+	w.on_new_day()
+	w._on_placeable_used(press)
+	print("queijos: ", game.count_item("cheese"))
+	assert(game.count_item("cheese") == 1)
+	# celeiro e compra de animal
+	var cap0: int = w.capacity("big")
+	var barn_target := Vector2i(-1, -1)
+	for y in range(5, 30):
+		for x in range(4, 46):
+			if barn_target.x < 0 and w.can_place("barn", Vector2i(x, y)):
+				barn_target = Vector2i(x, y)
+	p.position = Vector2(barn_target.x * 32 + 16, (barn_target.y + 2) * 32)
+	print("celeiro pode construir: ", w.can_place("barn", barn_target))
+	assert(w.place("barn", Placeable.footprint("barn", barn_target).position) != null)
+	print("capacidade grandes: ", cap0, " -> ", w.capacity("big"))
+	var n0: int = w.animals.size()
+	w.add_animal("moombor")
+	assert(w.animals.size() == n0 + 1)
+	main.camera.reset_smoothing()
+	await _wait(0.3)
+	await _shot("12_construcoes")
+	main.save_now()
+	var saved: Dictionary = game.load_game()
+	print("objetos salvos: ", saved.get("placeables", []).size(), " animais: ", saved.get("animals", []).size())
+	main.hud.open_shop()
+	await _wait(0.2)
+	await _shot("13_loja_animais")
+	main.hud.close_panel()
 
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
