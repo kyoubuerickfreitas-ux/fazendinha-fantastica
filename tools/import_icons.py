@@ -39,6 +39,13 @@ ORDER += PRODUCE
 ANIMAL_PRODUCTS = ["milk", "wool", "egg"]
 ORDER += ANIMAL_PRODUCTS + ["truffle"]
 
+# peixes (fish.webp, 4 linhas x 5, fundo preto)
+FISH = ["fish_orange", "fish_mackerel", "fish_goldfish", "fish_perch", "fish_catfish",
+        "fish_silver", "fish_puffer", "fish_angel", "fish_snapper", "fish_eel",
+        "fish_shark", "fish_clown", "fish_sword", "fish_axolotl", "fish_yellow",
+        "fish_betta", "fish_angler", "fish_ghost", "fish_lion", "fish_sunfish"]
+ORDER += FISH
+
 # selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
 SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
 
@@ -99,6 +106,22 @@ def pieces(path, names, checker=False, white=False, rows=1, black=False):
     return {n: cut(im, c) for n, c in zip(names, main)}
 
 
+def add_outline(cell, color=(43, 33, 24, 255)):
+    out = cell.copy()
+    src, dst = cell.load(), out.load()
+    w, h = cell.size
+    for y in range(h):
+        for x in range(w):
+            if src[x, y][3]:
+                continue
+            for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < w and 0 <= ny < h and src[nx, ny][3]:
+                    dst[x, y] = color
+                    break
+    return out
+
+
 def fit(img):
     s = FIT / max(img.width, img.height)
     w, h = max(1, round(img.width * s)), max(1, round(img.height * s))
@@ -124,6 +147,7 @@ if __name__ == "__main__":
     icons.update(pieces(os.path.join(SRC, "produce.webp"), PRODUCE, white=True, rows=4))
     icons.update(pieces(os.path.join(SRC, "animal_products.webp"), ANIMAL_PRODUCTS, white=True))
     icons.update(pieces(os.path.join(SRC, "truffle.webp"), ["truffle"], black=True))
+    icons.update(pieces(os.path.join(SRC, "fish.webp"), FISH, black=True, rows=4))
     small_icons = Image.open(os.path.join(ROOT, "assets", "sprites", "icons.png")).convert("RGBA")
     per_row = 16
     atlas = Image.new("RGBA", (CELL * per_row, CELL * ((len(ORDER) + per_row - 1) // per_row)), (0, 0, 0, 0))
@@ -148,6 +172,8 @@ if __name__ == "__main__":
             cell.alpha_composite(badge, (17, 17))
         else:
             cell = fit(icons[n])
+            if n in FISH:
+                cell = add_outline(cell)   # os peixes vieram sem contorno; deixa igual aos outros ícones
         atlas.alpha_composite(cell, ((i % per_row) * CELL, (i // per_row) * CELL))
         print(f"{i}: {n}")
     atlas.save(OUT)
