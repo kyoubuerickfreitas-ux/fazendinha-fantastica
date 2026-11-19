@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "blueberry"
+name = "Mirtilo-Celeste"
+description = "Perene. Muitos frutinhos a cada dois dias."
+category = "fruit"
+seed_price = 50
+sell_price = 25
+produce_icon_hd = 17
+stage_days = PackedInt32Array(2, 2, 3)
+seasons = PackedStringArray("summer")
+season_end = "dormant"
+temp_min = 10
+temp_max = 36
+harvest_type = "regrow"
+regrow_days = 2
+yield_min = 2
+yield_max = 3

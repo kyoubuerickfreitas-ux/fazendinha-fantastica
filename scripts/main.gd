@@ -140,11 +140,13 @@ func _sleep(rested: bool) -> void:
 	player.fishing.cancel()
 	hud.fade_through(func():
 		Game.start_new_day(rested)
-		world.on_new_day()
+		var notes := world.on_new_day()
 		player.position = world.player_start
 		camera.reset_smoothing()
 		save_now()
-		Game.toast.emit("Dia %d — %s" % [Game.day, "Está chovendo!" if Game.weather == "rain" else "Bom dia!"]))
+		var head := "%s · %d°C%s" % [Calendar.short_text(Game.day), int(Game.temperature),
+			" · chuva" if Game.weather == "rain" else ""]
+		Game.toast.emit(head + ("\n" + notes if notes != "" else "")))
 
 
 func save_now() -> void:

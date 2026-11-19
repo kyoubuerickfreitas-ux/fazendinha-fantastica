@@ -92,14 +92,6 @@ const ITEMS := {
 	"bait_fly": {"name": "Mosca de Fibra", "icon": 0, "hd": 65, "type": "bait", "buy": 40, "desc": "Isca artesanal. A melhor para peixes raros e lendários."},
 }
 
-## row: linha em crops.png (colunas = estágios 0..3)
-const CROPS := {
-	"carrot": {"row": 0, "days": 3, "produce": "carrot", "amount": 1},
-	"tomato": {"row": 1, "days": 4, "produce": "tomato", "amount": 2},
-	"kale": {"row": 2, "days": 2, "produce": "kale", "amount": 1},
-	"starflower": {"row": 3, "days": 5, "produce": "starflower", "amount": 1},
-}
-
 ## Objetos construíveis. size = células (largura, altura); a célula mirada é a de baixo, no meio.
 ## solid = bloqueia a passagem; floor = desenhado no chão; machine = máquina de produção.
 const PLACEABLES := {
@@ -188,6 +180,14 @@ const SHOP_ITEMS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower
 const MAX_STACK := 99
 
 
+## Itens criados em tempo de execução (sementes e colheitas vindas de data/crops).
+static var _extra := {}
+
+
+static func register(id: String, data: Dictionary) -> void:
+	_extra[id] = data
+
+
 static func can_afford(cost: Dictionary) -> bool:
 	for k in cost:
 		if k == "money":
@@ -209,15 +209,22 @@ static func cost_text(cost: Dictionary) -> String:
 
 
 static func has(id: String) -> bool:
-	return ITEMS.has(id)
+	CropDB.ensure_loaded()
+	return _extra.has(id) or ITEMS.has(id)
 
 
 static func get_item(id: String) -> Dictionary:
+	if _extra.has(id):
+		return _extra[id]
+	if not CropDB._loaded:
+		CropDB.ensure_loaded()
+		if _extra.has(id):
+			return _extra[id]
 	return ITEMS.get(id, {})
 
 
 static func item_name(id: String) -> String:
-	return ITEMS.get(id, {}).get("name", id)
+	return get_item(id).get("name", id)
 
 
 static func is_stackable(id: String) -> bool:
@@ -261,11 +268,4 @@ static func ui_icon(name: String) -> AtlasTexture:
 	return icon_index_texture(int(UI_ICON.get(name, 0)))
 
 
-## Estágio visual (0 = semente, 3 = pronta) a partir dos dias de crescimento.
-static func crop_stage(crop: String, growth: int) -> int:
-	var days: int = CROPS[crop]["days"]
-	if growth <= 0:
-		return 0
-	if growth >= days:
-		return 3
-	return clampi(1 + int(2.0 * growth / days), 1, 2)
+

@@ -712,7 +712,6 @@ def app_icon():
 if __name__ == "__main__":
     npc_sheet()
     tiles_sheet()
-    crops_sheet()
     save(stump(), "stump.png")
     icons_sheet()
     app_icon()

@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SeasonData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/season_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "summer"
+name = "Verão"
+short_name = "Verão"
+temp_min = 22
+temp_max = 34
+rain_chance = 0.15
+air_humidity = 0.3
+tint = Color(1.04, 1.02, 0.86, 1)
+weed_regrow = 3

@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "starflower"
+name = "Flor-Estrela"
+description = "Brilha suavemente nas noites frias."
+category = "flower"
+seed_item = "seed_starflower"
+seed_price = 45
+produce_item = "starflower"
+sell_price = 110
+stage_days = PackedInt32Array(2, 1, 2)
+seasons = PackedStringArray("autumn", "winter")
+temp_min = -12
+temp_max = 20

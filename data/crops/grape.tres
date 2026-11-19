@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "grape"
+name = "Uva-Crepúsculo"
+description = "Perene. Cachos no fim do ano."
+category = "fruit"
+seed_price = 70
+sell_price = 60
+produce_icon_hd = 15
+stage_days = PackedInt32Array(3, 2, 2)
+seasons = PackedStringArray("autumn")
+season_end = "dormant"
+temp_min = 4
+temp_max = 30
+harvest_type = "regrow"
+regrow_days = 3
+yield_min = 2
+yield_max = 3

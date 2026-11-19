@@ -50,6 +50,17 @@ ORDER += FISH
 BAITS = ["bait_worm", "bait_corn", "bait_cricket", "bait_mushroom", "bait_fly"]
 ORDER += BAITS
 
+# sacos de sementes das plantas novas (tools/crops_table.py), com selo do produto
+from crops_table import CROPS as _CROPS  # noqa: E402
+_HD_NAMES = {13: "apple", 14: "pear", 15: "grape", 16: "strawberry", 17: "blueberry", 25: "watermelon",
+             26: "melon", 32: "radish", 33: "beet", 35: "potato", 36: "mushroom", 31: "carrot", 34: "tomato"}
+NEW_SEEDS = []
+for _c in _CROPS:
+    if "seed_item" in _c or "hd" not in _c:
+        continue
+    NEW_SEEDS.append("seed_" + _c["id"])
+ORDER += NEW_SEEDS
+
 
 def draw_bait(name):
     from PIL import ImageDraw
@@ -108,6 +119,9 @@ def draw_bait(name):
 
 # selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
 SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
+for _c in _CROPS:
+    if "seed_" + _c["id"] in NEW_SEEDS:
+        SEED_BADGES["seed_" + _c["id"]] = _HD_NAMES[_c["hd"]]
 
 
 def remove_white(im, black=False):
@@ -239,3 +253,6 @@ if __name__ == "__main__":
         atlas.alpha_composite(cell, ((i % per_row) * CELL, (i // per_row) * CELL))
         print(f"{i}: {n}")
     atlas.save(OUT)
+    import json
+    with open(os.path.join(ROOT, "data", "items_hd.json"), "w") as f:
+        json.dump({n: i for i, n in enumerate(ORDER)}, f, indent=0)

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c6n2qr1611tch"
-path="res://.godot/imported/crops.png-648722bf4b30dd00966f28fb52c99d59.ctex"
+uid="uid://4yillf2xlmb6"
+path="res://.godot/imported/grape.png-083c60df946743fa6a0742aee0bdb8a9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/crops.png"
-dest_files=["res://.godot/imported/crops.png-648722bf4b30dd00966f28fb52c99d59.ctex"]
+source_file="res://assets/sprites/crops/grape.png"
+dest_files=["res://.godot/imported/grape.png-083c60df946743fa6a0742aee0bdb8a9.ctex"]
 
 [params]
 

@@ -84,7 +84,7 @@ func _run() -> void:
 	await _shot("02_plantando")
 	# avança dias regando tudo
 	for d in 3:
-		for c in w.soil: w.soil[c]["wet"] = true
+		for c in w.soil: w.soil[c]["moist"] = 1.0
 		game.start_new_day(true)
 		w.on_new_day()
 	w._soil_layer.queue_redraw()
@@ -266,6 +266,84 @@ func _run() -> void:
 	await _wait(0.2)
 	await _shot("13_loja_animais")
 	main.hud.close_panel()
+
+	# ---------- agricultura: seca, recorrente, dormência, estação
+	var cell := Agri.new_cell(false)
+	Agri.plant(cell, "seed_strawberry")
+	var sb := CropDB.get_crop("strawberry")
+	var sl := {Vector2i(0, 0): cell}
+	var dd := 1
+	for i in sb.total_days():
+		cell["moist"] = 1.0
+		Agri.process_day(sl, dd, dd + 1, 16.0, 16.0, false)
+		dd += 1
+	print("morango pronto após %d dias: %s" % [sb.total_days(), Agri.is_ready(cell)])
+	assert(Agri.is_ready(cell))
+	var hv := Agri.harvest(cell)
+	print("colheita: ", hv, " estado depois: ", cell["crop"].get("state"))
+	assert(cell["crop"]["state"] == "growing", "morango deveria ficar no canteiro (recorrente)")
+	for i in sb.regrow_days:
+		cell["moist"] = 1.0
+		Agri.process_day(sl, dd, dd + 1, 16.0, 16.0, false)
+		dd += 1
+	assert(Agri.is_ready(cell), "deveria dar de novo após a regeneração")
+	# seca: sem água o crescimento pausa e, depois da tolerância, morre
+	var dry := Agri.new_cell(false)
+	Agri.plant(dry, "seed_radish")
+	var dl := {Vector2i(1, 0): dry}
+	Agri.process_day(dl, 2, 3, 16.0, 16.0, false)
+	print("rabanete sem água: progresso ", dry["crop"]["prog"], " estresse ", dry["crop"]["stress"])
+	assert(dry["crop"]["prog"] == 0.0 and dry["crop"]["stress"] == 1)
+	for i in 6:
+		Agri.process_day(dl, 3 + i, 4 + i, 16.0, 16.0, false)
+	assert(Agri.is_dead(dry), "depois de muitos dias sem água o rabanete morre")
+	# fim da estação: morango dorme, rabanete morre, cogumelo sobrevive
+	var e1 := Agri.new_cell(false); Agri.plant(e1, "seed_strawberry")
+	var e2 := Agri.new_cell(false); Agri.plant(e2, "seed_radish")
+	var el := {Vector2i(0, 0): e1, Vector2i(1, 0): e2}
+	var last_spring := Calendar.SEASON_LENGTH
+	Agri.process_day(el, last_spring, last_spring + 1, 16.0, 26.0, false)
+	print("virada para o verão: morango=", e1["crop"]["state"], " rabanete=", e2["crop"]["state"])
+	assert(e1["crop"]["state"] == "dormant" and e2["crop"]["state"] == "dead")
+	Agri.process_day(el, Calendar.SEASON_LENGTH * 4, Calendar.SEASON_LENGTH * 4 + 1, 2.0, 14.0, false)
+	print("primavera do ano 2: morango=", e1["crop"]["state"])
+	assert(e1["crop"]["state"] == "growing")
+	print("calendário dia 21: ", Calendar.short_text(21), " | evaporação verão: ", snappedf(Agri.evaporation(28.0, CropDB.season("summer")), 0.01))
+	main.hud.open_calendar()
+	await _wait(0.2)
+	await _shot("14_calendario")
+	main.hud.close_panel()
+
+	# sinais nos canteiros + cor do outono
+	var base_c: Vector2i = w.cell_of(w.player_start) + Vector2i(3, 2)
+	var demo := [["seed_tomato", "ready"], ["seed_melon", "dry"], ["seed_strawberry", "dormant"], ["seed_radish", "dead"], ["seed_watermelon", "ready"], ["seed_mushroom", "ready"]]
+	for i in demo.size():
+		var cc: Vector2i = base_c + Vector2i(i, 0)
+		w.props.erase(cc)
+		w.soil[cc] = Agri.new_cell(false)
+		Agri.plant(w.soil[cc], demo[i][0])
+		var cr: Dictionary = w.soil[cc]["crop"]
+		var cdat: CropData = CropDB.get_crop(cr["id"])
+		match demo[i][1]:
+			"ready":
+				cr["stage"] = cdat.frames() - 1
+				cr["state"] = "ready"
+				w.soil[cc]["moist"] = 0.8
+			"dry":
+				cr["stage"] = 2
+				cr["stress"] = 1
+			"dormant":
+				cr["stage"] = 2
+				cr["state"] = "dormant"
+			"dead":
+				cr["stage"] = 2
+				cr["state"] = "dead"
+	w._soil_layer.queue_redraw()
+	w._ground_layer.modulate = CropDB.season("autumn").tint
+	p.position = Vector2((base_c.x + 2) * 32, (base_c.y - 1) * 32)
+	main.camera.reset_smoothing()
+	await _wait(0.3)
+	await _shot("15_canteiros")
 
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")

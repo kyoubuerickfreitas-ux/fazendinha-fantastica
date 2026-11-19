@@ -8,7 +8,6 @@ const W := 50
 const H := 38
 
 const TILES_TEX := preload("res://assets/sprites/tiles.png")
-const CROPS_TEX := preload("res://assets/sprites/crops.png")
 const HOUSE_TEX := preload("res://assets/sprites/house.png")
 const BIN_TEX := preload("res://assets/sprites/forest/crate_veggies.png")
 const SHOP_TEX := preload("res://assets/sprites/shop.png")
@@ -34,7 +33,8 @@ signal workbench_used
 var ground := PackedByteArray()
 var variant := PackedByteArray()
 var blocked := {}        # células onde não se pode arar (casa, caixa, NPC)
-var soil := {}           # Vector2i -> {"wet": bool, "crop": String, "growth": int}
+var soil := {}           # Vector2i -> canteiro (formato em scripts/systems/agriculture.gd)
+var _crop_tex := {}
 var props := {}          # Vector2i -> Prop
 var placeables: Array[Placeable] = []
 var occupied := {}       # Vector2i -> Placeable (células ocupadas por objetos construídos)
@@ -131,9 +131,10 @@ func generate(saved: Dictionary) -> void:
 	soil.clear()
 	if saved.has("soil"):
 		for s in saved["soil"]:
-			soil[Vector2i(int(s["x"]), int(s["y"]))] = {
-				"wet": bool(s["wet"]), "crop": str(s["crop"]), "growth": int(s["growth"])}
+			var cell = s.get("cell", s)
+			soil[Vector2i(int(s["x"]), int(s["y"]))] = Agri.migrate(cell if cell is Dictionary else {})
 
+	_ground_layer.modulate = CropDB.season(Game.season_id()).tint
 	_ground_layer.queue_redraw()
 	_soil_layer.queue_redraw()
 
@@ -506,21 +507,21 @@ func would_act(item_id: String, c: Vector2i) -> bool:
 	if item_id in ["axe", "pickaxe"] and occupied.has(c) and occupied[c].can_pick_up():
 		return true
 	if item.get("type", "") == "seed":
-		return soil.has(c) and soil[c]["crop"] == "" and prop == null
+		return soil.has(c) and prop == null and Agri.can_plant(soil[c], item_id, Game.day) == ""
 	match item_id:
 		"hoe":
 			return prop == null and _is_free_grass(c)
 		"fishing_rod":
 			return ground_at(c) == Ground.WATER
 		"watering_can":
-			return ground_at(c) == Ground.WATER or (soil.has(c) and not soil[c]["wet"])
+			return ground_at(c) == Ground.WATER or (soil.has(c) and Agri.needs_water(soil[c]))
 		"axe", "pickaxe", "scythe":
 			if prop:
 				return prop.required_tool() == item_id
-			if item_id == "scythe" and soil.has(c) and soil[c]["crop"] != "":
-				return ItemDB.crop_stage(soil[c]["crop"], soil[c]["growth"]) == 3
+			if item_id == "scythe" and soil.has(c):
+				return Agri.is_ready(soil[c]) or Agri.is_dead(soil[c])
 			if item_id == "pickaxe" and soil.has(c):
-				return soil[c]["crop"] == ""
+				return not Agri.has_crop(soil[c]) or Agri.is_dead(soil[c])
 	return false
 
 
@@ -575,7 +576,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				return "Não dá para arar aqui."
 			if not Game.use_energy(ENERGY_COST["hoe"]):
 				return ""
-			soil[c] = {"wet": Game.weather == "rain", "crop": "", "growth": 0}
+			soil[c] = Agri.new_cell(Game.weather == "rain")
 			FX.spawn(self, "till", _cell_center(c))
 			if randf() < 0.08 and Game.add_item("bait_worm", 1) == 0:
 				_popup("+1 Minhoca", _cell_center(c))
@@ -585,14 +586,14 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				Game.water = Game.WATER_CAPACITY
 				Game.inventory_changed.emit()
 				return "Regador cheio!"
-			if not soil.has(c) or soil[c]["wet"]:
+			if not soil.has(c) or not Agri.needs_water(soil[c]):
 				return ""
 			if Game.water <= 0:
 				return "Regador vazio! Encha no lago."
 			if not Game.use_energy(ENERGY_COST["watering_can"]):
 				return ""
 			Game.water -= 1
-			soil[c]["wet"] = true
+			Agri.water(soil[c])
 			FX.spawn(self, "water", _cell_center(c))
 			Game.inventory_changed.emit()
 			_soil_layer.queue_redraw()
@@ -606,9 +607,9 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				if prop.hit():
 					_destroy_prop(prop)
 				return ""
-			if item_id == "scythe" and soil.has(c) and soil[c]["crop"] != "":
+			if item_id == "scythe" and soil.has(c) and Agri.has_crop(soil[c]):
 				return _harvest(c, true)
-			if item_id == "pickaxe" and soil.has(c) and soil[c]["crop"] == "":
+			if item_id == "pickaxe" and soil.has(c) and (not Agri.has_crop(soil[c]) or Agri.is_dead(soil[c])):
 				if not Game.use_energy(ENERGY_COST["pickaxe"]):
 					return ""
 				soil.erase(c)
@@ -619,7 +620,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 
 ## Interação com a célula usando a mão (colher, arrancar mato).
 func interact_cell(c: Vector2i) -> String:
-	if soil.has(c) and soil[c]["crop"] != "":
+	if soil.has(c) and Agri.has_crop(soil[c]):
 		return _harvest(c, false)
 	var prop: Prop = props.get(c)
 	if prop and prop.kind == "weed":
@@ -629,9 +630,8 @@ func interact_cell(c: Vector2i) -> String:
 
 
 func can_interact_cell(c: Vector2i) -> bool:
-	if soil.has(c) and soil[c]["crop"] != "":
-		var s: Dictionary = soil[c]
-		return ItemDB.crop_stage(s["crop"], s["growth"]) == 3
+	if soil.has(c) and Agri.has_crop(soil[c]):
+		return Agri.is_ready(soil[c]) or Agri.is_dead(soil[c])
 	var prop: Prop = props.get(c)
 	return prop != null and prop.kind == "weed"
 
@@ -651,10 +651,10 @@ func _build(kind: String, target: Vector2i) -> String:
 func _plant(seed_id: String, c: Vector2i) -> String:
 	if not soil.has(c):
 		return "Are a terra antes de plantar."
-	if soil[c]["crop"] != "":
-		return ""
-	soil[c]["crop"] = ItemDB.get_item(seed_id)["crop"]
-	soil[c]["growth"] = 0
+	var why := Agri.can_plant(soil[c], seed_id, Game.day)
+	if why != "":
+		return why if not Agri.has_crop(soil[c]) else ""
+	Agri.plant(soil[c], seed_id)
 	Game.remove_from_slot(Game.selected_slot, 1)
 	FX.spawn(self, "plant", _cell_center(c) + Vector2(0, 6))
 	_soil_layer.queue_redraw()
@@ -662,17 +662,28 @@ func _plant(seed_id: String, c: Vector2i) -> String:
 
 
 func _harvest(c: Vector2i, with_scythe: bool) -> String:
-	var s: Dictionary = soil[c]
-	var crop: String = s["crop"]
-	if ItemDB.crop_stage(crop, s["growth"]) < 3:
-		return "Ainda não está pronta." if not with_scythe else ""
-	var def: Dictionary = ItemDB.CROPS[crop]
-	var left := Game.add_item(def["produce"], def["amount"])
-	if left > 0:
+	var cell: Dictionary = soil[c]
+	if Agri.is_dead(cell):
+		Agri.clear_crop(cell)
+		Game.add_item("fiber", 1)
+		_popup("+1 Fibra", _cell_center(c))
+		FX.spawn(self, "weed", _cell_center(c))
+		_soil_layer.queue_redraw()
 		return ""
-	s["crop"] = ""
-	s["growth"] = 0
-	_popup("+%d %s" % [def["amount"], ItemDB.item_name(def["produce"])], _cell_center(c))
+	if not Agri.is_ready(cell):
+		if with_scythe:
+			return ""
+		var cr: Dictionary = cell["crop"]
+		if cr["state"] == "dormant":
+			return "Dormindo até a estação certa."
+		return "Ainda não está pronta."
+	var r := Agri.harvest(cell)
+	if Game.add_item(r["item"], r["qty"]) > 0:
+		return ""
+	var text := "+%d %s" % [r["qty"], ItemDB.item_name(r["item"])]
+	if r["seeds"] > 0 and Game.add_item(r["seed_item"], r["seeds"]) == 0:
+		text += " +1 semente"
+	_popup(text, _cell_center(c))
 	FX.spawn(self, "harvest", _cell_center(c))
 	_soil_layer.queue_redraw()
 	return ""
@@ -719,13 +730,21 @@ func _popup(text: String, pos: Vector2) -> void:
 
 
 # =================================================================== novo dia
-func on_new_day() -> void:
-	var rain := Game.weather == "rain"
-	for c in soil:
-		var s: Dictionary = soil[c]
-		if s["crop"] != "" and s["wet"]:
-			s["growth"] += 1
-		s["wet"] = rain
+## Processa o novo dia (chamado depois de Game.start_new_day). Retorna avisos curtos.
+func on_new_day() -> String:
+	var notes := []
+	var r := Agri.process_day(soil, Game.day - 1, Game.day, Game.temperature_yesterday,
+		Game.temperature, Game.weather == "rain")
+	if Calendar.day_of_season(Game.day) == 1:
+		notes.append("Começou o %s!" % Calendar.season_name(Game.day))
+	if r["ready"] > 0:
+		notes.append("%d plantação(ões) pronta(s)" % r["ready"])
+	if r["dry"] > 0:
+		notes.append("%d sem água" % r["dry"])
+	if r["died"] > 0:
+		notes.append("%d morreu(ram)" % r["died"])
+	if r["dormant"] > 0:
+		notes.append("%d dormindo até a próxima estação" % r["dormant"])
 	# o mato volta a crescer aos pouquinhos
 	var rng := RandomNumberGenerator.new()
 	rng.randomize()
@@ -747,12 +766,14 @@ func on_new_day() -> void:
 	for p in placeables:
 		p.refresh()
 	if hungry > 0:
-		Game.toast.emit("%d animal(is) ficaram com fome. Ponha feno no comedouro!" % hungry)
-	for i in 3:
+		notes.append("%d animal(is) com fome" % hungry)
+	for i in CropDB.season(Game.season_id()).weed_regrow:
 		var c := Vector2i(rng.randi_range(5, 24), rng.randi_range(14, 30))
 		if _is_free_grass(c):
 			_spawn_prop("weed", c, -1, rng.randi())
 	_soil_layer.queue_redraw()
+	_ground_layer.modulate = CropDB.season(Game.season_id()).tint
+	return " · ".join(notes)
 
 
 # =================================================================== salvar
@@ -764,7 +785,7 @@ func serialize() -> Dictionary:
 	var s := []
 	for c in soil:
 		var d: Dictionary = soil[c]
-		s.append({"x": c.x, "y": c.y, "wet": d["wet"], "crop": d["crop"], "growth": d["growth"]})
+		s.append({"x": c.x, "y": c.y, "cell": d})
 	var an := []
 	for a in animals:
 		an.append(a.serialize())
@@ -795,19 +816,68 @@ func _draw_ground() -> void:
 				Rect2(x * TILE, y * TILE, TILE, TILE), _tile_rect(t))
 
 
+func _crop_texture(id: String) -> Texture2D:
+	if not _crop_tex.has(id):
+		_crop_tex[id] = load("res://assets/sprites/crops/%s.png" % id)
+	return _crop_tex[id]
+
+
 func _draw_soil() -> void:
 	for c in soil:
-		var s: Dictionary = soil[c]
+		var cell: Dictionary = soil[c]
 		var dest := Rect2(c.x * TILE, c.y * TILE, TILE, TILE)
-		_soil_layer.draw_texture_rect_region(TILES_TEX, dest,
-			_tile_rect(T_TILLED_WET if s["wet"] else T_TILLED))
-		if s["crop"] != "":
-			var row: int = ItemDB.CROPS[s["crop"]]["row"]
-			var stage := ItemDB.crop_stage(s["crop"], s["growth"])
-			# a arte tem a base no pé do quadro; sobe para a planta ficar no meio do canteiro
-			var lift: float = CROP_LIFT[stage]
-			_soil_layer.draw_texture_rect_region(CROPS_TEX, Rect2(dest.position - Vector2(0, lift), dest.size),
-				Rect2(stage * TILE, row * TILE, TILE, TILE))
+		# terra seca por baixo e a molhada por cima, mais forte quanto mais úmida
+		_soil_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_TILLED))
+		var m: float = cell["moist"]
+		if m > 0.12:
+			_soil_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_TILLED_WET),
+				Color(1, 1, 1, clampf(0.35 + m * 0.65, 0.0, 1.0)))
+		if not Agri.has_crop(cell):
+			continue
+		var cd := Agri.crop_data(cell)
+		if cd == null:
+			continue
+		var cr: Dictionary = cell["crop"]
+		var tex := _crop_texture(cd.id)
+		var stage := Agri.frame(cell)
+		var h := cd.sprite_height
+		var lift: float = CROP_LIFT[mini(stage, 3)] if stage < cd.frames() - 1 else 3.0
+		var tint := Color.WHITE
+		match cr["state"]:
+			"dead":
+				tint = Color(0.62, 0.48, 0.32)
+			"dormant":
+				tint = Color(0.72, 0.72, 0.78)
+			_:
+				if cr["stress"] > 0:
+					tint = Color(1.0, 0.92, 0.65)   # murchinha
+		_soil_layer.draw_texture_rect_region(tex,
+			Rect2(dest.position + Vector2(0, TILE - h - lift), Vector2(TILE, h)),
+			Rect2(stage * TILE, 0, TILE, h), tint)
+		_draw_crop_marker(dest, cell, cd)
+
+
+## Sinais no canteiro: gota (precisa de água), brilho (pronta), zzz (dormindo), x (morta).
+func _draw_crop_marker(dest: Rect2, cell: Dictionary, cd: CropData) -> void:
+	var cr: Dictionary = cell["crop"]
+	var p := dest.position + Vector2(TILE - 7, 5)
+	var ink := Color("2b2118")
+	match cr["state"]:
+		"ready":
+			for v in [Vector2(0, -4), Vector2(0, 4), Vector2(-4, 0), Vector2(4, 0)]:
+				_soil_layer.draw_line(p, p + v, ink, 3.0)
+			for v in [Vector2(0, -3), Vector2(0, 3), Vector2(-3, 0), Vector2(3, 0)]:
+				_soil_layer.draw_line(p, p + v, Color("f6e7a8"), 1.0)
+		"dormant":
+			var f := ThemeDB.fallback_font
+			_soil_layer.draw_string_outline(f, p + Vector2(-4, 3), "z", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 3, ink)
+			_soil_layer.draw_string(f, p + Vector2(-4, 3), "z", HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("dfe6f2"))
+		"growing":
+			if cell["moist"] < cd.water_min:
+				_soil_layer.draw_circle(p + Vector2(0, 1), 3.5, ink)
+				_soil_layer.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -5), p + Vector2(-3, 0), p + Vector2(3, 0)]), ink)
+				_soil_layer.draw_circle(p + Vector2(0, 1), 2.5, Color("7db4c9"))
+				_soil_layer.draw_colored_polygon(PackedVector2Array([p + Vector2(0, -3.5), p + Vector2(-2, 0), p + Vector2(2, 0)]), Color("7db4c9"))
 
 
 func _draw_cursor() -> void:

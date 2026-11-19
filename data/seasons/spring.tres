@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SeasonData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/season_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "spring"
+name = "Primavera"
+short_name = "Prim."
+temp_min = 10
+temp_max = 22
+rain_chance = 0.35
+air_humidity = 0.6
+tint = Color(1, 1, 1, 1)
+weed_regrow = 3

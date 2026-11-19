@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "carrot"
+name = "Cenoura-Lunar"
+description = "Crocante e levemente brilhante."
+category = "vegetable"
+seed_item = "seed_carrot"
+seed_price = 20
+produce_item = "carrot"
+sell_price = 45
+stage_days = PackedInt32Array(1, 1, 1)
+seasons = PackedStringArray("spring")
+temp_min = 4
+temp_max = 28

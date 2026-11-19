@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "potato"
+name = "Batata-Toca"
+description = "Às vezes vem mais de uma. Pode render sementes."
+category = "vegetable"
+seed_price = 25
+sell_price = 50
+produce_icon_hd = 35
+stage_days = PackedInt32Array(2, 2, 1)
+seasons = PackedStringArray("autumn")
+water_min = 0.25
+drought_tolerance = 5
+temp_min = 2
+temp_max = 26
+yield_min = 1
+yield_max = 3
+extra_seed_chance = 0.15

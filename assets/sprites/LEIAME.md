@@ -10,7 +10,7 @@ Para colocar a arte definitiva, substitua o arquivo mantendo **o mesmo nome, tam
 | `player_actions.png` | 576×1280 | Animações de ferramenta: 9 quadros por linha; linha = ferramenta×4 + direção (machado, enxada, picareta, regador, foice). Direções vazias usam o golpe simples. |
 | `npc_fungo.png` | 128×64 | 2 quadros de 64×64 (animação parado). |
 | `tiles.png` | 256×32 | Peças de 32×32: grama, grama c/ flores, grama c/ trevos, caminho, terra arada, terra molhada, água, água com margem. |
-| `crops.png` | 128×128 | Linhas: cenoura, tomate, couve, flor-estrela. Colunas: estágios 0 (semente) a 3 (pronta). 32×32 cada. |
+| `crops/<id>.png` | 32·N × 32 | Uma tira por planta: um quadro de 32×32 por estágio (dias em `stage_days` + 1). O último quadro é a planta pronta. Provisórios de `tools/generate_crop_art.py`. |
 | `stump.png` | 32×32 | Base em y≈28 (só para saves antigos). |
 | `house.png` | 128×128 | Casa do jogador. Base em y≈116, porta em x≈44. |
 | `shop.png` | 128×128 | Barraca do Fungo (asset do projeto idle). Base em y≈120. |

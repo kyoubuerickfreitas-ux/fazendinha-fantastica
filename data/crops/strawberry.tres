@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "strawberry"
+name = "Morango-Orvalho"
+description = "Perene: dorme fora da primavera e volta a dar frutos no ano seguinte."
+category = "fruit"
+seed_price = 40
+sell_price = 45
+produce_icon_hd = 16
+stage_days = PackedInt32Array(2, 2, 2)
+seasons = PackedStringArray("spring")
+season_end = "dormant"
+water_min = 0.5
+drought_tolerance = 3
+temp_min = 6
+temp_max = 28
+harvest_type = "regrow"
+regrow_days = 3
+yield_min = 1
+yield_max = 2

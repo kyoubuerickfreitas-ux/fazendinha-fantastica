@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tomato"
+name = "Tomate-Rubi"
+description = "Dá frutos o verão inteiro depois de crescer."
+category = "fruit"
+seed_item = "seed_tomato"
+seed_price = 30
+produce_item = "tomato"
+sell_price = 60
+stage_days = PackedInt32Array(2, 1, 2)
+seasons = PackedStringArray("summer")
+temp_min = 12
+temp_max = 36
+harvest_type = "regrow"
+regrow_days = 3
+yield_min = 1
+yield_max = 2

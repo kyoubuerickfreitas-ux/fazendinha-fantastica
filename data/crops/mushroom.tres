@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mushroom"
+name = "Cogumelo-Abrigo"
+description = "Gosta de frio e sombra. Aguenta pouca água."
+category = "fungus"
+seed_name = "Esporos de Cogumelo-Abrigo"
+seed_price = 45
+sell_price = 55
+produce_icon_hd = 36
+stage_days = PackedInt32Array(2, 2, 2)
+seasons = PackedStringArray("autumn", "winter")
+season_end = "survive"
+water_min = 0.2
+drought_tolerance = 6
+temp_min = -8
+temp_max = 20
+harvest_type = "regrow"
+regrow_days = 4
+yield_min = 1
+yield_max = 2

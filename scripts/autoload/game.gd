@@ -10,6 +10,7 @@ signal inventory_changed
 signal selected_slot_changed(index: int)
 signal toast(text: String)
 signal pass_out
+signal season_changed(season_id: String)
 
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
@@ -30,6 +31,11 @@ var max_health := 100.0
 var day := 1
 var minutes := DAY_START
 var weather := "sunny"
+## temperatura de hoje (°C) e de ontem (o crescimento da noite usa a de ontem)
+var temperature := 16.0
+var temperature_yesterday := 16.0
+## previsão dos próximos dias: [{"weather", "temp"}]
+var forecast: Array = []
 var water := WATER_CAPACITY
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
@@ -59,6 +65,10 @@ func reset_new_game() -> void:
 	day = 1
 	minutes = DAY_START
 	weather = "sunny"
+	temperature = 16.0
+	temperature_yesterday = 16.0
+	forecast.clear()
+	_fill_forecast()
 	water = WATER_CAPACITY
 	inventory.clear()
 	inventory.resize(INV_SIZE)
@@ -102,12 +112,37 @@ func start_new_day(rested: bool) -> void:
 	_passed_out = false
 	energy = max_energy if rested else max_energy * 0.5
 	health = max_health
-	var rng := RandomNumberGenerator.new()
-	rng.randomize()
-	weather = "rain" if rng.randf() < 0.25 else "sunny"
+	temperature_yesterday = temperature
+	_fill_forecast()
+	var today: Dictionary = forecast.pop_front()
+	weather = today["weather"]
+	temperature = today["temp"]
+	_fill_forecast()
+	if Calendar.day_of_season(day) == 1:
+		season_changed.emit(Calendar.season_id(day))
 	weather_changed.emit(weather)
 	time_changed.emit(day, minutes)
 	stats_changed.emit()
+
+
+# ------------------------------------------------------------------ clima e previsão
+## Mantém a previsão com 3 dias à frente. O clima de cada dia depende da estação
+## daquele dia e um pouco do dia anterior (chuva tende a durar).
+func _fill_forecast() -> void:
+	while forecast.size() < 4:
+		var d := day + 1 + forecast.size()
+		var s := CropDB.season(Calendar.season_id(d))
+		var prev_rain: bool = (forecast.back()["weather"] == "rain") if not forecast.is_empty() else weather == "rain"
+		var chance := s.rain_chance + (0.15 if prev_rain else 0.0)
+		var w := "rain" if randf() < chance else "sunny"
+		var t := randf_range(s.temp_min, s.temp_max)
+		if w == "rain":
+			t -= 3.0
+		forecast.append({"weather": w, "temp": snappedf(t, 1.0)})
+
+
+func season_id() -> String:
+	return Calendar.season_id(day)
 
 
 # ------------------------------------------------------------------ status
@@ -231,6 +266,7 @@ func save_game(world_data: Dictionary) -> void:
 		"version": SAVE_VERSION,
 		"money": money, "energy": energy, "health": health,
 		"day": day, "minutes": minutes, "weather": weather, "water": water,
+		"temperature": temperature, "temperature_yesterday": temperature_yesterday, "forecast": forecast,
 		"bait": equipped_bait,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
@@ -256,6 +292,11 @@ func load_game() -> Dictionary:
 	day = int(data.get("day", day))
 	minutes = int(data.get("minutes", DAY_START))
 	weather = str(data.get("weather", "sunny"))
+	temperature = float(data.get("temperature", 16.0))
+	temperature_yesterday = float(data.get("temperature_yesterday", temperature))
+	var fc = data.get("forecast", [])
+	forecast = fc if fc is Array else []
+	_fill_forecast()
 	water = int(data.get("water", WATER_CAPACITY))
 	equipped_bait = str(data.get("bait", ""))
 	selected_slot = int(data.get("selected_slot", 0))

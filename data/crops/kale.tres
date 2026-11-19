@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "kale"
+name = "Couve-Musgo"
+description = "Folhas macias como musgo. Aguenta o frio."
+category = "vegetable"
+seed_item = "seed_kale"
+seed_price = 15
+produce_item = "kale"
+sell_price = 35
+stage_days = PackedInt32Array(1, 1, 1)
+seasons = PackedStringArray("spring", "autumn", "winter")
+season_end = "die"
+water_min = 0.35
+drought_tolerance = 4
+temp_min = -8
+temp_max = 26

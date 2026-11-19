@@ -9,7 +9,10 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - HUD: retrato, vida, energia, moedas, dia/hora e clima
 - Barra rápida de 6 espaços (personalizável pela mochila), botão de usar ferramenta, botão de interagir (mão) e botão da mochila
 - Ferramentas: regador (enche no lago), enxada, machado, picareta e foice
-- Plantações: Couve-Musgo, Cenoura-Lunar, Tomate-Rubi e Flor-Estrela. Arar, plantar, regar, crescer por dia e colher
+- **Agricultura com estações** (20 dias cada): 13 culturas em `data/crops/*.tres`, de colheita única ou recorrente, com dormência, sobrevivência ou morte no fim da estação
+- **Umidade do solo**: a terra seca durante a noite conforme a temperatura; abaixo do mínimo da planta o crescimento pausa, e só morre depois de vários dias sem água
+- **Calendário** (toque no relógio): estação, dias restantes, previsão de 3 dias e o que dá tempo de plantar
+- Sinais no canteiro: gota (precisa de água), brilho (pronta), z (dormindo), planta seca (morreu — colha com a mão/foice para limpar)
 - Limpeza do terreno: mato, pedras, tocos e árvores dão fibra, pedra e madeira
 - Animais no pasto (a leste): **Moombor** (leite), **Fofrança** (lã), **Catarrápio** (trufa) e **Piuplum** (ovos). Faça carinho uma vez por dia e no dia seguinte colete o produto
 - **Bancada de trabalho** (ao lado da casa): fabrique feno, comedouro, cercas, caminho de pedra, espantalho, Mosca de Fibra, máquinas, galinheiro e celeiro com madeira, pedra e fibra
@@ -78,7 +81,10 @@ A Play Store exige **AAB** assinado:
 scenes/main.tscn            cena inicial
 scripts/main.gd             monta mundo, câmera, HUD, dia/noite, chuva, sono, save
 scripts/autoload/game.gd    estado global: dinheiro, energia, tempo, inventário, save
-scripts/data/item_db.gd     itens, plantações e preços  ← adicionar conteúdo aqui
+scripts/data/item_db.gd     itens, receitas e preços
+scripts/systems/            calendário, catálogo de plantas e regras da agricultura
+data/crops/*.tres           uma ficha por planta  ← para criar uma planta nova, copie uma ficha
+data/seasons/*.tres         as 4 estações (temperatura, chuva, cor)
 scripts/world/              mapa (farm_world), objetos (prop), NPCs, interações
 scripts/player/player.gd    personagem
 scripts/ui/                 HUD, joystick, botões de toque, slots, estilo

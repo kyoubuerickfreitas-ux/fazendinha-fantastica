@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SeasonData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/season_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "autumn"
+name = "Outono"
+short_name = "Out."
+temp_min = 8
+temp_max = 20
+rain_chance = 0.3
+air_humidity = 0.55
+tint = Color(1.08, 0.9, 0.72, 1)
+weed_regrow = 2

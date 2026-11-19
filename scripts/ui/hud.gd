@@ -39,6 +39,9 @@ var _shop: Control
 var _shop_buy: VBoxContainer
 var _shop_sell: VBoxContainer
 var _shop_money: Label
+var _top_right: Control
+var _calendar: Control
+var _cal_body: VBoxContainer
 var _craft: Control
 var _craft_list: VBoxContainer
 var _shop_animals: VBoxContainer
@@ -64,6 +67,7 @@ func _ready() -> void:
 	_build_backpack()
 	_build_shop()
 	_build_crafting()
+	_build_calendar()
 	_build_confirm()
 	_build_fade()
 
@@ -156,6 +160,7 @@ func _build_top_right() -> void:
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(panel)
 	_blockers.append(panel)
+	_top_right = panel
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 5)
 	panel.add_child(h)
@@ -372,6 +377,63 @@ func _build_crafting() -> void:
 	v.add_child(scroll)
 
 
+# ================================================================= calendário
+func _build_calendar() -> void:
+	var w := _make_window("Calendário", Vector2(420, 0))
+	_calendar = w[0]
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 230)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_cal_body = VBoxContainer.new()
+	_cal_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_cal_body)
+	w[1].add_child(scroll)
+
+
+func open_calendar() -> void:
+	_open(_calendar)
+	for c in _cal_body.get_children():
+		c.queue_free()
+	var d := Game.day
+	var left := Calendar.days_left(d)
+	_cal_body.add_child(UIStyle.label("%s · dia %d de %d · ano %d" % [Calendar.season_name(d),
+		Calendar.day_of_season(d), Calendar.SEASON_LENGTH, Calendar.year(d)], 14, UIStyle.WOOD_DARK))
+	var next_name := Calendar.season_name(d + left + 1)
+	_cal_body.add_child(UIStyle.label("Faltam %d dia(s) para o %s." % [left, next_name] if left > 0
+		else "Hoje é o último dia! Amanhã começa o %s." % next_name, 11, UIStyle.EARTH))
+	# previsão
+	_cal_body.add_child(UIStyle.label("Previsão", 13, UIStyle.WOOD))
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 14)
+	var days := [{"weather": Game.weather, "temp": Game.temperature}] + Game.forecast.slice(0, 3)
+	for i in days.size():
+		var f: Dictionary = days[i]
+		var box := HBoxContainer.new()
+		var ic := TextureRect.new()
+		ic.texture = ItemDB.ui_icon("rain" if f["weather"] == "rain" else "sun")
+		ic.custom_minimum_size = Vector2(16, 16)
+		box.add_child(ic)
+		box.add_child(UIStyle.label("%s\n%d°C" % ["Hoje" if i == 0 else Calendar.weekday(d + i), int(f["temp"])], 10, UIStyle.WOOD_DARK))
+		row.add_child(box)
+	_cal_body.add_child(row)
+	# o que plantar agora
+	_cal_body.add_child(UIStyle.label("Plante agora", 13, UIStyle.WOOD))
+	for seed_id in CropDB.seeds_for(Calendar.season_id(d)):
+		var c := CropDB.crop_for_seed(seed_id)
+		var ok := Calendar.fits_in_season(c, d)
+		var extra := ", depois a cada %d" % c.regrow_days if c.harvest_type == "regrow" else ""
+		var line := _shop_row(c.produce_id(), "%s — %d dias%s%s" % [c.name, c.total_days(), extra,
+			"" if ok else " · não dá tempo nesta estação"])
+		_cal_body.add_child(line)
+
+
+func _input(event: InputEvent) -> void:
+	if event is InputEventScreenTouch and event.pressed and _open_panel == null and _top_right \
+			and _top_right.get_global_rect().has_point(event.position):
+		open_calendar()
+		get_viewport().set_input_as_handled()
+
+
 func open_crafting() -> void:
 	_open(_craft)
 	_refresh_crafting()
@@ -552,7 +614,11 @@ func _refresh_shop() -> void:
 	for c in _shop_sell.get_children():
 		c.queue_free()
 
+	var buy_list: Array = CropDB.seeds_for(Calendar.season_id(Game.day))
 	for id in ItemDB.SHOP_ITEMS:
+		if ItemDB.get_item(id).get("type", "") != "seed":
+			buy_list.append(id)
+	for id in buy_list:
 		if ItemDB.get_item(id).get("type", "") == "tool" and Game.count_item(id) > 0:
 			continue   # não vende de novo uma ferramenta que você já tem
 		var price: int = ItemDB.get_item(id)["buy"]
@@ -657,7 +723,7 @@ func _refresh_stats() -> void:
 
 
 func _refresh_time() -> void:
-	_time_label.text = "Dia %d  %s" % [Game.day, Game.clock_text()]
+	_time_label.text = "%s  %s  %d°" % [Calendar.short_text(Game.day), Game.clock_text(), int(Game.temperature)]
 	_time_icon.texture = ItemDB.ui_icon("moon" if Game.is_night() else "sun")
 	_weather_icon.texture = ItemDB.ui_icon("rain" if Game.weather == "rain" else "cloud")
 	_weather_icon.visible = true
