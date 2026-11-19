@@ -38,10 +38,10 @@ const ITEMS := {
 	"wool": {"name": "Lã de Fofrança", "icon": 28, "type": "product", "sell": 80, "desc": "Macia como nuvem, com cheiro de flor."},
 	"truffle": {"name": "Trufa da Floresta", "icon": 29, "type": "product", "sell": 120, "desc": "Farejada pelo Catarrápio."},
 
-	"seed_carrot": {"name": "Sementes de Cenoura-Lunar", "icon": 12, "type": "seed", "crop": "carrot", "buy": 20, "desc": "Cresce em 3 dias."},
-	"seed_tomato": {"name": "Sementes de Tomate-Rubi", "icon": 13, "type": "seed", "crop": "tomato", "buy": 30, "desc": "Cresce em 4 dias."},
-	"seed_kale": {"name": "Sementes de Couve-Musgo", "icon": 14, "type": "seed", "crop": "kale", "buy": 15, "desc": "Cresce em 2 dias."},
-	"seed_starflower": {"name": "Sementes de Flor-Estrela", "icon": 15, "type": "seed", "crop": "starflower", "buy": 45, "desc": "Cresce em 5 dias."},
+	"seed_carrot": {"name": "Sementes de Cenoura-Lunar", "icon": 12, "hd": 10, "type": "seed", "crop": "carrot", "buy": 20, "desc": "Cresce em 3 dias."},
+	"seed_tomato": {"name": "Sementes de Tomate-Rubi", "icon": 13, "hd": 11, "type": "seed", "crop": "tomato", "buy": 30, "desc": "Cresce em 4 dias."},
+	"seed_kale": {"name": "Sementes de Couve-Musgo", "icon": 14, "hd": 9, "type": "seed", "crop": "kale", "buy": 15, "desc": "Cresce em 2 dias."},
+	"seed_starflower": {"name": "Sementes de Flor-Estrela", "icon": 15, "hd": 12, "type": "seed", "crop": "starflower", "buy": 45, "desc": "Cresce em 5 dias."},
 }
 
 ## row: linha em crops.png (colunas = estágios 0..3)

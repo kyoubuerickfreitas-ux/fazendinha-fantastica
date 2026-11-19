@@ -25,7 +25,11 @@ OUT = os.path.join(ROOT, "assets", "sprites", "items_hd.png")
 CELL = 32
 FIT = 30
 
-ORDER = ["watering_can", "hoe", "axe", "pickaxe", "scythe", "fiber", "sprout", "fishing_rod"]
+ORDER = ["watering_can", "hoe", "axe", "pickaxe", "scythe", "fiber", "sprout", "fishing_rod",
+         "seed_bag", "seed_kale", "seed_carrot", "seed_tomato", "seed_starflower"]
+
+# selinho no canto do saco de sementes: índice do ícone da colheita em icons.png (16x16)
+SEED_BADGES = {"seed_kale": 10, "seed_carrot": 8, "seed_tomato": 9, "seed_starflower": 11}
 
 
 def remove_white(im):
@@ -102,8 +106,22 @@ if __name__ == "__main__":
     icons["sprout"], icons["fiber"] = old["sprout"], old["fiber"]
     icons.update(pieces(os.path.join(SRC, "tools_forest.webp"),
                         ["pickaxe", "watering_can", "hoe", "scythe", "fishing_rod", "axe"], white=True, rows=2))
+    icons.update(pieces(os.path.join(SRC, "seed_bag.webp"), ["seed_bag"], white=True))
+    small_icons = Image.open(os.path.join(ROOT, "assets", "sprites", "icons.png")).convert("RGBA")
     atlas = Image.new("RGBA", (CELL * len(ORDER), CELL), (0, 0, 0, 0))
     for i, n in enumerate(ORDER):
-        atlas.alpha_composite(fit(icons[n]), (i * CELL, 0))
+        if n in SEED_BADGES:
+            cell = fit(icons["seed_bag"])
+            from PIL import ImageDraw
+            d = ImageDraw.Draw(cell)
+            d.ellipse((15, 15, 31, 31), fill=(43, 33, 24, 255))
+            d.ellipse((16, 16, 30, 30), fill=(233, 221, 187, 255))
+            k = SEED_BADGES[n]
+            badge = small_icons.crop(((k % 16) * 16, (k // 16) * 16, (k % 16) * 16 + 16, (k // 16) * 16 + 16))
+            badge = badge.resize((12, 12), Image.NEAREST)
+            cell.alpha_composite(badge, (17, 17))
+        else:
+            cell = fit(icons[n])
+        atlas.alpha_composite(cell, (i * CELL, 0))
         print(f"{i}: {n}")
     atlas.save(OUT)
