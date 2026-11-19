@@ -173,6 +173,8 @@ func _draw() -> void:
 	if state == State.IDLE or player == null:
 		return
 	var tip := player.position + player.facing_vector() * 12 + Vector2(0, -30)
+	if player._holding_rod and player.facing_vector() == Vector2.DOWN:
+		tip = player.position + Vector2(18, -10)   # ponta da vara na pose de segurar (de frente)
 	var bob := _bobber_pos
 	var dip := 0.0
 	if state == State.WAITING:

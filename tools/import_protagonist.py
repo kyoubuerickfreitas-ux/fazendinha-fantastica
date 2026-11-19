@@ -30,7 +30,7 @@ SOURCES = [
 # Animações de ferramenta do jogador (assets/source/base_body/<Pasta>/<direção>/0..8.png)
 # Saída: assets/sprites/player_actions.png, 9 colunas x (5 ferramentas x 4 direções) de 64x64.
 # Linha = ferramenta * 4 + direção (0 baixo, 1 esquerda, 2 direita, 3 cima); direção ausente fica vazia.
-ACTION_TOOLS = ["Axe", "Hoe", "Pickaxe", "Water", "Scythe"]
+ACTION_TOOLS = ["Axe", "Hoe", "Pickaxe", "Water", "Scythe", "Fish"]
 ACTION_FRAMES = 9
 CELL = 64
 FEET_Y = 58

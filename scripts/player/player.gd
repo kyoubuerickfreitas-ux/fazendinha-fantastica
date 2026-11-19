@@ -14,6 +14,7 @@ const ACTION_ANIMS := {
 	"pickaxe": {"tool": 2, "impact": 5},
 	"watering_can": {"tool": 3, "impact": 4},
 	"scythe": {"tool": 4, "impact": 4},
+	"fishing_rod": {"tool": 5, "impact": 5},   # lançar; o último quadro é a pose de segurar a vara
 }
 const ACTION_FPS := 16.0
 const ACTION_FRAMES := 9
@@ -38,6 +39,7 @@ var _anim_t := 0.0
 var _busy := 0.0
 var _sprite: Sprite2D
 var _action := {}   # animação de ferramenta em andamento
+var _holding_rod := false
 
 
 func _ready() -> void:
@@ -68,6 +70,9 @@ func _physics_process(delta: float) -> void:
 		v = Vector2.ZERO
 	if not _action.is_empty():
 		_step_action(delta)
+	elif _holding_rod and not (fishing and fishing.is_active()):
+		_holding_rod = false
+		_restore_sheet()
 	if fishing and fishing.is_active():
 		if fishing.blocks_movement():
 			v = Vector2.ZERO
@@ -78,7 +83,7 @@ func _physics_process(delta: float) -> void:
 	velocity = v * SPEED
 	move_and_slide()
 
-	if not _action.is_empty():
+	if not _action.is_empty() or _holding_rod:
 		pass
 	elif v.length() > 0.15:
 		facing = v.normalized()
@@ -170,6 +175,8 @@ func use_at(c: Vector2i) -> void:
 		return
 	if id == "fishing_rod":
 		_face(world.target_anchor(c))
+		if world.ground_at(c) == FarmWorld.Ground.WATER and _start_action(id, c):
+			return
 		_busy = ACTION_TIME
 		_play_action_anim()
 		_report(fishing.on_use(c))
@@ -183,6 +190,9 @@ func use_at(c: Vector2i) -> void:
 
 
 func _apply_tool(id: String, c: Vector2i) -> void:
+	if id == "fishing_rod":
+		_report(fishing.on_use(c))
+		return
 	var msg: String
 	if id != "" and not world.would_act(id, c) and world.can_interact_cell(c):
 		msg = world.interact_cell(c)   # ex.: tocar numa colheita pronta com o machado na mão
@@ -225,12 +235,19 @@ func _step_action(delta: float) -> void:
 		_apply_tool(a["id"], a["cell"])
 	if f >= ACTION_FRAMES:
 		_action = {}
-		_sprite.texture = SHEET
-		_sprite.hframes = COLS
-		_sprite.vframes = 4
-		_sprite.frame = _dir * COLS
+		if a["id"] == "fishing_rod" and fishing and fishing.is_active():
+			_holding_rod = true   # fica na última pose segurando a vara
+			return
+		_restore_sheet()
 		return
 	_sprite.frame = (int(def["tool"]) * 4 + _dir) * ACTION_FRAMES + f
+
+
+func _restore_sheet() -> void:
+	_sprite.texture = SHEET
+	_sprite.hframes = COLS
+	_sprite.vframes = 4
+	_sprite.frame = _dir * COLS
 
 
 func _report(msg: String) -> void:

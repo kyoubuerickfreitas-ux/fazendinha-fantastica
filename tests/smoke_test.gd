@@ -171,6 +171,10 @@ func _run() -> void:
 	game.select_slot(1); p._busy = 0
 	print("alvo da vara: ", p.target_cell(), " água: ", water_cell)
 	p.use_tool()
+	await _wait(0.2)
+	await _shot("09a_lancando")
+	while not p._action.is_empty():
+		await process_frame
 	assert(fishing.state == Fishing.State.WAITING, "deveria estar esperando o peixe")
 	assert(game.count_item("bait_cricket") == 2, "o lançamento gasta 1 isca")
 	fishing._timer = 0.01
