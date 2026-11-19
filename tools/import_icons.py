@@ -7,7 +7,7 @@ Origem (assets/source/icons/):
                       picareta, regador, enxada / foice, vara de pesca, machado
   tools_row.png     : só o broto e o feixe de trigo (fibra) são usados daqui
 
-Saída: assets/sprites/items_hd.png (uma linha de ícones 32x32, na ordem de ORDER).
+Saída: assets/sprites/items_hd.png (ícones 32x32, 16 por linha, na ordem de ORDER).
 O índice de cada ícone é usado em "hd" nos itens de scripts/data/item_db.gd.
 
 Uso: python3 tools/import_icons.py
@@ -28,8 +28,15 @@ FIT = 30
 ORDER = ["watering_can", "hoe", "axe", "pickaxe", "scythe", "fiber", "sprout", "fishing_rod",
          "seed_bag", "seed_kale", "seed_carrot", "seed_tomato", "seed_starflower"]
 
-# selinho no canto do saco de sementes: índice do ícone da colheita em icons.png (16x16)
-SEED_BADGES = {"seed_kale": 10, "seed_carrot": 8, "seed_tomato": 9, "seed_starflower": 11}
+# frutas e legumes (produce.webp, 4 linhas x 6), em ordem de leitura
+PRODUCE = ["apple", "pear", "grape", "strawberry", "blueberry", "cherry",
+           "orange", "lemon", "raspberry", "plum", "peach", "pomegranate",
+           "watermelon", "melon", "pineapple", "coconut", "banana", "grape_dark",
+           "carrot", "radish", "beet", "tomato", "potato", "mushroom"]
+ORDER += PRODUCE
+
+# selinho no canto do saco de sementes: nome de um ícone HD, ou índice em icons.png (16x16)
+SEED_BADGES = {"seed_kale": 10, "seed_carrot": "carrot", "seed_tomato": "tomato", "seed_starflower": 11}
 
 
 def remove_white(im):
@@ -107,8 +114,10 @@ if __name__ == "__main__":
     icons.update(pieces(os.path.join(SRC, "tools_forest.webp"),
                         ["pickaxe", "watering_can", "hoe", "scythe", "fishing_rod", "axe"], white=True, rows=2))
     icons.update(pieces(os.path.join(SRC, "seed_bag.webp"), ["seed_bag"], white=True))
+    icons.update(pieces(os.path.join(SRC, "produce.webp"), PRODUCE, white=True, rows=4))
     small_icons = Image.open(os.path.join(ROOT, "assets", "sprites", "icons.png")).convert("RGBA")
-    atlas = Image.new("RGBA", (CELL * len(ORDER), CELL), (0, 0, 0, 0))
+    per_row = 16
+    atlas = Image.new("RGBA", (CELL * per_row, CELL * ((len(ORDER) + per_row - 1) // per_row)), (0, 0, 0, 0))
     for i, n in enumerate(ORDER):
         if n in SEED_BADGES:
             cell = fit(icons["seed_bag"])
@@ -117,11 +126,19 @@ if __name__ == "__main__":
             d.ellipse((15, 15, 31, 31), fill=(43, 33, 24, 255))
             d.ellipse((16, 16, 30, 30), fill=(233, 221, 187, 255))
             k = SEED_BADGES[n]
-            badge = small_icons.crop(((k % 16) * 16, (k // 16) * 16, (k % 16) * 16 + 16, (k // 16) * 16 + 16))
-            badge = badge.resize((12, 12), Image.NEAREST)
+            if isinstance(k, str):
+                badge = fit(icons[k]).resize((12, 12), Image.LANCZOS)
+                bp = badge.load()
+                for yy in range(12):
+                    for xx in range(12):
+                        r, g, b, a = bp[xx, yy]
+                        bp[xx, yy] = (r, g, b, 255) if a >= 110 else (0, 0, 0, 0)
+            else:
+                badge = small_icons.crop(((k % 16) * 16, (k // 16) * 16, (k % 16) * 16 + 16, (k // 16) * 16 + 16))
+                badge = badge.resize((12, 12), Image.NEAREST)
             cell.alpha_composite(badge, (17, 17))
         else:
             cell = fit(icons[n])
-        atlas.alpha_composite(cell, (i * CELL, 0))
+        atlas.alpha_composite(cell, ((i % per_row) * CELL, (i // per_row) * CELL))
         print(f"{i}: {n}")
     atlas.save(OUT)

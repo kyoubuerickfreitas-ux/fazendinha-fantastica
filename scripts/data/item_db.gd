@@ -9,6 +9,7 @@ const ICON_COLUMNS := 16
 ## Itens com "hd" usam este atlas no lugar de icons.png.
 const ICONS_HD := preload("res://assets/sprites/items_hd.png")
 const HD_SIZE := 32
+const HD_COLUMNS := 16
 
 ## Ícones de interface (índices em icons.png)
 const UI_ICON := {
@@ -28,8 +29,8 @@ const ITEMS := {
 	"stone": {"name": "Pedra", "icon": 6, "type": "resource", "sell": 2, "desc": "Material de construção."},
 	"fiber": {"name": "Fibra", "icon": 7, "hd": 5, "type": "resource", "sell": 1, "desc": "Usada em artesanato."},
 
-	"carrot": {"name": "Cenoura-Lunar", "icon": 8, "type": "crop", "sell": 45, "desc": "Crocante e levemente brilhante."},
-	"tomato": {"name": "Tomate-Rubi", "icon": 9, "type": "crop", "sell": 70, "desc": "Vermelho como uma pedra preciosa."},
+	"carrot": {"name": "Cenoura-Lunar", "icon": 8, "hd": 31, "type": "crop", "sell": 45, "desc": "Crocante e levemente brilhante."},
+	"tomato": {"name": "Tomate-Rubi", "icon": 9, "hd": 34, "type": "crop", "sell": 70, "desc": "Vermelho como uma pedra preciosa."},
 	"kale": {"name": "Couve-Musgo", "icon": 10, "type": "crop", "sell": 35, "desc": "Folhas macias como musgo."},
 	"starflower": {"name": "Flor-Estrela", "icon": 11, "type": "crop", "sell": 110, "desc": "Brilha suavemente à noite."},
 
@@ -92,7 +93,8 @@ static func icon(id: String) -> AtlasTexture:
 	if item.has("hd"):
 		var t := AtlasTexture.new()
 		t.atlas = ICONS_HD
-		t.region = Rect2(int(item["hd"]) * HD_SIZE, 0, HD_SIZE, HD_SIZE)
+		var i := int(item["hd"])
+		t.region = Rect2((i % HD_COLUMNS) * HD_SIZE, (i / HD_COLUMNS) * HD_SIZE, HD_SIZE, HD_SIZE)
 		return t
 	return icon_index_texture(int(item.get("icon", 0)))
 

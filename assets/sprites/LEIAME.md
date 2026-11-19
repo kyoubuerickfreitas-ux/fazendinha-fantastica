@@ -26,4 +26,4 @@ Efeitos ficam em `assets/fx/` (quadros de 64×64, 9 linhas de cores). Para troca
 São gerados a partir das folhas originais em `assets/source/animals/` por `tools/import_animals.py`, que encontra cada quadro sozinho, remove fundo xadrez pintado e reduz para a escala do jogo (altura alvo por animal no próprio script).
 
 ## Ícones HD
-`items_hd.png`: ícones 32×32 numa linha (regador, enxada, machado, picareta, foice, fibra, broto, vara de pesca), gerados por `tools/import_icons.py` a partir de `assets/source/icons/`. Itens com o campo `hd` em `item_db.gd` usam este atlas.
+`items_hd.png`: ícones 32×32, 16 por linha (ferramentas, fibra, broto, vara de pesca, sacos de sementes e 24 frutas/legumes; a lista completa está em `ORDER`), gerados por `tools/import_icons.py` a partir de `assets/source/icons/`. Itens com o campo `hd` em `item_db.gd` usam este atlas.
