@@ -389,8 +389,13 @@ func _build_crafting() -> void:
 func _build_animal_card() -> void:
 	var w := _make_window("Animal", Vector2(360, 0))
 	_animal_card = w[0]
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 240)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	_card_body = VBoxContainer.new()
-	w[1].add_child(_card_body)
+	_card_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_card_body)
+	w[1].add_child(scroll)
 
 
 ## Abre o cartão de um animal (ou a lista, se `records` tiver mais de um).
@@ -445,11 +450,38 @@ func open_animal_card(r: AnimalRecord) -> void:
 
 
 ## Lista dos animais de uma construção (ou de todos).
-func open_animal_list(records: Array, title: String) -> void:
+func open_animal_list(records: Array, title: String, building: Placeable = null) -> void:
 	_open(_animal_card)
 	for c in _card_body.get_children():
 		c.queue_free()
 	_card_body.add_child(UIStyle.label(title, 15, UIStyle.WOOD_DARK))
+	if building:
+		var bar := HBoxContainer.new()
+		var stored := 0
+		for it in building.storage:
+			stored += int(it["qty"])
+		if stored > 0:
+			var cb := Button.new()
+			cb.text = "Coletar tudo (%d)" % stored
+			cb.pressed.connect(func():
+				var n: int = world.collect_storage(building)
+				show_toast("Pegou %d produto(s) do coletor." % n)
+				close_panel())
+			bar.add_child(cb)
+		var levels: Array = ItemDB.BUILDING_LEVELS[building.kind]
+		if building.level < levels.size():
+			var nxt: Dictionary = levels[building.level]
+			var ub := Button.new()
+			ub.text = "Melhorar p/ nível %d" % (building.level + 1)
+			ub.disabled = not ItemDB.can_afford(nxt["cost"])
+			ub.pressed.connect(func():
+				show_toast(world.upgrade_building(building))
+				close_panel())
+			bar.add_child(ub)
+			var perk := "comedouro automático do silo" if building.level == 1 else "aquecedor + coletor automático"
+			_card_body.add_child(UIStyle.label("Próximo nível: %d vagas, %s.\nCusto: %s" % [nxt["capacity"], perk,
+				ItemDB.cost_text(nxt["cost"])], 10, UIStyle.EARTH))
+		_card_body.add_child(bar)
 	if records.is_empty():
 		_card_body.add_child(UIStyle.label("Ninguém mora aqui ainda. Compre animais na barraca do Fungo.", 11, UIStyle.EARTH))
 	for r: AnimalRecord in records:

@@ -57,7 +57,7 @@ func _ready() -> void:
 	world.bin_used.connect(_sell_all)
 	world.workbench_used.connect(func(): hud.open_crafting())
 	world.animal_card_requested.connect(func(r): hud.open_animal_card(r))
-	world.animal_list_requested.connect(func(list, title): hud.open_animal_list(list, title))
+	world.animal_list_requested.connect(func(list, title, b): hud.open_animal_list(list, title, b))
 	hud.world = world
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")

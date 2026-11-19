@@ -13,8 +13,11 @@ var origin := Vector2i.ZERO      # célula de cima à esquerda
 var size := Vector2i.ONE
 ## máquina: {"input": id, "output": id, "ready": dia} ou {}
 var job := {}
-## comedouro: quantidade de feno
+## comedouro/silo: quantidade de feno
 var hay := 0
+## celeiro/galinheiro: nível (1..3) e produtos guardados pelo coletor automático
+var level := 1
+var storage: Array = []
 
 var _sprite: Sprite2D
 var _bubble: Sprite2D
@@ -100,7 +103,10 @@ func refresh() -> void:
 		"workbench":
 			_interact.label = "Fabricar"
 		"barn", "coop":
-			_interact.label = "Animais"
+			var n := 0
+			for it in storage:
+				n += int(it["qty"])
+			_interact.label = "Animais · Nv %d%s" % [level, (" (%d)" % n) if n > 0 else ""]
 		"silo":
 			_interact.label = "Silo (%d)" % hay
 		"feeder":
@@ -154,11 +160,14 @@ func collect() -> String:
 
 # ------------------------------------------------------------------ salvar
 func serialize() -> Dictionary:
-	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay}
+	return {"kind": kind, "x": origin.x, "y": origin.y, "job": job, "hay": hay, "level": level, "storage": storage}
 
 
 func restore(d: Dictionary) -> void:
 	var j = d.get("job", {})
 	job = j if j is Dictionary else {}
 	hay = int(d.get("hay", 0))
+	level = int(d.get("level", 1))
+	var st = d.get("storage", [])
+	storage = st if st is Array else []
 	refresh()

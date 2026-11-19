@@ -367,6 +367,48 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	await _wait(0.3)
 	await _shot("12_construcoes")
+	# níveis: melhorar celeiro, comedouro automático do silo e coletor
+	var barn_pl: Placeable = null
+	for pl in w.placeables:
+		if pl.kind == "barn":
+			barn_pl = pl
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	game.add_item("wood", 400)
+	game.add_item("stone", 300)
+	game.add_money(8000)
+	print("antes de melhorar: madeira %d pedra %d moedas %d" % [game.count_item("wood"), game.count_item("stone"), game.money])
+	print(w.upgrade_building(barn_pl))
+	print(w.upgrade_building(barn_pl))
+	print("capacidade com celeiro nível 3: ", w.capacity("big"))
+	assert(barn_pl.level == 3 and w.capacity("big") == 3 + 12)
+	var silo2: Placeable = null
+	for pl in w.placeables:
+		if pl.kind == "silo":
+			silo2 = pl
+	silo2.hay = 50
+	for pl in w.placeables:
+		if pl.kind == "feeder":
+			pl.hay = 0
+	var housed_rec: AnimalRecord = null
+	for an in w.animals:
+		an.record.ate_grass = false
+		an.record.hand_fed = false
+		an.record.product_ready = false
+		if an.record.home == w._key(barn_pl) and an.record.species == "moombor":
+			housed_rec = an.record
+	w.on_new_day()
+	print("silo depois do comedouro automático: ", silo2.hay, " | guardado no celeiro: ", barn_pl.storage)
+	assert(silo2.hay < 50)
+	if housed_rec:
+		assert(housed_rec.fed_today and not housed_rec.product_ready)
+		assert(barn_pl.storage.size() > 0)
+	var got: int = w.collect_storage(barn_pl)
+	print("coletado do celeiro: ", got)
+	main.hud.open_animal_list(w.records().filter(func(r): return r.home == w._key(barn_pl)), "Celeiro", barn_pl)
+	await _wait(0.2)
+	await _shot("18_celeiro_painel")
+	main.hud.close_panel()
 	# rotina da noite: quem tem casa vai para o celeiro e some; sem casa dorme no pasto
 	var housed_n := 0
 	for an in w.animals:

@@ -137,7 +137,26 @@ const RECIPES := [
 
 ## Espaço para animais: o pasto comporta BASE; cada construção soma a sua capacidade.
 const BASE_CAPACITY := {"big": 3, "bird": 2}
-const BUILDING_CAPACITY := {"barn": 4, "coop": 6}
+const BUILDING_CAPACITY := {"barn": 4, "coop": 6}   # nível 1 (use building_capacity())
+
+## Níveis dos alojamentos: capacidade e custo para chegar a cada nível.
+## Nível 2: comedouro automático (puxa feno do silo). Nível 3: aquecedor + coletor automático.
+const BUILDING_LEVELS := {
+	"barn": [
+		{"capacity": 4},
+		{"capacity": 8, "cost": {"wood": 150, "stone": 80, "money": 2000}},
+		{"capacity": 12, "cost": {"wood": 200, "stone": 120, "money": 5000}},
+	],
+	"coop": [
+		{"capacity": 6},
+		{"capacity": 10, "cost": {"wood": 100, "stone": 60, "money": 1200}},
+		{"capacity": 14, "cost": {"wood": 150, "stone": 90, "money": 3000}},
+	],
+}
+
+
+static func building_capacity(kind: String, level: int) -> int:
+	return int(BUILDING_LEVELS[kind][clampi(level, 1, 3) - 1]["capacity"])
 
 const SHOP_SEEDS := ["seed_kale", "seed_carrot", "seed_tomato", "seed_starflower"]
 ## Peixes: raridade 0 comum, 1 incomum, 2 raro, 3 lendário; time: day | night | any; rain: aparece mais na chuva

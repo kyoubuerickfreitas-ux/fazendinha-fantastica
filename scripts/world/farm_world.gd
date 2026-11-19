@@ -30,7 +30,7 @@ signal shop_requested
 signal bin_used
 signal workbench_used
 signal animal_card_requested(record: AnimalRecord)
-signal animal_list_requested(records: Array, title: String)
+signal animal_list_requested(records: Array, title: String, building: Placeable)
 
 var ground := PackedByteArray()
 var variant := PackedByteArray()
@@ -429,6 +429,51 @@ func _spawn_animals(saved: Array) -> void:
 	assign_homes()
 
 
+func _store_in(b: Placeable, id: String, qty: int, q: int) -> void:
+	for it in b.storage:
+		if it["id"] == id and int(it.get("q", 0)) == q:
+			it["qty"] += qty
+			b.refresh()
+			return
+	b.storage.append({"id": id, "qty": qty, "q": q})
+	b.refresh()
+
+
+## Pega tudo que o coletor guardou. Retorna quantos itens foram para a mochila.
+func collect_storage(b: Placeable) -> int:
+	var n := 0
+	var left: Array = []
+	for it in b.storage:
+		var rest := Game.add_item(it["id"], int(it["qty"]), int(it.get("q", 0)))
+		n += int(it["qty"]) - rest
+		if rest > 0:
+			left.append({"id": it["id"], "qty": rest, "q": it.get("q", 0)})
+	b.storage = left
+	b.refresh()
+	return n
+
+
+## Melhora o celeiro/galinheiro para o próximo nível. Retorna mensagem.
+func upgrade_building(b: Placeable) -> String:
+	var levels: Array = ItemDB.BUILDING_LEVELS[b.kind]
+	if b.level >= levels.size():
+		return "Já está no nível máximo."
+	var cost: Dictionary = levels[b.level]["cost"]
+	if not ItemDB.can_afford(cost):
+		return "Faltam materiais: %s." % ItemDB.cost_text(cost)
+	for k in cost:
+		if k == "money":
+			Game.add_money(-int(cost[k]))
+		else:
+			Game.remove_item(k, int(cost[k]))
+	b.level += 1
+	b.refresh()
+	FX.spawn(self, "harvest", b.position + Vector2(0, -40))
+	assign_homes()
+	var perks := {2: "comedouro automático (usa o silo)", 3: "aquecedor e coletor automático"}
+	return "%s agora é nível %d: %s!" % [ItemDB.item_name(b.kind), b.level, perks.get(b.level, "")]
+
+
 func _spawn_actor(r: AnimalRecord) -> Animal:
 	var a := Animal.new()
 	a.world = self
@@ -477,7 +522,7 @@ func assign_homes() -> void:
 			r.home = ""
 		if r.home == "":
 			for p in placeables:
-				if p.kind == r.data().housing and used.get(_key(p), 0) < ItemDB.BUILDING_CAPACITY[p.kind]:
+				if p.kind == r.data().housing and used.get(_key(p), 0) < ItemDB.building_capacity(p.kind, p.level):
 					r.home = _key(p)
 					used[r.home] = used.get(r.home, 0) + 1
 					break
@@ -503,10 +548,8 @@ func _building_at_key(k: String) -> Placeable:
 func capacity(group: String) -> int:
 	var cap: int = ItemDB.BASE_CAPACITY[group]
 	for p in placeables:
-		if group == "big" and p.kind == "barn":
-			cap += ItemDB.BUILDING_CAPACITY["barn"]
-		elif group == "bird" and p.kind == "coop":
-			cap += ItemDB.BUILDING_CAPACITY["coop"]
+		if (group == "big" and p.kind == "barn") or (group == "bird" and p.kind == "coop"):
+			cap += ItemDB.building_capacity(p.kind, p.level)
 	return cap
 
 
@@ -574,8 +617,8 @@ func _on_placeable_used(p: Placeable) -> void:
 		"barn", "coop":
 			var k := _key(p)
 			var list := records().filter(func(r): return r.home == k)
-			animal_list_requested.emit(list, "%s (%d/%d)" % [ItemDB.item_name(p.kind), list.size(),
-				ItemDB.BUILDING_CAPACITY[p.kind]])
+			animal_list_requested.emit(list, "%s nível %d (%d/%d)" % [ItemDB.item_name(p.kind), p.level, list.size(),
+				ItemDB.building_capacity(p.kind, p.level)], p)
 		"silo":
 			if held == "hay":
 				var n := store_hay(Game.count_item("hay"))
@@ -977,11 +1020,15 @@ func on_new_day() -> String:
 	rng.randomize()
 	# animais (ordem da §19 dos animais em AnimalSystem.process_day)
 	var feeders: Array = placeables.filter(func(p): return p.kind == "feeder")
-	var eat := func(_r: AnimalRecord) -> bool:
+	var eat := func(r: AnimalRecord) -> bool:
 		for f in feeders:
 			if f.hay > 0:
 				f.hay -= 1
 				return true
+		# nível 2+: comedouro automático puxa do silo
+		var home := _building_at_key(r.home)
+		if home and home.level >= 2 and take_hay_from_silos(1) == 1:
+			return true
 		return false
 	var housed := func(r: AnimalRecord) -> bool: return r.home != ""
 	var ar := AnimalSystem.process_day(records(), eat, housed, Game.weather_data(), Game.temperature, Game.season_id())
@@ -991,6 +1038,22 @@ func on_new_day() -> String:
 		_spawn_pickup(item["item"], item["q"], finder.pos + Vector2(randf_range(-30, 30), randf_range(-14, 14)), finder.name)
 	if ar["forage"].size() > 0:
 		notes.append("o farejador achou %d coisa(s) no pasto" % ar["forage"].size())
+	# nível 3: aquecedor (inverno mais feliz) e coletor automático
+	var collected := 0
+	for an in animals:
+		var rec: AnimalRecord = an.record
+		var home := _building_at_key(rec.home)
+		if home == null or home.level < 3:
+			continue
+		if Game.season_id() == "winter":
+			rec.happiness = mini(100, rec.happiness + 5)
+		if rec.product_ready and rec.data().produce_mode == "hand":
+			var res := AnimalSystem.collect(rec)
+			if not res.is_empty() and not res.has("error"):
+				_store_in(home, res["item"], res["qty"], res["q"])
+				collected += res["qty"]
+	if collected > 0:
+		notes.append("coletor guardou %d produto(s)" % collected)
 	if ar["grown"] > 0:
 		notes.append("%d animal(is) cresceu(ram)" % ar["grown"])
 	for an in animals:
