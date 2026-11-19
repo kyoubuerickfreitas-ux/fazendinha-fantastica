@@ -118,6 +118,8 @@ func _build_top_left() -> void:
 	inner_style.shadow_size = 0
 	inner.add_theme_stylebox_override("panel", inner_style)
 	var face := TextureRect.new()
+	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	var at := AtlasTexture.new()
 	at.atlas = PLAYER_SHEET
 	at.region = Rect2(18, 9, 28, 28)
@@ -144,6 +146,8 @@ func _make_bar(parent: Control, icon_name: String, color: Color) -> ProgressBar:
 	var h := HBoxContainer.new()
 	h.add_theme_constant_override("separation", 3)
 	var ic := TextureRect.new()
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	ic.texture = ItemDB.ui_icon(icon_name)
 	ic.custom_minimum_size = Vector2(16, 16)
 	h.add_child(ic)
@@ -174,6 +178,8 @@ func _build_top_right() -> void:
 	panel.add_child(h)
 
 	var coin := TextureRect.new()
+	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	coin.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	coin.texture = ItemDB.ui_icon("coin")
 	coin.custom_minimum_size = Vector2(16, 16)
 	h.add_child(coin)
@@ -182,12 +188,16 @@ func _build_top_right() -> void:
 	h.add_child(_money_label)
 	h.add_child(_vsep())
 	_time_icon = TextureRect.new()
+	_time_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_time_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	_time_icon.custom_minimum_size = Vector2(16, 16)
 	h.add_child(_time_icon)
 	_time_label = UIStyle.outlined_label("", 13)
 	h.add_child(_time_label)
 	h.add_child(_vsep())
 	_weather_icon = TextureRect.new()
+	_weather_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_weather_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	_weather_icon.custom_minimum_size = Vector2(16, 16)
 	h.add_child(_weather_icon)
 
@@ -407,6 +417,8 @@ func open_animal_card(r: AnimalRecord) -> void:
 	var s := r.data()
 	var top := HBoxContainer.new()
 	var ic := TextureRect.new()
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	var at := AtlasTexture.new()
 	at.atlas = load(s.sprite_path())
 	at.region = Rect2(0, 0, 64, 64)
@@ -574,6 +586,8 @@ func open_calendar() -> void:
 		var f: Dictionary = days[i]
 		var box := HBoxContainer.new()
 		var ic := TextureRect.new()
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 		ic.texture = ItemDB.ui_icon(CropDB.weather(f["weather"]).icon)
 		ic.custom_minimum_size = Vector2(16, 16)
 		box.add_child(ic)
@@ -781,6 +795,8 @@ func _refresh_shop() -> void:
 		var has_room: bool = world != null and world.count_animals(group) < world.capacity(group)
 		var row := HBoxContainer.new()
 		var ic := TextureRect.new()
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 		var at := AtlasTexture.new()
 		at.atlas = load("res://assets/sprites/animals/%s.png" % sp)
 		at.region = Rect2(0, 0, 64, 64)
@@ -865,6 +881,8 @@ func _refresh_shop() -> void:
 func _shop_row(id: String, text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var ic := TextureRect.new()
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
 	ic.texture = ItemDB.icon(id)
 	ic.custom_minimum_size = Vector2(24, 24)
 	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
