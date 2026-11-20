@@ -6,7 +6,7 @@ NPCS = [
          birthday=("summer", 8), cap="2E6E7E", scarf="F2C14E", skirt="9FB6C2",
          description="Pesca no lago desde antes de o vilarejo ter nome. Sempre participa do torneio.",
          loves=["dish_lake_stew", "dish_lake_sushi", "pearl", "fish_angler"],
-         likes=["any_fish", "dish_grilled_fish", "bait_fly", "old_coin"],
+         likes=["any_fish", "dish_grilled_fish", "bait_fly", "old_coin", "moonstone"],
          dislikes=["old_boot", "kale"],
          lines={
              "0": ["Hm? Você é a pessoa nova da fazenda. O lago não gosta de barulho.",
@@ -28,7 +28,7 @@ NPCS = [
          birthday=("spring", 15), cap="F2C14E", scarf="E07A9A", skirt="F2E6CF", scale=0.82,
          description="Sobrinha do Fungo. Corre pela vila atrás de bichos e doces.",
          loves=["dish_tropical_pop", "dish_strawberry_cake", "strawberry", "dish_fruit_juice"],
-         likes=["any_fruit", "egg", "dish_blueberry_pancake", "relic_shell"],
+         likes=["any_fruit", "egg", "dish_blueberry_pancake", "relic_shell", "any_gem"],
          dislikes=["kale", "beet", "any_fish"],
          lines={
              "0": ["Oi! Você tem bichos? Eu gosto de bichos! Posso ver?",
@@ -49,7 +49,7 @@ NPCS = [
     dict(id="raiz", name="Vó Raiz", role="Herbalista", home=(14, 30), wander=3,
          birthday=("autumn", 4), cap="5A3E6E", scarf="78945B", skirt="D9C49A",
          description="Conhece todas as ervas do vale. Diz que as plantas contam fofocas.",
-         loves=["dish_starflower_tea", "starflower", "truffle", "dish_mushroom_risotto"],
+         loves=["dish_starflower_tea", "starflower", "truffle", "dish_mushroom_risotto", "emerald"],
          likes=["mushroom", "herbal_tea", "any_vegetable", "milk"],
          dislikes=["old_boot", "dish_tropical_pop"],
          lines={

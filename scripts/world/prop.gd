@@ -38,6 +38,17 @@ const DEFS := {
 	"barrel": {"tex": ["barrel"], "tool": "", "hp": 0, "drop": [], "shape": Vector2(20, 10), "pad": 3},
 	"crate": {"tex": ["crate"], "tool": "", "hp": 0, "drop": [], "shape": Vector2(24, 10), "pad": 3},
 	"fence": {"tex": ["fence"], "tool": "", "hp": 0, "drop": [], "shape": Vector2(40, 8), "pad": 4},
+	# mina (assets/sprites/mine): o que cai pode mudar com a profundidade (MineWorld)
+	"mine_rock": {"tex": ["res://assets/sprites/mine/rock_a.png", "res://assets/sprites/mine/rock_b.png"], "tool": "pickaxe",
+		"hp": 2, "drop": ["stone", 2], "shape": Vector2(26, 10), "pad": 3},
+	"ore_copper": {"tex": ["res://assets/sprites/mine/ore_copper.png"], "tool": "pickaxe", "hp": 3,
+		"drop": ["copper_ore", 2], "shape": Vector2(26, 10), "pad": 3},
+	"ore_iron": {"tex": ["res://assets/sprites/mine/ore_iron.png"], "tool": "pickaxe", "hp": 4,
+		"drop": ["iron_ore", 2], "shape": Vector2(26, 10), "pad": 3},
+	"ore_crystal": {"tex": ["res://assets/sprites/mine/ore_crystal.png"], "tool": "pickaxe", "hp": 5,
+		"drop": ["crystal", 1], "shape": Vector2(26, 10), "pad": 3},
+	"gem_rock": {"tex": ["res://assets/sprites/mine/gem_rock.png"], "tool": "pickaxe", "hp": 4,
+		"drop": ["amethyst", 1], "shape": Vector2(26, 10), "pad": 3},
 }
 
 static var _tex_cache := {}
@@ -108,10 +119,10 @@ func is_removable() -> bool:
 
 
 ## Aplica um golpe. Retorna true se o objeto foi destruído.
-func hit() -> bool:
+func hit(damage: int = 1) -> bool:
 	if not is_removable():
 		return false
-	hp -= 1
+	hp -= damage
 	var tw := create_tween()
 	tw.tween_property(_sprite, "position:x", 2.0, 0.04)
 	tw.tween_property(_sprite, "position:x", -2.0, 0.06)

@@ -7,6 +7,8 @@ var player: Player
 var hud: HUD
 var tutorial: Tutorial
 var _resetting := false
+## andar da mina em que o jogador está (null = na fazenda)
+var mine: MineWorld = null
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
@@ -73,6 +75,8 @@ func _ready() -> void:
 	world.shop_requested.connect(_on_shop)
 	world.stove_used.connect(func(): hud.open_cooking())
 	world.villager_used.connect(_on_villager)
+	world.mine_entrance_used.connect(_on_mine_entrance)
+	hud.floor_chosen.connect(enter_mine)
 	Game.time_changed.connect(func(_d: int, m: int):
 		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():
 			var res := FishQuests.finish_tournament()
@@ -91,6 +95,7 @@ func _ready() -> void:
 	hud.world = world
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")
+		exit_mine(true)
 		_sleep(false))
 	Game.time_changed.connect(func(_d, _m): _update_daylight())
 	Game.weather_changed.connect(func(_w): _update_weather())
@@ -125,6 +130,8 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 	var best_d := 22.0
 	for n in get_tree().get_nodes_in_group("interactable"):
 		var it := n as Interactable
+		if not it.is_visible_in_tree() or not player.world.is_ancestor_of(it):
+			continue
 		var d := (it.global_position + Vector2(0, -14)).distance_to(wp)
 		if d < best_d:
 			best = it
@@ -137,9 +144,10 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 		return
 
 	# objetos grandes (árvore, pedra...) pela imagem; senão, a célula tocada
-	var prop := world.prop_at_point(wp)
-	var c: Vector2i = prop.cell if prop else world.cell_of(wp)
-	if not player.can_reach(world.target_anchor(c)):
+	var here: FarmWorld = player.world      # fazenda ou andar da mina
+	var prop := here.prop_at_point(wp)
+	var c: Vector2i = prop.cell if prop else here.cell_of(wp)
+	if not player.can_reach(here.target_anchor(c)):
 		Game.toast.emit("Chegue mais perto.")
 		return
 	player.use_at(c)
@@ -221,6 +229,68 @@ func _sleep(rested: bool) -> void:
 				_new_babies.clear())
 
 
+# ------------------------------------------------------------------ mina
+func _on_mine_entrance() -> void:
+	if Game.mine_deepest >= 5:
+		hud.open_floor_chooser(Game.mine_deepest)     # elevador: a cada 5 andares
+	else:
+		enter_mine(1)
+
+
+## Vai para um andar da mina (da fazenda ou de outro andar).
+func enter_mine(level: int) -> void:
+	var old := mine
+	mine = MineWorld.new()
+	mine.name = "Mine"
+	add_child(mine)
+	mine.generate({"level": level})
+	mine.ladder_down_used.connect(func(): enter_mine(mine.level + 1))
+	mine.exit_used.connect(func(): exit_mine())
+	_move_player(mine, mine.spawn_pos)
+	if old:
+		old.queue_free()
+	world.visible = false
+	world.process_mode = Node.PROCESS_MODE_DISABLED
+	tutorial.visible = false
+	Game.mine_deepest = maxi(Game.mine_deepest, level)
+	_update_weather()
+	var extra := ""
+	if level % 5 == 0 and level == Game.mine_deepest:
+		extra = "\nO elevador agora para aqui!"
+	if level % 3 == 0:
+		extra += "\nTem um laguinho subterrâneo neste andar."
+	Game.toast.emit("Mina · andar %d%s" % [level, extra])
+
+
+## Volta para a fazenda, na entrada da mina.
+func exit_mine(silent: bool = false) -> void:
+	if mine == null:
+		return
+	world.visible = true
+	world.process_mode = Node.PROCESS_MODE_INHERIT
+	tutorial.visible = true
+	_move_player(world, world.mine_entrance_pos)
+	mine.queue_free()
+	mine = null
+	_update_weather()
+	if not silent:
+		Game.toast.emit("De volta à fazenda.")
+
+
+func _move_player(to: FarmWorld, pos: Vector2) -> void:
+	player.fishing.cancel()
+	player.get_parent().remove_child(player)
+	to.entities.add_child(player)
+	player.world = to
+	player.position = pos
+	to.player = player
+	var f := player.fishing
+	f.get_parent().remove_child(f)
+	to.add_child(f)
+	f.world = to
+	camera.reset_smoothing()
+
+
 ## Apaga o save e recomeça do zero (botão Opções > Novo jogo).
 func _new_game() -> void:
 	_resetting = true
@@ -234,7 +304,8 @@ func save_now() -> void:
 	if _resetting:
 		return     # não salvar o jogo antigo por cima enquanto recomeça
 	var data := world.serialize()
-	data["player"] = [player.position.x, player.position.y]
+	var pos := world.mine_entrance_pos if mine else player.position   # salvo na mina: volta pela entrada
+	data["player"] = [pos.x, pos.y]
 	Game.save_game(data)
 
 
@@ -254,6 +325,8 @@ func _update_daylight() -> void:
 	else:
 		c = night_c
 	c = c * Game.weather_data().light
+	if mine:
+		c = Color(0.66, 0.6, 0.72)       # caverna: sempre na penumbra
 	var tw := create_tween()
 	tw.tween_property(daylight, "color", c, 1.0)
 
@@ -265,6 +338,7 @@ func _build_rain() -> void:
 
 func _update_weather() -> void:
 	weather_fx.set_weather(Game.weather)
+	weather_fx.visible = mine == null       # não chove dentro da mina
 	_update_daylight()
 
 

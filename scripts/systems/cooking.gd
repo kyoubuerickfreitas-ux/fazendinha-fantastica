@@ -147,6 +147,8 @@ static func matches(group: String, item_id: String) -> bool:
 			return CropDB.category_of(item_id) == "fruit"
 		"any_vegetable":
 			return CropDB.category_of(item_id) == "vegetable"
+		"any_gem":
+			return item.get("type", "") == "gem"
 	return item_id == group
 
 

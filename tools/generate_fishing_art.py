@@ -32,6 +32,14 @@ LEGENDS = {
 }
 
 
+# peixes de caverna: recoloridos sem a aura dos lendários
+CAVE = {
+    "fish_cave_blind": ("fish_silver", None, 0.15, 1.3),
+    "fish_cave_glow": ("fish_angler", 0.5, 1.3, 1.25),
+    "fish_cave_crystal": ("fish_goldfish", 0.76, 0.9, 1.3),
+}
+
+
 def atlas_cell(name):
     idx = json.load(open(os.path.join(ROOT, "data", "items_hd.json")))[name]
     atlas = Image.open(os.path.join(ROOT, "assets", "sprites", "items_hd.png")).convert("RGBA")
@@ -284,6 +292,8 @@ if __name__ == "__main__":
     ic = Image.new("RGBA", (32, 32), (0, 0, 0, 0))
     ic.alpha_composite(c.resize((24, 32), Image.NEAREST), (4, 0))
     ic.save(os.path.join(CRAFT, "icon_trophy_tournament.png"))
+    for fid, (base, hue, sat, val) in CAVE.items():
+        recolor(atlas_cell(base), hue, sat, val).save(os.path.join(OUT, fid + ".png"))
     for t in TREASURES:
         treasure(t).save(os.path.join(OUT, t + ".png"))
     print("arte da pesca gerada em", OUT)

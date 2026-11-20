@@ -53,6 +53,9 @@ var _tut_label: Label
 signal tutorial_skip_pressed
 signal save_requested
 signal new_game_requested
+signal floor_chosen(level: int)
+var _floors: Control
+var _floors_body: VBoxContainer
 signal tutorial_restart_requested
 var _options_btn: TouchButton
 var _options: Control
@@ -97,6 +100,11 @@ func _ready() -> void:
 	_build_cooking()
 	_build_npc_dialog()
 	_build_options()
+	var fw := _make_window("Elevador da Mina", Vector2(260, 0))
+	_floors = fw[0]
+	_floors_body = VBoxContainer.new()
+	_floors_body.add_theme_constant_override("separation", 6)
+	fw[1].add_child(_floors_body)
 	_build_animal_card()
 	_build_name_dialog()
 	_build_confirm()
@@ -1102,6 +1110,8 @@ func _refresh_crafting() -> void:
 		var effect := "3 canteiros em linha" if lvl == 1 else "área 3×3"
 		if tool == "fishing_rod":
 			effect = "fisgada mais longa, puxa com mais força"
+		elif tool == "pickaxe":
+			effect = "quebra pedras e minérios com %d golpes a menos" % lvl
 		if tool == "watering_can":
 			effect += ", %d de água" % (Game.WATER_CAPACITY * (lvl + 1))
 		var row := _shop_row(tool, "%s → nível %d (%s)\n%s" % [ItemDB.item_name(tool), lvl + 1, effect, ItemDB.cost_text(cost)])
@@ -1427,6 +1437,25 @@ func _build_options() -> void:
 	var ver := UIStyle.label("Fazendinha Fantástica · versão de teste", 9, UIStyle.EARTH)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(ver)
+
+
+## Escolher o andar da mina (1 e a cada 5 andares já alcançados).
+func open_floor_chooser(deepest: int) -> void:
+	for c in _floors_body.get_children():
+		c.queue_free()
+	_floors_body.add_child(UIStyle.label("Andar mais fundo: %d" % deepest, 10, UIStyle.EARTH))
+	var levels := [1]
+	for l in range(5, deepest + 1, 5):
+		levels.append(l)
+	for l in levels:
+		var b := Button.new()
+		b.text = "Andar %d" % l
+		var lv: int = l
+		b.pressed.connect(func():
+			close_panel()
+			floor_chosen.emit(lv))
+		_floors_body.add_child(b)
+	_open(_floors)
 
 
 func open_options() -> void:

@@ -90,6 +90,17 @@ const ITEMS := {
 	"smoker": {"name": "Defumador", "tex": "res://assets/sprites/craft/icon_smoker.png", "type": "placeable", "desc": "Qualquer peixe vira peixe defumado (vale o dobro) em 1 dia."},
 	"fert_fish": {"name": "Adubo de Peixe", "tex": "res://assets/sprites/craft/icon_fert_fish.png", "type": "fertilizer", "sell": 12, "desc": "Use num canteiro: muita fertilidade e cresce 10% mais rápido."},
 	"stove": {"name": "Fogão", "tex": "res://assets/sprites/craft/icon_stove.png", "type": "placeable", "desc": "Toque para cozinhar as receitas que você sabe."},
+	# mina: minérios, barras, cristal e gemas
+	"copper_ore": {"name": "Minério de Cobre", "tex": "res://assets/sprites/mine/items/copper_ore.png", "type": "resource", "sell": 8, "desc": "Derreta 5 na Fornalha para fazer uma barra de cobre."},
+	"iron_ore": {"name": "Minério de Ferro", "tex": "res://assets/sprites/mine/items/iron_ore.png", "type": "resource", "sell": 15, "desc": "Derreta 5 na Fornalha para fazer uma barra de ferro. Fica nos andares do meio da mina."},
+	"crystal": {"name": "Cristal Bruto", "tex": "res://assets/sprites/mine/items/crystal.png", "type": "resource", "sell": 60, "desc": "Brilha sozinho. Só nos andares fundos da mina."},
+	"copper_bar": {"name": "Barra de Cobre", "tex": "res://assets/sprites/mine/items/copper_bar.png", "type": "resource", "sell": 60, "desc": "Para melhorar ferramentas e fabricar aspersores."},
+	"iron_bar": {"name": "Barra de Ferro", "tex": "res://assets/sprites/mine/items/iron_bar.png", "type": "resource", "sell": 110, "desc": "Para as melhorias mais fortes."},
+	"amethyst": {"name": "Ametista-Eco", "tex": "res://assets/sprites/mine/items/amethyst.png", "type": "gem", "sell": 100, "desc": "Dizem que guarda o som da caverna."},
+	"ruby": {"name": "Rubi-Brasa", "tex": "res://assets/sprites/mine/items/ruby.png", "type": "gem", "sell": 180, "desc": "Quente ao toque."},
+	"emerald": {"name": "Esmeralda-Musgo", "tex": "res://assets/sprites/mine/items/emerald.png", "type": "gem", "sell": 220, "desc": "Verde como o fundo do lago."},
+	"moonstone": {"name": "Pedra-Lua", "tex": "res://assets/sprites/mine/items/moonstone.png", "type": "gem", "sell": 350, "desc": "Rara. Só no fundo da mina."},
+	"furnace": {"name": "Fornalha", "tex": "res://assets/sprites/craft/icon_furnace.png", "type": "placeable", "desc": "Coloque 5 minérios (cobre ou ferro) para fazer 1 barra. Até 5 barras por vez, prontas no dia seguinte."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
@@ -156,6 +167,7 @@ const PLACEABLES := {
 	"fish_pond": {"size": Vector2i(2, 2), "solid": true, "pad": 2, "aquarium": 5, "tank": Rect2(-18, -34, 35, 22)},
 	"smoker": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
 	"stove": {"size": Vector2i(1, 1), "solid": true, "pad": 3},
+	"furnace": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -171,14 +183,17 @@ const MACHINES := {
 	"oil_press": {"input": "truffle", "output": "truffle_oil", "days": 2},
 	"incubator": {"input": "fertile_egg", "output": "hatch:piuplum", "days": 4},
 	"smoker": {"input_type": "fish", "prefix": "smoked_", "days": 1},
+	# fornalha: 5 minérios -> 1 barra (põe vários de uma vez, até 5 barras)
+	"furnace": {"inputs": {"copper_ore": "copper_bar", "iron_ore": "iron_bar"}, "input_qty": 5, "max_batch": 5, "days": 1},
 }
 
 ## Melhorias de ferramenta (na bancada): custo para o nível 2 e 3.
 ## Nível 2: age em 3 canteiros em linha; nível 3: área 3x3. Regador: +20 de água por nível.
 const TOOL_UPGRADES := {
-	"watering_can": [{"stone": 25, "money": 800}, {"stone": 60, "truffle": 1, "money": 2500}],
-	"hoe": [{"stone": 25, "money": 600}, {"stone": 60, "money": 2000}],
-	"fishing_rod": [{"wood": 20, "fiber": 10, "money": 700}, {"stone": 40, "pearl": 1, "money": 2200}],
+	"watering_can": [{"copper_bar": 5, "money": 800}, {"iron_bar": 5, "crystal": 1, "money": 2500}],
+	"hoe": [{"copper_bar": 5, "money": 600}, {"iron_bar": 5, "money": 2000}],
+	"fishing_rod": [{"copper_bar": 3, "fiber": 10, "money": 700}, {"iron_bar": 3, "pearl": 1, "money": 2200}],
+	"pickaxe": [{"copper_bar": 5, "money": 1000}, {"iron_bar": 5, "money": 3000}],
 }
 
 ## Adubos: efeitos no canteiro (duram até a colheita).
@@ -220,8 +235,9 @@ const RECIPES := [
 	{"result": "spinning_wheel", "qty": 1, "cost": {"wood": 30, "fiber": 10}},
 	{"result": "oil_press", "qty": 1, "cost": {"wood": 25, "stone": 25, "money": 600}},
 	{"result": "sprinkler", "qty": 1, "cost": {"stone": 10, "wood": 5}},
-	{"result": "sprinkler_q", "qty": 1, "cost": {"stone": 25, "wood": 10, "money": 300}},
-	{"result": "sprinkler_c", "qty": 1, "cost": {"stone": 50, "truffle": 1, "money": 1500}},
+	{"result": "sprinkler_q", "qty": 1, "cost": {"copper_bar": 1, "stone": 10, "money": 300}},
+	{"result": "sprinkler_c", "qty": 1, "cost": {"iron_bar": 1, "crystal": 1, "money": 1000}},
+	{"result": "furnace", "qty": 1, "cost": {"stone": 25, "wood": 10}},
 	{"result": "silo", "qty": 1, "cost": {"wood": 50, "stone": 30, "money": 300}},
 	{"result": "coop", "qty": 1, "cost": {"wood": 80, "stone": 40, "money": 500}},
 	{"result": "barn", "qty": 1, "cost": {"wood": 120, "stone": 60, "money": 1000}},

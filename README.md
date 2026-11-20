@@ -51,6 +51,11 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - Toque para conversar (amizade 1x por dia); segure um item e toque para dar de presente (1 por dia). Cada um adora, gosta ou não gosta de coisas diferentes
   - 10 corações de amizade; a cada 2 corações o morador te dá um presente. No aniversário os presentes valem o triplo
   - O calendário mostra os moradores, os corações, os aniversários e os presentes que você já descobriu
+- **Mina** (entrada no norte da fazenda): cada andar é uma caverna nova, com pedras e minérios para quebrar com a picareta
+  - A escada para o andar de baixo fica escondida debaixo de uma das rochas; às vezes aparece um baú
+  - Andares 1–4: cobre · 5–9: cobre e ferro · 10+: ferro e cristal. Rochas de gemas dão Ametista, Rubi, Esmeralda e Pedra-Lua (fundo)
+  - A cada 3 andares tem um laguinho subterrâneo com 3 peixes de caverna; o elevador para a cada 5 andares
+  - **Fornalha** (bancada): 5 minérios viram 1 barra (até 5 barras por vez, prontas no dia seguinte). As barras melhoram regador, enxada, vara e picareta, e fazem os aspersores melhores
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -127,7 +132,7 @@ data/fish/*.tres            peixes (FishData)        ← gerados por tools/make_
 data/treasures/*.tres       tesouros (TreasureData)  ← tools/make_treasure_data.py + tools/treasure_table.py
 data/recipes/*.tres         receitas (RecipeData)    ← tools/make_recipe_data.py + tools/recipe_table.py
 data/npcs/*.tres            moradores (NPCData)      ← tools/make_npc_data.py + tools/npc_table.py
-scripts/world/              mapa (farm_world), objetos (prop), NPCs, interações
+scripts/world/              mapa (farm_world), mina (mine_world), objetos (prop), NPCs, interações
 scripts/player/player.gd    personagem
 scripts/ui/                 HUD, joystick, botões de toque, slots, estilo
 assets/sprites/             arte (provisória, veja LEIAME.md lá dentro)

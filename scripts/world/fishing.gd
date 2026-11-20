@@ -176,7 +176,7 @@ func rod_level() -> int:
 
 ## Contexto do lance atual (lugar + momento).
 func context() -> Dictionary:
-	return FishDB.context(_water, _depth, _bait)
+	return FishDB.context(_water, _depth, _bait, world.region_id())
 
 
 # ------------------------------------------------------------------ atualização

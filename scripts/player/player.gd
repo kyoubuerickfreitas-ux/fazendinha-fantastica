@@ -305,6 +305,8 @@ func find_interactable() -> Interactable:
 	var f := feet()
 	for n in get_tree().get_nodes_in_group("interactable"):
 		var it := n as Interactable
+		if not it.is_visible_in_tree() or not world.is_ancestor_of(it):
+			continue      # só o que está no mundo atual (fazenda ou mina)
 		var to := it.global_position - f
 		var d := to.length()
 		if d > it.reach + 14.0:

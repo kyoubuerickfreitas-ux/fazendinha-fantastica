@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_cave_blind"
+name = "Peixe-Cego"
+description = "Nunca viu a luz do sol. Sente a isca pelas vibrações."
+lore = ""
+rarity = 1
+waters = PackedStringArray("cave")
+depth = "any"
+regions = PackedStringArray("mine", "mine_deep")
+seasons = PackedStringArray()
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 1
+difficulty = 0.0
+special = ""
+hint = "Nada no escuro dos laguinhos da mina."
+size_min = 8.0
+size_max = 20.0
+weight_min = 0.05
+weight_max = 0.3
+sell = 120
+icon = "res://assets/sprites/fishing/fish_cave_blind.png"

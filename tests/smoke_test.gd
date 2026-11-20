@@ -1087,6 +1087,121 @@ func _run() -> void:
 	assert(game.tutorial["done"] and not main.hud._tut_panel.visible)
 	print("tutorial: %d passos concluídos" % Tutorial.STEPS.size())
 
+	# ---- mina
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	game.minutes = 10 * 60
+	assert(w.mine_entrance_pos != Vector2.ZERO)
+	game.mine_deepest = 0
+	w.mine_entrance_used.emit()
+	await _wait(0.3)
+	var mn: MineWorld = main.mine
+	assert(mn != null and p.world == mn and mn.entities.is_ancestor_of(p) and not w.visible, "deveria estar na mina")
+	var kinds_m := {}
+	for c in mn.props:
+		kinds_m[mn.props[c].kind] = int(kinds_m.get(mn.props[c].kind, 0)) + 1
+	print("mina andar 1: ", mn.props.size(), " rochas ", kinds_m)
+	assert(mn.props.size() > 20 and kinds_m.has("ore_copper") and not kinds_m.has("ore_crystal"))
+	await _shot("35_mina")
+	# quebra rochas até achar a escada
+	game.inventory[0] = {"id": "pickaxe", "qty": 1}
+	game.select_slot(0)
+	var copper0: int = game.count_item("copper_ore")
+	var broken := 0
+	for c in mn.props.keys():
+		if mn.ladder_visible():
+			break
+		while mn.props.has(c):
+			game.energy = 100.0
+			mn.use_item("pickaxe", c)
+		broken += 1
+	print("  quebrou %d rochas, escada=%s, cobre +%d" % [broken, mn.ladder_visible(), game.count_item("copper_ore") - copper0])
+	assert(mn.ladder_visible(), "uma das rochas esconde a escada")
+	mn.ladder_down_used.emit()
+	await _wait(0.2)
+	assert(main.mine.level == 2 and p.world == main.mine)
+	# andar fundo com laguinho: peixes de caverna
+	main.enter_mine(12)
+	await _wait(0.3)
+	mn = main.mine
+	var water_cells := []
+	for y in FarmWorld.H:
+		for x in FarmWorld.W:
+			if mn.ground_at(Vector2i(x, y)) == FarmWorld.Ground.WATER:
+				water_cells.append(Vector2i(x, y))
+	kinds_m = {}
+	for c in mn.props:
+		kinds_m[mn.props[c].kind] = int(kinds_m.get(mn.props[c].kind, 0)) + 1
+	print("mina andar 12: rochas ", kinds_m, " · água: ", water_cells.size())
+	assert(water_cells.size() > 4 and mn.water_kind(water_cells[0]) == "cave" and mn.region_id() == "mine_deep")
+	assert(kinds_m.has("ore_iron") and kinds_m.has("ore_crystal"))
+	var cave_seen := {}
+	for i in 400:
+		var cctx := FishDB.context("cave", "deep", "bait_mushroom", mn.region_id())
+		cctx["level"] = 10
+		cave_seen[FishDB.roll(cctx)] = true
+	print("  peixes da caverna: ", cave_seen.keys())
+	assert(cave_seen.has("fish_cave_blind") and cave_seen.has("fish_cave_crystal") and not cave_seen.has("fish_silver"))
+	p.position = mn.cell_center(water_cells[0]) + Vector2(0, 40)
+	main.camera.reset_smoothing()
+	await _wait(0.3)
+	await _shot("36_mina_lago")
+	for c in mn.props.keys():
+		if mn.props[c].kind == "gem_rock":
+			var gems0 := 0
+			for g in ["ruby", "emerald", "moonstone"]:
+				gems0 += game.count_item(g)
+			while mn.props.has(c):
+				game.energy = 100.0
+				mn.use_item("pickaxe", c)
+			var gems1 := 0
+			for g in ["ruby", "emerald", "moonstone"]:
+				gems1 += game.count_item(g)
+			assert(gems1 == gems0 + 1, "rocha de gemas funda dá rubi, esmeralda ou pedra-lua")
+			break
+	var money_ch: int = game.money
+	print("  ", mn._open_chest())
+	assert(game.money > money_ch)
+	# picareta melhorada: menos golpes
+	game.tool_levels["pickaxe"] = 3
+	for c in mn.props.keys():
+		if mn.props[c].kind == "ore_iron":
+			game.energy = 100.0
+			mn.use_item("pickaxe", c)
+			mn.use_item("pickaxe", c)
+			assert(not mn.props.has(c), "picareta nível 3 quebra ferro (4) em 2 golpes")
+			break
+	game.tool_levels["pickaxe"] = 1
+	# salvar dentro da mina volta pela entrada
+	main.save_now()
+	var sd: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(game.SAVE_PATH))
+	assert(Vector2(sd["world"]["player"][0], sd["world"]["player"][1]) == w.mine_entrance_pos, "salvo na mina: volta pela entrada")
+	main.exit_mine()
+	await _wait(0.3)
+	assert(main.mine == null and p.world == w and w.visible and p.position == w.mine_entrance_pos)
+	await _shot("37_entrada_mina")
+	assert(game.mine_deepest == 12)
+	main._on_mine_entrance()
+	await _wait(0.2)
+	assert(main.hud._floors.visible and main.hud._floors_body.get_child_count() == 4, "elevador: andares 1, 5 e 10")
+	await _shot("38_elevador")
+	main.hud.close_panel()
+	# fornalha: 5 minérios -> 1 barra, vários de uma vez
+	var furnace: Placeable = w.place("furnace", Vector2i(34, 9), true)
+	assert(furnace != null)
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	game.inventory[0] = {"id": "copper_ore", "qty": 12}
+	game.select_slot(0)
+	w._on_placeable_used(furnace)
+	assert(int(furnace.job.get("qty", 0)) == 2 and game.count_item("copper_ore") == 2, "12 minérios -> 2 barras, sobram 2")
+	furnace.job["ready"] = game.day
+	var bars0: int = game.count_item("copper_bar")
+	w._on_placeable_used(furnace)
+	assert(game.count_item("copper_bar") == bars0 + 2)
+	assert(Villagers.reaction("pipoca", "ruby") == "like" and Villagers.reaction("raiz", "emerald") == "love")
+	game.inventory[0] = null
+
 	# ---- opções
 	main.hud.open_options()
 	await _wait(0.3)

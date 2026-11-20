@@ -67,9 +67,9 @@ static func time_of_day(minutes: int) -> String:
 
 
 ## Contexto atual para um lugar: {water, depth, season, time, weather, level, bait, region}
-static func context(water: String, depth: String, bait: String) -> Dictionary:
+static func context(water: String, depth: String, bait: String, region: String = "farm") -> Dictionary:
 	return {"water": water, "depth": depth, "season": Game.season_id(), "time": time_of_day(Game.minutes),
-		"weather": Game.weather, "level": level(), "bait": bait, "region": "farm"}
+		"weather": Game.weather, "level": level(), "bait": bait, "region": region}
 
 
 ## Este peixe pode aparecer neste contexto?

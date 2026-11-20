@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="FishData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/fish_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fish_cave_crystal"
+name = "Peixe-Cristal"
+description = "As escamas são de cristal de verdade. Tilinta quando nada."
+lore = ""
+rarity = 4
+waters = PackedStringArray("cave")
+depth = "any"
+regions = PackedStringArray("mine_deep")
+seasons = PackedStringArray()
+times = PackedStringArray()
+weathers = PackedStringArray()
+favored_weathers = PackedStringArray()
+baits = PackedStringArray()
+min_level = 5
+difficulty = 0.0
+special = ""
+hint = "Só nos laguinhos do fundo da mina (andar 10 ou mais). Nível 5."
+size_min = 20.0
+size_max = 45.0
+weight_min = 0.5
+weight_max = 2.5
+sell = 750
+icon = "res://assets/sprites/fishing/fish_cave_crystal.png"

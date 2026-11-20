@@ -154,6 +154,8 @@ func _process(_d: float) -> void:
 ## Tenta colocar o item na máquina. Retorna mensagem.
 func insert(item_id: String) -> String:
 	var m: Dictionary = ItemDB.MACHINES[kind]
+	if m.has("inputs"):
+		return _insert_batch(m, item_id)
 	var ok := false
 	if m.has("input"):
 		ok = item_id == m["input"]
@@ -173,13 +175,32 @@ func insert(item_id: String) -> String:
 	return "%s começou a trabalhar. Fica pronto em %d dia(s)." % [ItemDB.item_name(kind), int(m["days"])]
 
 
+## Máquina de lote (Fornalha): N do mesmo item -> 1 produto, vários de uma vez.
+func _insert_batch(m: Dictionary, item_id: String) -> String:
+	var inputs: Dictionary = m["inputs"]
+	var need := int(m.get("input_qty", 1))
+	if not inputs.has(item_id):
+		var names := []
+		for k in inputs:
+			names.append(ItemDB.item_name(k))
+		return "Precisa de %d %s na mão." % [need, " ou ".join(names)]
+	var n := mini(Game.count_item(item_id) / need, int(m.get("max_batch", 1)))
+	if n <= 0:
+		return "Precisa de %d %s (você tem %d)." % [need, ItemDB.item_name(item_id), Game.count_item(item_id)]
+	Game.remove_item(item_id, n * need)
+	job = {"input": item_id, "output": inputs[item_id], "ready": Game.day + int(m["days"]), "q": 0, "qty": n}
+	refresh()
+	return "%s começou: %d %s. Pronto amanhã." % [ItemDB.item_name(kind), n, ItemDB.item_name(inputs[item_id])]
+
+
 func collect() -> String:
 	var out: String = job["output"]
-	if Game.add_item(out, 1, int(job.get("q", 0))) > 0:
+	var qty := int(job.get("qty", 1))
+	if Game.add_item(out, qty, int(job.get("q", 0))) > 0:
 		return ""
 	job = {}
 	refresh()
-	return "+1 %s" % ItemDB.item_name(out)
+	return "+%d %s" % [qty, ItemDB.item_name(out)]
 
 
 # ------------------------------------------------------------------ aquário

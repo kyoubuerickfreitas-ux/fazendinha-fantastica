@@ -68,4 +68,18 @@ FISH = [
          description="Ninguém sabe se ele existe mesmo ou se você está sonhando.",
          lore="Aparece só para quem já conhece os peixes de verdade. Quem pesca o Peixe-Sonho acorda com a sensação de ter visto o lago inteiro de cima.",
          hint="???"),
+    # ---------------------------------------------------------------- caverna (laguinhos da mina, a cada 3 andares)
+    dict(id="fish_cave_blind", name="Peixe-Cego", rarity=1, waters=["cave"], regions=["mine", "mine_deep"],
+         size=(8, 20), weight=(0.05, 0.3), sell=120, icon="res://assets/sprites/fishing/fish_cave_blind.png",
+         description="Nunca viu a luz do sol. Sente a isca pelas vibrações.",
+         hint="Nada no escuro dos laguinhos da mina."),
+    dict(id="fish_cave_glow", name="Lanterna-da-Gruta", rarity=3, waters=["cave"], regions=["mine", "mine_deep"],
+         baits=["bait_mushroom"], min_level=3, size=(15, 35), weight=(0.2, 1.2), sell=380,
+         icon="res://assets/sprites/fishing/fish_cave_glow.png",
+         description="Ilumina a caverna com a própria barriga.",
+         hint="Laguinhos da mina. Gosta de iscas que brilham. Nível 3."),
+    dict(id="fish_cave_crystal", name="Peixe-Cristal", rarity=4, waters=["cave"], regions=["mine_deep"], min_level=5,
+         size=(20, 45), weight=(0.5, 2.5), sell=750, icon="res://assets/sprites/fishing/fish_cave_crystal.png",
+         description="As escamas são de cristal de verdade. Tilinta quando nada.",
+         hint="Só nos laguinhos do fundo da mina (andar 10 ou mais). Nível 5."),
 ]

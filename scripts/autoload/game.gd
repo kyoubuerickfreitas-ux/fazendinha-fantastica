@@ -37,7 +37,7 @@ var temperature_yesterday := 16.0
 ## previsão dos próximos dias: [{"weather", "temp"}]
 var forecast: Array = []
 var water := WATER_CAPACITY
-var tool_levels := {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
+var tool_levels := {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 ## Pesca: registro do Livro ({id: {n, first, max_size, max_weight}}), XP, tesouros e marcadores
 var fish_log := {}
 var fishing_xp := 0
@@ -51,6 +51,8 @@ var dishes_cooked := 0
 var friends := {}
 ## Contadores de ações (tutorial e metas): {"talks": 3, "harvests": 10, ...}
 var counters := {}
+## Mina: andar mais fundo já alcançado (o elevador para a cada 5)
+var mine_deepest := 0
 ## Tutorial: {"step": índice, "base": valor no começo do passo, "done": bool}
 var tutorial := {"step": 0, "base": 0, "done": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -90,7 +92,7 @@ func reset_new_game() -> void:
 	inventory.resize(INV_SIZE)
 	selected_slot = 0
 	equipped_bait = ""
-	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
+	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	fish_log = {}
 	fishing_xp = 0
 	treasure_log = {}
@@ -100,6 +102,7 @@ func reset_new_game() -> void:
 	dishes_cooked = 0
 	friends = {}
 	counters = {}
+	mine_deepest = 0
 	tutorial = {"step": 0, "base": -1, "done": false}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
@@ -338,7 +341,7 @@ func save_game(world_data: Dictionary) -> void:
 		"bait": equipped_bait, "tools": tool_levels,
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
-		"friends": friends, "counters": counters, "tutorial": tutorial,
+		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -384,13 +387,14 @@ func load_game() -> Dictionary:
 	dishes_cooked = int(data.get("dishes_cooked", 0))
 	var fr = data.get("friends", {})
 	friends = fr if fr is Dictionary else {}
+	mine_deepest = int(data.get("mine_deepest", 0))
 	var ct = data.get("counters", {})
 	counters = ct if ct is Dictionary else {}
 	var tu = data.get("tutorial", null)
 	# saves de antes do tutorial: quem já joga não precisa dele
 	tutorial = tu if tu is Dictionary else {"step": 0, "base": -1, "done": true}
 	var tl = data.get("tools", {})
-	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
+	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:
 		for k in tool_levels:
 			tool_levels[k] = int(tl.get(k, 1))

@@ -30,6 +30,7 @@ signal shop_requested
 signal bin_used
 signal stove_used
 signal villager_used(npc_id: String)
+signal mine_entrance_used
 signal workbench_used
 signal baby_born(record: AnimalRecord)
 signal animal_card_requested(record: AnimalRecord)
@@ -183,7 +184,36 @@ func _path_rect(x0: int, y0: int, x1: int, y1: int) -> void:
 			ground[y * W + x] = Ground.PATH
 
 
+## Região para a pesca e outros sistemas ("farm"; a mina devolve "mine"/"mine_deep").
+func region_id() -> String:
+	return "farm"
+
+
+func _build_mine_entrance() -> void:
+	# entrada da mina no norte do mapa (ocupa x 29..31, y 0..2)
+	var ent := StaticBody2D.new()
+	ent.position = Vector2(30 * TILE + TILE / 2, 2 * TILE + 30)
+	var es := Sprite2D.new()
+	es.texture = load("res://assets/sprites/mine/entrance.png")
+	es.position = Vector2(0, -32)
+	ent.add_child(es)
+	_add_rect_collision(ent, Vector2(30, 14), Vector2(-33, -7))
+	_add_rect_collision(ent, Vector2(30, 14), Vector2(33, -7))
+	entities.add_child(ent)
+	for y in range(0, 6):
+		for x in range(28, 33):
+			blocked[Vector2i(x, y)] = true      # entrada e a frente dela livres (sem árvores nem pedras)
+	var door := Interactable.new()
+	door.label = "Entrar na mina"
+	door.reach = 30.0
+	door.position = Vector2(30 * TILE + TILE / 2, 3 * TILE + 4)
+	door.interacted.connect(func(_w): mine_entrance_used.emit())
+	entities.add_child(door)
+	mine_entrance_pos = Vector2(30 * TILE + TILE / 2, 3 * TILE + 24)
+
+
 func _build_static_scenery() -> void:
+	_build_mine_entrance()
 	# casa (ocupa x 4..8, y 3..7). A porta fica à esquerda do centro.
 	var house := StaticBody2D.new()
 	house.position = Vector2(6 * TILE + TILE / 2, 7 * TILE + 4)
@@ -432,6 +462,8 @@ var villagers: Array[NPC] = []
 var house_door: Interactable
 var sell_bin: Interactable
 var fungo: NPC
+## onde o jogador aparece ao sair da mina
+var mine_entrance_pos := Vector2.ZERO
 
 
 func _spawn_villagers() -> void:
@@ -1101,7 +1133,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				if not Game.use_energy(ENERGY_COST[item_id]):
 					return ""
 				FX.spawn(self, "hit", prop.position + Vector2(0, -12))
-				if prop.hit():
+				if prop.hit(Game.tool_level(item_id)):     # picareta melhorada bate mais forte
 					_destroy_prop(prop)
 				return ""
 			if item_id == "scythe" and soil.has(c) and Agri.has_crop(soil[c]):
@@ -1224,7 +1256,7 @@ func _destroy_prop(prop: Prop) -> void:
 	var fx_name := "break_wood"
 	if prop.kind in ["weed", "bush"]:
 		fx_name = "weed"
-	elif prop.kind == "rock":
+	elif prop.kind == "rock" or prop.required_tool() == "pickaxe":
 		fx_name = "break_stone"
 	FX.spawn(self, fx_name, prop.position + Vector2(0, -10))
 	var tw := prop.create_tween()
