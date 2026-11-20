@@ -80,7 +80,7 @@ func _physics_process(delta: float) -> void:
 			fishing.cancel("Você recolheu a linha.")
 	_busy = max(0.0, _busy - delta)
 
-	velocity = v * SPEED
+	velocity = v * SPEED * Cooking.speed_mult()
 	move_and_slide()
 
 	if not _action.is_empty() or _holding_rod:
@@ -174,6 +174,21 @@ func use_at(c: Vector2i) -> void:
 	# itens de cuidar de animais: o botão de usar age no animal mais próximo
 	if id in ["brush", "herbal_tea", "shears"]:
 		interact()
+		return
+	# comida na mão: come; receita na mão: aprende
+	var itype: String = ItemDB.get_item(id).get("type", "")
+	if itype == "food":
+		var msg := Cooking.eat(id)
+		if msg != "":
+			Game.toast.emit(msg)
+		return
+	if itype == "recipe":
+		var rid: String = ItemDB.get_item(id)["recipe"]
+		if Cooking.learn(rid):
+			Game.remove_from_slot(Game.selected_slot, 1)
+			Game.toast.emit("Aprendeu a receita: %s! Cozinhe no Fogão." % Cooking.get_recipe(rid).name)
+		else:
+			Game.toast.emit("Você já sabe essa receita.")
 		return
 	# isca na mão: coloca na vara
 	if ItemDB.get_item(id).get("type", "") == "bait":

@@ -717,6 +717,8 @@ func _run() -> void:
 			sleeping_n += 1
 	print("noite: %d com casa, %d dentro de casa, %d dormindo no pasto" % [housed_n, inside_n, sleeping_n])
 	assert(inside_n == housed_n and housed_n > 0)
+	print("clima na hora de sair: ", game.weather)
+	game.weather = "sunny"     # com tempestade/neve eles ficam em casa de propósito
 	game.minutes = 8 * 60
 	await _wait(0.2)
 	for an in w.animals:
@@ -897,6 +899,58 @@ func _run() -> void:
 	Agri.plant(info_cell, "seed_kale")
 	print("info do canteiro: ", Agri.describe(info_cell))
 	print("ficha da semente: ", ItemDB.get_item("seed_grape")["desc"])
+
+	# ---- cozinha: receitas, fogão, comer e bônus
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	print("receitas iniciais: ", game.known_recipes)
+	assert(game.known_recipes.size() == 4 and Cooking.is_known("grilled_fish"))
+	var stove: Placeable = w.place("stove", Vector2i(32, 14), true)
+	assert(stove != null and stove.is_interactive())
+	game.add_item("kale", 2)
+	game.add_item("egg", 2)
+	game.add_item("fish_silver", 1)
+	game.add_item("fish_perch", 1)
+	game.add_item("apple", 2)
+	assert(Cooking.can_cook("salad_kale") and Cooking.can_cook("omelette") and Cooking.can_cook("fruit_juice"))
+	assert(not Cooking.can_cook("carrot_soup"), "receita não aprendida")
+	w._on_placeable_used(stove)
+	await _wait(0.3)
+	assert(main.hud._cook.visible, "o fogão deveria abrir a cozinha")
+	await _shot("29_cozinha")
+	print("  ", Cooking.cook("grilled_fish").replace("\n", " / "))
+	assert(game.count_item("fish_silver") == 0 and game.count_item("fish_perch") == 1, "gasta o peixe mais barato")
+	assert(game.count_item("dish_grilled_fish") == 1)
+	print("  ", Cooking.cook("fruit_juice"))
+	main.hud.close_panel()
+	game.energy = 20.0
+	game.inventory[0] = {"id": "dish_grilled_fish", "qty": 1}
+	game.select_slot(0)
+	p._busy = 0
+	p._action = {}
+	var dishes0: int = game.count_item("dish_grilled_fish")
+	p.use_at(p.target_cell())
+	print("  energia depois de comer: ", game.energy)
+	assert(game.energy == 65.0 and game.count_item("dish_grilled_fish") == dishes0 - 1)
+	game.inventory[0] = {"id": "dish_fruit_juice", "qty": 1}
+	p.use_at(p.target_cell())
+	assert(Cooking.has_buff("speed") and Cooking.speed_mult() > 1.0, "o suco dá Passo Leve")
+	print("  bônus: ", Cooking.buffs_text())
+	game.buffs["stamina"] = Cooking.now_abs() + 60
+	var e0: float = game.energy
+	game.use_energy(10.0)
+	assert(is_equal_approx(e0 - game.energy, 6.0), "Fôlego: gasta 40% menos energia")
+	game.inventory[0] = {"id": "recipe_carrot_soup", "qty": 1}
+	p.use_at(p.target_cell())
+	assert(Cooking.is_known("carrot_soup") and game.count_item("recipe_carrot_soup") == 0, "a receita ensina")
+	print("  desbloqueios: ", Cooking.check_unlocks().replace("\n", " / "))
+	assert(Cooking.is_known("lake_stew") and Cooking.is_known("legend_feast"), "nível de pesca e título liberam receitas")
+	assert(Cooking.shop_scrolls("spring").has("recipe_strawberry_cake") and not Cooking.shop_scrolls("spring").has("recipe_carrot_soup"))
+	main.hud._refresh_stats()
+	await _wait(0.2)
+	await _shot("30_bonus")
+	game.buffs = {}
+	game.inventory[0] = null
 
 	# vitrine: todas as plantas da folha nova em todos os estágios (2 por linha)
 	var crop_ids := ["apple", "orange", "pear", "lemon", "grape", "raspberry", "strawberry", "plum", "blueberry", "peach",

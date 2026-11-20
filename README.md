@@ -44,6 +44,9 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - **Tesouros** (`data/treasures/*.tres`): baús, moedas antigas, garrafas com mensagens/pistas, 4 pedaços de mapa, relíquias, pérola, objetos perdidos. A Isca Reluzente puxa mais tesouros
   - **Pedidos do Fungo** (espécie, tamanho, qualidade, raridade, objeto perdido) e o **Torneio do Lago** no dia 13 de cada estação (8h–16h) contra 3 rivais
   - **Aquário pequeno/grande e laguinho ornamental** (peixes nadando), **Defumador** (peixe → defumado, vale o dobro), **Adubo de Peixe**, **vara melhorada** na bancada e **10 títulos** com recompensas
+- **Cozinha** (Fogão, fabricado na bancada): 20 receitas em `data/recipes/*.tres` com ingredientes da horta, dos animais e da pesca (aceita grupos como "qualquer peixe" ou "qualquer fruta")
+  - Segure o prato e toque em usar para comer: recupera energia e vida; alguns dão bônus até dormir (Passo Leve, Fôlego, Sorte na Pesca, Amigo dos Bichos, Banquete)
+  - 4 receitas no começo; as outras se compram com o Fungo (algumas só em certas estações) ou se ganham com conquistas (nível de pesca, pedidos, pratos feitos, pescar um lendário)
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -105,11 +108,12 @@ scenes/main.tscn            cena inicial
 scripts/main.gd             monta mundo, câmera, HUD, dia/noite, chuva, sono, save
 scripts/autoload/game.gd    estado global: dinheiro, energia, tempo, inventário, save
 scripts/data/item_db.gd     itens, receitas e preços
-scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests)
+scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests), cozinha (cooking)
 data/crops/*.tres           uma ficha por planta  ← para criar uma planta nova, copie uma ficha
 data/seasons/*.tres         as 4 estações (temperatura, chuva, cor)
 data/fish/*.tres            peixes (FishData)        ← gerados por tools/make_fish_data.py a partir de tools/fish_table.py
 data/treasures/*.tres       tesouros (TreasureData)  ← tools/make_treasure_data.py + tools/treasure_table.py
+data/recipes/*.tres         receitas (RecipeData)    ← tools/make_recipe_data.py + tools/recipe_table.py
 scripts/world/              mapa (farm_world), objetos (prop), NPCs, interações
 scripts/player/player.gd    personagem
 scripts/ui/                 HUD, joystick, botões de toque, slots, estilo

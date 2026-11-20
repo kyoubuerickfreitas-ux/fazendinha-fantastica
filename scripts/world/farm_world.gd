@@ -28,6 +28,7 @@ const ENERGY_COST := {"hoe": 2.0, "watering_can": 1.0, "axe": 3.0, "pickaxe": 3.
 signal house_door_used
 signal shop_requested
 signal bin_used
+signal stove_used
 signal workbench_used
 signal baby_born(record: AnimalRecord)
 signal animal_card_requested(record: AnimalRecord)
@@ -681,6 +682,8 @@ func _on_placeable_used(p: Placeable) -> void:
 	match p.kind:
 		"workbench":
 			workbench_used.emit()
+		"stove":
+			stove_used.emit()
 		"barn", "coop":
 			var k := _key(p)
 			var list := records().filter(func(r): return r.home == k)

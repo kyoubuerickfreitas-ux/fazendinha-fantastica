@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "starflower_tea"
+name = "Chá de Flor-Estrela"
+description = "Acalma qualquer bicho (e qualquer gente)."
+ingredients = {"starflower": 1, "milk": 1}
+energy = 40
+health = 40
+buff = "animal"
+buff_minutes = 480
+sell = 300
+unlock = "shop"
+shop_season = "winter"
+price = 200
+icon = "res://assets/sprites/food/starflower_tea.png"

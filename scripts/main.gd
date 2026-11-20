@@ -55,6 +55,7 @@ func _ready() -> void:
 	hud.interact_pressed.connect(player.interact)
 	world.house_door_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 	world.shop_requested.connect(_on_shop)
+	world.stove_used.connect(func(): hud.open_cooking())
 	Game.time_changed.connect(func(_d: int, m: int):
 		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():
 			var res := FishQuests.finish_tournament()
@@ -174,7 +175,7 @@ func _sleep(rested: bool) -> void:
 	hud.fade_through(func():
 		Game.start_new_day(rested)
 		var notes := world.on_new_day()
-		for extra in [FishQuests.on_new_day(), tour_result]:
+		for extra in [FishQuests.on_new_day(), tour_result, Cooking.check_unlocks()]:
 			if extra != "":
 				notes = extra if notes == "" else notes + "\n" + extra
 		player.position = world.player_start

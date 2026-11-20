@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lake_stew"
+name = "Ensopado do Lago"
+description = "Receita de pescador. Dizem que atrai peixes raros."
+ingredients = {"any_fish": 2, "potato": 1, "carrot": 1}
+energy = 120
+health = 40
+buff = "fishing"
+buff_minutes = 360
+sell = 480
+unlock = "fishing_level:3"
+shop_season = ""
+price = 150
+icon = "res://assets/sprites/food/lake_stew.png"

@@ -44,6 +44,9 @@ var _book_btn: TouchButton
 var _book: Control
 var _book_body: VBoxContainer
 var _book_filter := "all"
+var _cook: Control
+var _cook_body: VBoxContainer
+var _buff_label: Label
 var _top_right: Control
 var _calendar: Control
 var _cal_body: VBoxContainer
@@ -80,6 +83,7 @@ func _ready() -> void:
 	_build_crafting()
 	_build_calendar()
 	_build_fish_book()
+	_build_cooking()
 	_build_animal_card()
 	_build_name_dialog()
 	_build_confirm()
@@ -87,7 +91,9 @@ func _ready() -> void:
 
 	Game.money_changed.connect(func(_v): _refresh_stats())
 	Game.stats_changed.connect(_refresh_stats)
-	Game.time_changed.connect(func(_d, _m): _refresh_time())
+	Game.time_changed.connect(func(_d, _m):
+		_refresh_time()
+		_refresh_buffs())
 	Game.weather_changed.connect(func(_w): _refresh_time())
 	Game.inventory_changed.connect(_on_inventory_changed)
 	Game.selected_slot_changed.connect(func(_i): _refresh_hotbar())
@@ -146,6 +152,12 @@ func _build_top_left() -> void:
 	_health_bar = _make_bar(v, "heart", Color("c8503c"))
 	_energy_bar = _make_bar(v, "bolt", Color("78945b"))
 	box.add_child(bars)
+	# bônus de comida ativos (some quando não há nenhum)
+	_buff_label = UIStyle.label("", 9, UIStyle.CREAM)
+	_buff_label.position = Vector2(10, 60)
+	_buff_label.add_theme_color_override("font_outline_color", UIStyle.WOOD_DARK)
+	_buff_label.add_theme_constant_override("outline_size", 4)
+	_root.add_child(_buff_label)
 
 
 func _make_bar(parent: Control, icon_name: String, color: Color) -> ProgressBar:
@@ -566,6 +578,62 @@ func _confirm_name() -> void:
 		if world:
 			world.refresh_animals()
 	close_panel()
+
+
+# ================================================================= Cozinha
+func _build_cooking() -> void:
+	var w := _make_window("Fogão", Vector2(470, 0))
+	_cook = w[0]
+	var scroll := ScrollContainer.new()
+	scroll.custom_minimum_size = Vector2(0, 250)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	_cook_body = VBoxContainer.new()
+	_cook_body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(_cook_body)
+	w[1].add_child(scroll)
+
+
+func open_cooking() -> void:
+	var u := Cooking.check_unlocks()
+	if u != "":
+		show_toast(u)
+	_open(_cook)
+	_refresh_cooking()
+
+
+func _refresh_cooking() -> void:
+	for c in _cook_body.get_children():
+		c.queue_free()
+	var ids := Cooking.all_ids()
+	var known := ids.filter(func(id): return Cooking.is_known(id)).size()
+	_cook_body.add_child(UIStyle.label("Receitas: %d de %d · pratos feitos: %d" % [known, ids.size(), Game.dishes_cooked],
+		11, UIStyle.EARTH))
+	for id in ids:
+		var r := Cooking.get_recipe(id)
+		if not Cooking.is_known(id):
+			var lock := _shop_row(r.dish_id(), "??? — %s" % Cooking.unlock_hint(r))
+			lock.modulate = Color(1, 1, 1, 0.55)
+			_cook_body.add_child(lock)
+			continue
+		var parts := []
+		for key in r.ingredients:
+			parts.append("%d/%d %s" % [mini(Cooking.have(key), int(r.ingredients[key])), int(r.ingredients[key]),
+				Cooking.ingredient_name(key)])
+		var eff := "+%d energia" % r.energy
+		if r.health > 0:
+			eff += ", +%d vida" % r.health
+		if r.buff != "":
+			eff += ", %s %s" % [RecipeData.BUFF_NAMES[r.buff], Cooking.duration_text(r.buff_minutes)]
+		var row := _shop_row(r.dish_id(), "%s · %s\n%s" % [r.name, eff, ", ".join(parts)])
+		var b := Button.new()
+		b.text = "Cozinhar"
+		b.disabled = not Cooking.can_cook(id)
+		var rid: String = id
+		b.pressed.connect(func():
+			show_toast(Cooking.cook(rid))
+			_refresh_cooking())
+		row.add_child(b)
+		_cook_body.add_child(row)
 
 
 # ================================================================= Livro de Pesca
@@ -1109,6 +1177,7 @@ func _refresh_shop() -> void:
 	for id in ItemDB.SHOP_ITEMS:
 		if ItemDB.get_item(id).get("type", "") != "seed":
 			buy_list.append(id)
+	buy_list += Cooking.shop_scrolls(Calendar.season_id(Game.day))
 	for id in buy_list:
 		if ItemDB.get_item(id).get("type", "") == "tool" and Game.count_item(id) > 0:
 			continue   # não vende de novo uma ferramenta que você já tem
@@ -1219,7 +1288,15 @@ func _refresh_hotbar() -> void:
 	_use_btn.queue_redraw()
 
 
+func _refresh_buffs() -> void:
+	if _buff_label:
+		var t := Cooking.buffs_text()
+		_buff_label.text = t
+		_buff_label.visible = t != ""
+
+
 func _refresh_stats() -> void:
+	_refresh_buffs()
 	_health_bar.max_value = Game.max_health
 	_health_bar.value = Game.health
 	_energy_bar.max_value = Game.max_energy

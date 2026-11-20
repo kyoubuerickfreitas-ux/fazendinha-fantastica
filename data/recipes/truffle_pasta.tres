@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "truffle_pasta"
+name = "Massa com Trufa"
+description = "Prato de chef. Cheiro de floresta."
+ingredients = {"truffle_oil": 1, "egg": 2, "cheese": 1}
+energy = 150
+health = 60
+buff = "stamina"
+buff_minutes = 600
+sell = 1100
+unlock = "cooked:5"
+shop_season = ""
+price = 150
+icon = "res://assets/sprites/food/truffle_pasta.png"

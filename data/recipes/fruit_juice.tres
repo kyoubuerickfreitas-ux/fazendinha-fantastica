@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "fruit_juice"
+name = "Suco do Pomar"
+description = "Dá energia para correr pela fazenda."
+ingredients = {"any_fruit": 2}
+energy = 30
+health = 0
+buff = "speed"
+buff_minutes = 120
+sell = 110
+unlock = "start"
+shop_season = ""
+price = 150
+icon = "res://assets/sprites/food/fruit_juice.png"

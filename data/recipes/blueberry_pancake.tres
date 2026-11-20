@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "blueberry_pancake"
+name = "Panqueca de Mirtilo"
+description = "Pilha alta, calda azul."
+ingredients = {"blueberry": 2, "egg": 1, "milk": 1}
+energy = 85
+health = 20
+buff = ""
+buff_minutes = 0
+sell = 330
+unlock = "shop"
+shop_season = "summer"
+price = 250
+icon = "res://assets/sprites/food/blueberry_pancake.png"

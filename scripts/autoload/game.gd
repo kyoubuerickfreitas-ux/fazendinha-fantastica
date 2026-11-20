@@ -43,6 +43,10 @@ var fish_log := {}
 var fishing_xp := 0
 var treasure_log := {}
 var fish_flags := {}
+## Cozinha: receitas que já sabe, bônus ativos ({tipo: minuto absoluto do fim}) e pratos feitos
+var known_recipes: Array = []
+var buffs := {}
+var dishes_cooked := 0
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
 
@@ -85,6 +89,9 @@ func reset_new_game() -> void:
 	fishing_xp = 0
 	treasure_log = {}
 	fish_flags = {}
+	known_recipes = Cooking.starting_recipes()
+	buffs = {}
+	dishes_cooked = 0
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -122,6 +129,7 @@ func start_new_day(rested: bool) -> void:
 	_time_acc = 0.0
 	_passed_out = false
 	energy = max_energy if rested else max_energy * 0.5
+	buffs = {}                              # bônus de comida duram só até dormir
 	health = max_health
 	temperature_yesterday = temperature
 	_fill_forecast()
@@ -192,6 +200,7 @@ func add_money(amount: int) -> void:
 
 
 func use_energy(amount: float) -> bool:
+	amount *= Cooking.energy_mult()        # bônus de comida (Fôlego)
 	if energy < amount:
 		toast.emit("Você está exausto... vá dormir.")
 		return false
@@ -311,6 +320,7 @@ func save_game(world_data: Dictionary) -> void:
 		"temperature": temperature, "temperature_yesterday": temperature_yesterday, "forecast": forecast,
 		"bait": equipped_bait, "tools": tool_levels,
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
+		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -349,6 +359,11 @@ func load_game() -> Dictionary:
 	treasure_log = tlog if tlog is Dictionary else {}
 	var ff = data.get("fish_flags", {})
 	fish_flags = ff if ff is Dictionary else {}
+	var kr = data.get("recipes", null)
+	known_recipes = kr if kr is Array else Cooking.starting_recipes()
+	var bf = data.get("buffs", {})
+	buffs = bf if bf is Dictionary else {}
+	dishes_cooked = int(data.get("dishes_cooked", 0))
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
 	if tl is Dictionary:

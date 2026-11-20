@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tropical_pop"
+name = "Picolé Tropical"
+description = "Refresca nos dias de onda de calor."
+ingredients = {"pineapple": 1, "coconut": 1, "banana": 1}
+energy = 60
+health = 0
+buff = "speed"
+buff_minutes = 300
+sell = 650
+unlock = "shop"
+shop_season = "summer"
+price = 350
+icon = "res://assets/sprites/food/tropical_pop.png"

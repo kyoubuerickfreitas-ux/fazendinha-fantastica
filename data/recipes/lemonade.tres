@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lemonade"
+name = "Limonada Faísca"
+description = "Faz cócegas no nariz."
+ingredients = {"lemon": 2}
+energy = 35
+health = 0
+buff = "speed"
+buff_minutes = 180
+sell = 170
+unlock = "shop"
+shop_season = "summer"
+price = 120
+icon = "res://assets/sprites/food/lemonade.png"

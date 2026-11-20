@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "mushroom_risotto"
+name = "Risoto de Cogumelo-Abrigo"
+description = "Para um dia longo de trabalho."
+ingredients = {"mushroom": 2, "cheese": 1, "butter": 1}
+energy = 120
+health = 0
+buff = "stamina"
+buff_minutes = 360
+sell = 600
+unlock = "shop"
+shop_season = "autumn"
+price = 350
+icon = "res://assets/sprites/food/mushroom_risotto.png"

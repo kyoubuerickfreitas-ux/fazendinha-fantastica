@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "legend_feast"
+name = "Banquete Lendário"
+description = "Só quem pescou uma lenda pode prepará-lo."
+ingredients = {"any_legend": 1, "truffle_oil": 1, "lemon": 2}
+energy = 300
+health = 100
+buff = "all"
+buff_minutes = 720
+sell = 4000
+unlock = "title:legend_hunter"
+shop_season = ""
+price = 150
+icon = "res://assets/sprites/food/legend_feast.png"

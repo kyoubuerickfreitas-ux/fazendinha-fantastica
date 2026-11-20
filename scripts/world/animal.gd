@@ -349,7 +349,7 @@ func _brush() -> bool:
 		return false
 	record.brushed_today = true
 	record.hygiene = 100
-	record.friendship = mini(1000, record.friendship + 10)
+	record.friendship = mini(1000, record.friendship + int(10 * Cooking.friendship_mult()))
 	record.happiness = mini(100, record.happiness + 8)
 	_play("brush")
 	FX.spawn(get_parent(), "harvest", position + Vector2(0, -18))
@@ -370,7 +370,7 @@ func _hand_feed() -> bool:
 	Game.remove_from_slot(Game.selected_slot, 1)
 	record.hand_fed = true
 	var fav := species_data().favorite_foods.has(held)
-	record.friendship = mini(1000, record.friendship + (40 if fav else 10))
+	record.friendship = mini(1000, record.friendship + int((40 if fav else 10) * Cooking.friendship_mult()))
 	record.happiness = mini(100, record.happiness + (15 if fav else 5))
 	_float_heart()
 	speak()

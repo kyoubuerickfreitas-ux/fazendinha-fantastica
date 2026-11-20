@@ -89,6 +89,7 @@ const ITEMS := {
 	"fish_pond": {"name": "Laguinho Ornamental", "tex": "res://assets/sprites/craft/icon_fish_pond.png", "type": "placeable", "desc": "Cabem 5 peixes, nadando ao ar livre."},
 	"smoker": {"name": "Defumador", "tex": "res://assets/sprites/craft/icon_smoker.png", "type": "placeable", "desc": "Qualquer peixe vira peixe defumado (vale o dobro) em 1 dia."},
 	"fert_fish": {"name": "Adubo de Peixe", "tex": "res://assets/sprites/craft/icon_fert_fish.png", "type": "fertilizer", "sell": 12, "desc": "Use num canteiro: muita fertilidade e cresce 10% mais rápido."},
+	"stove": {"name": "Fogão", "tex": "res://assets/sprites/craft/icon_stove.png", "type": "placeable", "desc": "Toque para cozinhar as receitas que você sabe."},
 	"coop": {"name": "Galinheiro", "tex": "res://assets/sprites/craft/icon_coop.png", "type": "placeable", "desc": "Abriga +6 Piuplum."},
 
 	"brush": {"name": "Escova", "tex": "res://assets/sprites/craft/icon_brush.png", "type": "tool", "buy": 120, "desc": "Segure e toque num animal para escová-lo (1x por dia). Deixa limpo e feliz."},
@@ -154,6 +155,7 @@ const PLACEABLES := {
 	"aquarium_large": {"size": Vector2i(2, 1), "solid": true, "pad": 2, "aquarium": 3, "tank": Rect2(-29, -32, 57, 19)},
 	"fish_pond": {"size": Vector2i(2, 2), "solid": true, "pad": 2, "aquarium": 5, "tank": Rect2(-18, -34, 35, 22)},
 	"smoker": {"size": Vector2i(1, 1), "solid": true, "pad": 3, "machine": true},
+	"stove": {"size": Vector2i(1, 1), "solid": true, "pad": 3},
 	"barn": {"size": Vector2i(4, 3), "solid": true, "pad": 2, "fixed": true},
 	"coop": {"size": Vector2i(3, 2), "solid": true, "pad": 2, "fixed": true},
 }
@@ -200,6 +202,7 @@ const RECIPES := [
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
 	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
+	{"result": "stove", "qty": 1, "cost": {"stone": 15, "wood": 10}},
 	{"result": "fert_fish", "qty": 3, "cost": {"any_fish": 1, "fiber": 2}},
 	{"result": "smoker", "qty": 1, "cost": {"wood": 20, "stone": 15}},
 	{"result": "aquarium_small", "qty": 1, "cost": {"wood": 8, "stone": 4}},
@@ -350,6 +353,7 @@ static func _ensure_dynamic() -> void:
 	CropDB.ensure_loaded()
 	FishDB.ensure_loaded()
 	TreasureDB.ensure_loaded()
+	Cooking.ensure_loaded()
 
 
 static func get_item(id: String) -> Dictionary:

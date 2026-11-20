@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "strawberry_cake"
+name = "Bolo de Morango-Orvalho"
+description = "O bolo de aniversário preferido do vale."
+ingredients = {"strawberry": 3, "egg": 2, "milk": 1}
+energy = 100
+health = 30
+buff = "speed"
+buff_minutes = 240
+sell = 520
+unlock = "shop"
+shop_season = "spring"
+price = 300
+icon = "res://assets/sprites/food/strawberry_cake.png"

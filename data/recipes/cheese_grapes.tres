@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cheese_grapes"
+name = "Tábua de Queijo e Uva"
+description = "Os animais adoram quem cheira a queijo."
+ingredients = {"cheese": 1, "grape": 2}
+energy = 70
+health = 0
+buff = "animal"
+buff_minutes = 240
+sell = 400
+unlock = "shop"
+shop_season = ""
+price = 250
+icon = "res://assets/sprites/food/cheese_grapes.png"

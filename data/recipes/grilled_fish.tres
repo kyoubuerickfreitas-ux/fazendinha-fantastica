@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="RecipeData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/recipe_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "grilled_fish"
+name = "Peixe na Brasa"
+description = "Qualquer peixe fica bom na brasa."
+ingredients = {"any_fish": 1}
+energy = 45
+health = 20
+buff = ""
+buff_minutes = 0
+sell = 70
+unlock = "start"
+shop_season = ""
+price = 150
+icon = "res://assets/sprites/food/grilled_fish.png"

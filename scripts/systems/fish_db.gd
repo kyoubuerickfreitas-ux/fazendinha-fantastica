@@ -109,7 +109,7 @@ static func roll(ctx: Dictionary) -> String:
 	# lendários/secretos: se todas as condições batem, uma chance fixa por fisgada
 	for id in fish:
 		var lf: FishData = fish[id]
-		if lf.rarity >= 5 and available(lf, ctx) and randf() < LEGEND_CHANCE:
+		if lf.rarity >= 5 and available(lf, ctx) and randf() < LEGEND_CHANCE * Cooking.fishing_luck():
 			return id
 	var weights := {}
 	var total := 0.0
@@ -122,6 +122,8 @@ static func roll(ctx: Dictionary) -> String:
 			w *= 2.0
 		if f.baits.has(bait):
 			w *= 2.5
+		if f.rarity >= 2:
+			w *= Cooking.fishing_luck()      # bônus de comida (Sorte na Pesca)
 		if ctx["time"] == "night" and f.times.has("night"):
 			w *= float(bdef.get("night", 1.0))
 		if w > 0.0:
