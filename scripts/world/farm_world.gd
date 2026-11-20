@@ -29,6 +29,7 @@ signal house_door_used
 signal shop_requested
 signal bin_used
 signal stove_used
+signal villager_used(npc_id: String)
 signal workbench_used
 signal baby_born(record: AnimalRecord)
 signal animal_card_requested(record: AnimalRecord)
@@ -242,6 +243,7 @@ func _build_static_scenery() -> void:
 	blocked[npc_cell] = true
 
 	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
+	_spawn_villagers.call_deferred()
 
 	# água bloqueia passagem
 	var water_body := StaticBody2D.new()
@@ -419,6 +421,60 @@ func _enclosure_for(b: Placeable) -> Dictionary:
 	for c in seen:
 		r = r.expand(c).expand(c + Vector2i.ONE)
 	return {"rect": Rect2(r.position * TILE, r.size * TILE).grow(-6), "cells": seen}
+
+
+# ------------------------------------------------------------------ moradores
+var villagers: Array[NPC] = []
+
+
+func _spawn_villagers() -> void:
+	for id in Villagers.all_ids():
+		var d := Villagers.get_npc(id)
+		var npc := NPC.new()
+		npc.setup(d, self)
+		npc.position = cell_center(nearest_passable(d.home))
+		npc.interacted.connect(func(_w): villager_used.emit(id))
+		entities.add_child(npc)
+		villagers.append(npc)
+
+
+## Pé do personagem no meio da célula.
+func cell_center(c: Vector2i) -> Vector2:
+	return Vector2(c.x * TILE + TILE / 2, c.y * TILE + TILE - 6)
+
+
+## A célula andável mais próxima (em espiral).
+func nearest_passable(c: Vector2i) -> Vector2i:
+	for r in 8:
+		for dy in range(-r, r + 1):
+			for dx in range(-r, r + 1):
+				if maxi(absi(dx), absi(dy)) == r and _passable(c + Vector2i(dx, dy)):
+					return c + Vector2i(dx, dy)
+	return c
+
+
+## Células alcançáveis a pé a partir de c (busca em largura).
+func walkable_from(c: Vector2i) -> Dictionary:
+	var seen := {c: true}
+	var q := [c]
+	while not q.is_empty():
+		var cur: Vector2i = q.pop_front()
+		for d in [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]:
+			var n: Vector2i = cur + d
+			if not seen.has(n) and _passable(n):
+				seen[n] = true
+				q.append(n)
+	return seen
+
+
+## Dá para andar em linha reta de a até b?
+func straight_clear(a: Vector2, b: Vector2) -> bool:
+	var n := int(a.distance_to(b) / 8.0) + 1
+	for i in n + 1:
+		var p := a.lerp(b, float(i) / n)
+		if not _passable(Vector2i(int(p.x) / TILE, int(p.y) / TILE)):
+			return false
+	return true
 
 
 func _passable(c: Vector2i) -> bool:

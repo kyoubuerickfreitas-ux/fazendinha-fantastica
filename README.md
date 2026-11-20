@@ -47,6 +47,10 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - **Cozinha** (Fogão, fabricado na bancada): 20 receitas em `data/recipes/*.tres` com ingredientes da horta, dos animais e da pesca (aceita grupos como "qualquer peixe" ou "qualquer fruta")
   - Segure o prato e toque em usar para comer: recupera energia e vida; alguns dão bônus até dormir (Passo Leve, Fôlego, Sorte na Pesca, Amigo dos Bichos, Banquete)
   - 4 receitas no começo; as outras se compram com o Fungo (algumas só em certas estações) ou se ganham com conquistas (nível de pesca, pedidos, pratos feitos, pescar um lendário)
+- **Moradores** (`data/npcs/*.tres`): Dona Carpa (pescadora, no lago), Pipoca (criança, perto da barraca) e Vó Raiz (herbalista, no laguinho). Andam pela vila de dia e vão para casa à noite
+  - Toque para conversar (amizade 1x por dia); segure um item e toque para dar de presente (1 por dia). Cada um adora, gosta ou não gosta de coisas diferentes
+  - 10 corações de amizade; a cada 2 corações o morador te dá um presente. No aniversário os presentes valem o triplo
+  - O calendário mostra os moradores, os corações, os aniversários e os presentes que você já descobriu
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
@@ -108,12 +112,13 @@ scenes/main.tscn            cena inicial
 scripts/main.gd             monta mundo, câmera, HUD, dia/noite, chuva, sono, save
 scripts/autoload/game.gd    estado global: dinheiro, energia, tempo, inventário, save
 scripts/data/item_db.gd     itens, receitas e preços
-scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests), cozinha (cooking)
+scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests), cozinha (cooking), moradores (villagers)
 data/crops/*.tres           uma ficha por planta  ← para criar uma planta nova, copie uma ficha
 data/seasons/*.tres         as 4 estações (temperatura, chuva, cor)
 data/fish/*.tres            peixes (FishData)        ← gerados por tools/make_fish_data.py a partir de tools/fish_table.py
 data/treasures/*.tres       tesouros (TreasureData)  ← tools/make_treasure_data.py + tools/treasure_table.py
 data/recipes/*.tres         receitas (RecipeData)    ← tools/make_recipe_data.py + tools/recipe_table.py
+data/npcs/*.tres            moradores (NPCData)      ← tools/make_npc_data.py + tools/npc_table.py
 scripts/world/              mapa (farm_world), objetos (prop), NPCs, interações
 scripts/player/player.gd    personagem
 scripts/ui/                 HUD, joystick, botões de toque, slots, estilo

@@ -47,6 +47,8 @@ var _book_filter := "all"
 var _cook: Control
 var _cook_body: VBoxContainer
 var _buff_label: Label
+var _npc_win: Control
+var _npc_body: VBoxContainer
 var _top_right: Control
 var _calendar: Control
 var _cal_body: VBoxContainer
@@ -84,6 +86,7 @@ func _ready() -> void:
 	_build_calendar()
 	_build_fish_book()
 	_build_cooking()
+	_build_npc_dialog()
 	_build_animal_card()
 	_build_name_dialog()
 	_build_confirm()
@@ -580,6 +583,67 @@ func _confirm_name() -> void:
 	close_panel()
 
 
+# ================================================================= Moradores
+func _build_npc_dialog() -> void:
+	var w := _make_window("", Vector2(430, 0))
+	_npc_win = w[0]
+	_npc_body = VBoxContainer.new()
+	w[1].add_child(_npc_body)
+
+
+func _npc_portrait(n: NPCData, size: float) -> TextureRect:
+	var at := AtlasTexture.new()
+	at.atlas = load(n.sheet)
+	at.region = Rect2(0, 0, 64, 64)
+	var ic := TextureRect.new()
+	ic.texture = at
+	ic.custom_minimum_size = Vector2(size, size)
+	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	return ic
+
+
+## 10 coraçõezinhos: cheios até a amizade atual.
+func _hearts_row(id: String) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 1)
+	var h := Villagers.hearts(id)
+	for i in Villagers.MAX_HEARTS:
+		var ic := TextureRect.new()
+		ic.texture = ItemDB.ui_icon("heart")
+		ic.custom_minimum_size = Vector2(12, 12)
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		if i >= h:
+			ic.modulate = Color(0.2, 0.15, 0.1, 0.35)
+		row.add_child(ic)
+	return row
+
+
+func open_npc_dialog(id: String, text: String) -> void:
+	var n := Villagers.get_npc(id)
+	for c in _npc_body.get_children():
+		c.queue_free()
+	var top := HBoxContainer.new()
+	top.add_theme_constant_override("separation", 10)
+	top.add_child(_npc_portrait(n, 72))
+	var info := VBoxContainer.new()
+	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info.add_child(UIStyle.label(n.name, 16, UIStyle.WOOD_DARK))
+	info.add_child(UIStyle.label("%s · aniversário: %s" % [n.role, Villagers.birthday_text(id)], 10, UIStyle.EARTH))
+	info.add_child(_hearts_row(id))
+	var says := UIStyle.label(text, 12, UIStyle.WOOD_DARK)
+	says.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	says.custom_minimum_size = Vector2(300, 0)
+	info.add_child(says)
+	top.add_child(info)
+	_npc_body.add_child(top)
+	var tip := UIStyle.label("Segure um item e toque no morador para dar de presente (1 por dia).", 9, UIStyle.EARTH)
+	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_npc_body.add_child(tip)
+	_open(_npc_win)
+
+
 # ================================================================= Cozinha
 func _build_cooking() -> void:
 	var w := _make_window("Fogão", Vector2(470, 0))
@@ -949,6 +1013,26 @@ func open_calendar() -> void:
 		else "daqui a %d dia(s)" % (FishQuests.TOURNAMENT_DAY - dos))]
 	_cal_body.add_child(UIStyle.label("Eventos", 13, UIStyle.WOOD))
 	_cal_body.add_child(UIStyle.label(ev, 11, UIStyle.WOOD_DARK))
+	for vid in Villagers.all_ids():
+		if Villagers.is_birthday(vid):
+			_cal_body.add_child(UIStyle.label("Hoje: aniversário de %s!" % Villagers.get_npc(vid).name, 11, UIStyle.WOOD_DARK))
+	# moradores
+	_cal_body.add_child(UIStyle.label("Moradores", 13, UIStyle.WOOD))
+	for vid in Villagers.all_ids():
+		var n := Villagers.get_npc(vid)
+		var vrow := HBoxContainer.new()
+		vrow.add_theme_constant_override("separation", 6)
+		vrow.add_child(_npc_portrait(n, 32))
+		var col := VBoxContainer.new()
+		col.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		col.add_child(UIStyle.label("%s (%s) · aniversário %s" % [n.name, n.role, Villagers.birthday_text(vid)], 10, UIStyle.WOOD_DARK))
+		col.add_child(_hearts_row(vid))
+		var known := UIStyle.label(Villagers.known_text(vid), 9, UIStyle.EARTH)
+		known.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		known.custom_minimum_size = Vector2(320, 0)
+		col.add_child(known)
+		vrow.add_child(col)
+		_cal_body.add_child(vrow)
 	# o que plantar agora
 	_cal_body.add_child(UIStyle.label("Plante agora", 13, UIStyle.WOOD))
 	for seed_id in CropDB.seeds_for(Calendar.season_id(d)):

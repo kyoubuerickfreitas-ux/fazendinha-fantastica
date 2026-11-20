@@ -56,6 +56,7 @@ func _ready() -> void:
 	world.house_door_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 	world.shop_requested.connect(_on_shop)
 	world.stove_used.connect(func(): hud.open_cooking())
+	world.villager_used.connect(_on_villager)
 	Game.time_changed.connect(func(_d: int, m: int):
 		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():
 			var res := FishQuests.finish_tournament()
@@ -129,6 +130,17 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 
 
 # ------------------------------------------------------------------ ações do mundo
+## Conversar com um morador; com um item na mão (que não seja ferramenta), dá de presente.
+func _on_villager(id: String) -> void:
+	var held := Game.selected_item_id()
+	var text := ""
+	if Villagers.can_gift(held):
+		text = Villagers.gift(id, held)
+	if text == "":
+		text = Villagers.talk(id)
+	hud.open_npc_dialog(id, text)
+
+
 func _on_shop() -> void:
 	var delivered := FishQuests.try_deliver()
 	if delivered != "":
@@ -175,7 +187,7 @@ func _sleep(rested: bool) -> void:
 	hud.fade_through(func():
 		Game.start_new_day(rested)
 		var notes := world.on_new_day()
-		for extra in [FishQuests.on_new_day(), tour_result, Cooking.check_unlocks()]:
+		for extra in [FishQuests.on_new_day(), tour_result, Cooking.check_unlocks(), Villagers.on_new_day()]:
 			if extra != "":
 				notes = extra if notes == "" else notes + "\n" + extra
 		player.position = world.player_start

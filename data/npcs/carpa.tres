@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "carpa"
+name = "Dona Carpa"
+role = "Pescadora"
+description = "Pesca no lago desde antes de o vilarejo ter nome. Sempre participa do torneio."
+sheet = "res://assets/sprites/npc_carpa.png"
+home = Vector2i(40, 30)
+wander = 3
+scale = 1.0
+birthday_season = "summer"
+birthday_day = 8
+loves = PackedStringArray("dish_lake_stew", "dish_lake_sushi", "pearl", "fish_angler")
+likes = PackedStringArray("any_fish", "dish_grilled_fish", "bait_fly", "old_coin")
+dislikes = PackedStringArray("old_boot", "kale")
+lines = {"0": ["Hm? Você é a pessoa nova da fazenda. O lago não gosta de barulho.", "Se quiser pescar, comece na beirinha. O fundo é para quem tem paciência."], "3": ["O lago está calmo hoje. Bom dia para os grandes.", "Minhoca é para iniciante. Experimente uma mosca de fibra."], "6": ["Já viu o rio à noite no outono? Ele fica prateado. Não é só a lua...", "Você pesca melhor que o Seu Anzol. Não conte para ele que eu disse isso."], "9": ["Quando eu era menina, vi o Guardião do Lago. Ninguém acreditou. Você acredita, né?", "Se um dia eu parar de pescar, a minha vara é sua."], "rain": ["Chuva boa! O Bagre-Barbudo sai da toca com esse tempo."], "birthday": ["Lembrou do meu aniversário? Que peixe bonito de surpresa!"]}
+rewards = {"2": {"item": "bait_fly", "qty": 5, "line": "Tome, umas moscas que eu mesma amarrei."}, "4": {"item": "bait_treasure", "qty": 3, "line": "Iscas reluzentes. Elas puxam coisas que brilham no fundo."}, "6": {"item": "pearl", "qty": 1, "line": "Achei essa pérola há anos. Acho que ela queria ficar com você."}, "8": {"item": "fish_pond", "qty": 1, "line": "Um laguinho de peixes para a sua fazenda. Cuide bem deles!"}}

@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pipoca"
+name = "Pipoca"
+role = "Criança curiosa"
+description = "Sobrinha do Fungo. Corre pela vila atrás de bichos e doces."
+sheet = "res://assets/sprites/npc_pipoca.png"
+home = Vector2i(21, 11)
+wander = 4
+scale = 0.82
+birthday_season = "spring"
+birthday_day = 15
+loves = PackedStringArray("dish_tropical_pop", "dish_strawberry_cake", "strawberry", "dish_fruit_juice")
+likes = PackedStringArray("any_fruit", "egg", "dish_blueberry_pancake", "relic_shell")
+dislikes = PackedStringArray("kale", "beet", "any_fish")
+lines = {"0": ["Oi! Você tem bichos? Eu gosto de bichos! Posso ver?", "O tio Fungo diz que eu falo demais. Você acha?"], "3": ["Hoje vi um Piuplum botar um ovo! Foi o melhor dia da minha vida!", "Sabia que o Catarrápio acha trufa só pelo cheiro? Eu também acho bolo assim."], "6": ["Quando eu crescer quero ter uma fazenda igual à sua. Mas com mais morangos.", "Fiz um desenho do seu Moombor. Ficou meio torto, mas é ele."], "9": ["Você é a minha pessoa favorita do vale. Depois do tio Fungo. Empatado, tá?", "Guardei um segredo: tem uma concha que canta no rio. Shhh!"], "rain": ["Eba, poças! Pular em poça é o melhor esporte do mundo!"], "birthday": ["É MEU ANIVERSÁRIO! Você lembrou!!"]}
+rewards = {"2": {"item": "strawberry", "qty": 3, "line": "Achei esses morangos. Pode ficar, eu já comi uns cinco."}, "4": {"item": "recipe_fruit_salad", "qty": 1, "line": "O tio Fungo me ensinou essa. Agora é sua!"}, "6": {"item": "fertile_egg", "qty": 1, "line": "Um ovo especial! Dizem que dele nasce um filhote."}, "8": {"item": "relic_shell", "qty": 1, "line": "A concha que canta! Escuta... ouviu?"}}

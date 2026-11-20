@@ -952,6 +952,66 @@ func _run() -> void:
 	game.buffs = {}
 	game.inventory[0] = null
 
+	# ---- moradores: conversar, presentear, corações, recompensas e aniversário
+	for i in range(12, game.INV_SIZE):
+		game.inventory[i] = null
+	game.minutes = 10 * 60
+	await _wait(0.2)
+	print("moradores: ", w.villagers.map(func(n): return "%s em %s" % [n.npc_name, Vector2i(n.position / 32)]))
+	assert(w.villagers.size() == 3 and w.villagers.all(func(n): return n.visible))
+	var reach: Dictionary = w.walkable_from(Vector2i(w.player_start / 32))
+	for n in w.villagers:
+		assert(reach.has(w.nearest_passable(n.data.home)), "%s deveria ser alcançável a pé" % n.npc_name)
+	game.inventory[0] = {"id": "axe", "qty": 1}
+	game.select_slot(0)
+	main._on_villager("carpa")
+	assert(Villagers.points("carpa") == Villagers.TALK_PTS and main.hud._npc_win.visible)
+	var carpa: NPC = w.villagers.filter(func(n): return n.data.id == "carpa")[0]
+	p.position = carpa.position + Vector2(-40, 0)
+	main.camera.reset_smoothing()
+	await _wait(0.3)
+	await _shot("31_conversa")
+	main.hud.close_panel()
+	main._on_villager("carpa")
+	assert(Villagers.points("carpa") == Villagers.TALK_PTS, "conversa só conta 1x por dia")
+	game.inventory[0] = {"id": "fish_perch", "qty": 2, "q": 0}
+	main._on_villager("carpa")
+	print("  presente: ", Villagers.reaction("carpa", "fish_perch"), " -> ", Villagers.points("carpa"))
+	assert(Villagers.points("carpa") == Villagers.TALK_PTS + 45 and game.count_item("fish_perch") == 1)
+	main._on_villager("carpa")
+	assert(game.count_item("fish_perch") == 1, "só 1 presente por dia")
+	assert(Villagers.reaction("carpa", "pearl") == "love" and Villagers.reaction("carpa", "old_boot") == "dislike")
+	assert(Villagers.reaction("pipoca", "apple") == "like" and Villagers.reaction("pipoca", "fish_silver") == "dislike")
+	assert(Villagers.reaction("raiz", "dish_starflower_tea") == "love" and Villagers.reaction("raiz", "potato") == "like")
+	# 2 corações: recompensa ao conversar
+	game.friends["carpa"]["pts"] = 200
+	var flies0: int = game.count_item("bait_fly")
+	print("  ", Villagers.talk("carpa").replace("\n", " / "))
+	assert(game.count_item("bait_fly") == flies0 + 5 and game.friends["carpa"]["rewards"].has(2))
+	# aniversário: presente vale o triplo
+	var day_b: int = game.day
+	game.day = Calendar.SEASON_LENGTH + 8      # 8 de verão
+	assert(Villagers.is_birthday("carpa"))
+	print("  avisos: ", Villagers.on_new_day())
+	var pts_b := Villagers.points("carpa")
+	game.inventory[0] = {"id": "fish_silver", "qty": 1, "q": 0}
+	main._on_villager("carpa")
+	assert(Villagers.points("carpa") == pts_b + 45 * Villagers.BIRTHDAY_MULT, "aniversário: o triplo")
+	main.hud.close_panel()
+	game.day = day_b
+	game.inventory[0] = null
+	main.hud.open_calendar()
+	await _wait(0.3)
+	main.hud._cal_body.get_parent().scroll_vertical = 260
+	await _wait(0.1)
+	await _shot("32_moradores")
+	main.hud.close_panel()
+	game.minutes = 21 * 60
+	await _wait(0.2)
+	assert(w.villagers.all(func(n): return not n.visible), "de noite os moradores ficam em casa")
+	game.minutes = 10 * 60
+	await _wait(0.1)
+
 	# vitrine: todas as plantas da folha nova em todos os estágios (2 por linha)
 	var crop_ids := ["apple", "orange", "pear", "lemon", "grape", "raspberry", "strawberry", "plum", "blueberry", "peach",
 		"cherry", "pomegranate", "watermelon", "carrot", "melon", "radish", "pineapple", "beet", "coconut", "tomato",

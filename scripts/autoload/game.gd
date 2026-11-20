@@ -47,6 +47,8 @@ var fish_flags := {}
 var known_recipes: Array = []
 var buffs := {}
 var dishes_cooked := 0
+## Amizade com os moradores (ver Villagers)
+var friends := {}
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
 
@@ -92,6 +94,7 @@ func reset_new_game() -> void:
 	known_recipes = Cooking.starting_recipes()
 	buffs = {}
 	dishes_cooked = 0
+	friends = {}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -321,6 +324,7 @@ func save_game(world_data: Dictionary) -> void:
 		"bait": equipped_bait, "tools": tool_levels,
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
+		"friends": friends,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -364,6 +368,8 @@ func load_game() -> Dictionary:
 	var bf = data.get("buffs", {})
 	buffs = bf if bf is Dictionary else {}
 	dishes_cooked = int(data.get("dishes_cooked", 0))
+	var fr = data.get("friends", {})
+	friends = fr if fr is Dictionary else {}
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
 	if tl is Dictionary:

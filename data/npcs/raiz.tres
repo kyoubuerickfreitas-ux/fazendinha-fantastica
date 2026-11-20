@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "raiz"
+name = "Vó Raiz"
+role = "Herbalista"
+description = "Conhece todas as ervas do vale. Diz que as plantas contam fofocas."
+sheet = "res://assets/sprites/npc_raiz.png"
+home = Vector2i(14, 30)
+wander = 3
+scale = 1.0
+birthday_season = "autumn"
+birthday_day = 4
+loves = PackedStringArray("dish_starflower_tea", "starflower", "truffle", "dish_mushroom_risotto")
+likes = PackedStringArray("mushroom", "herbal_tea", "any_vegetable", "milk")
+dislikes = PackedStringArray("old_boot", "dish_tropical_pop")
+lines = {"0": ["Hm. Mãos de quem mexe na terra. Isso é bom sinal.", "Não pise nas ervas da beira do laguinho, criança."], "3": ["Couve-Musgo aguenta o frio. Igual a mim.", "Um chá de ervas cura o resfriado dos bichos. Aprenda isso."], "6": ["As plantas me disseram que você rega direitinho. Elas não mentem.", "O cogumelo gosta de sombra e de pouca conversa. Como eu."], "9": ["Você me lembra eu mesma, muitos invernos atrás.", "Quando eu me for, as ervas vão sentir sua falta se você não cuidar delas. Cuide."], "rain": ["Chuva é o chá das plantas. Hoje elas estão contentes."], "birthday": ["Ninguém lembra do aniversário de uma velha. Você lembrou. Obrigada."]}
+rewards = {"2": {"item": "herbal_tea", "qty": 3, "line": "Chá de ervas. Para os seus bichinhos quando espirrarem."}, "4": {"item": "fert_quality", "qty": 3, "line": "Meu adubo secreto. Não conte a ninguém o que vai nele."}, "6": {"item": "recipe_starflower_tea", "qty": 1, "line": "A receita do meu chá. Era da minha avó."}, "8": {"item": "truffle_oil", "qty": 2, "line": "Óleo de trufa da minha despensa. Use com sabedoria."}}
