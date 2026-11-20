@@ -1,0 +1,25 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "banana"
+name = "Banana-Lua"
+description = "Perene. Cachos curvos como a lua. Frágil em tempestades."
+category = "fruit"
+seed_name = "Muda de Banana-Lua"
+seed_price = 120
+sell_price = 40
+produce_icon_hd = 29
+stage_days = PackedInt32Array(3, 3, 3, 3)
+seasons = PackedStringArray("summer")
+season_end = "dormant"
+temp_min = 16
+temp_max = 40
+fragile = true
+biomes = PackedStringArray("riverbank", "plains")
+harvest_type = "regrow"
+regrow_days = 4
+yield_min = 3
+yield_max = 4

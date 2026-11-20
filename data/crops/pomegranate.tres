@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pomegranate"
+name = "Romã-Coroa"
+description = "Árvore perene. Cada romã tem uma coroinha."
+category = "fruit"
+seed_name = "Muda de Romã-Coroa"
+seed_price = 130
+sell_price = 85
+produce_icon_hd = 24
+stage_days = PackedInt32Array(3, 3, 4, 3)
+seasons = PackedStringArray("autumn")
+season_end = "dormant"
+temp_min = 4
+temp_max = 34
+biomes = PackedStringArray("plains")
+harvest_type = "regrow"
+regrow_days = 4
+yield_min = 1
+yield_max = 3

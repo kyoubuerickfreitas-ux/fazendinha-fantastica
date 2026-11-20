@@ -898,6 +898,34 @@ func _run() -> void:
 	print("info do canteiro: ", Agri.describe(info_cell))
 	print("ficha da semente: ", ItemDB.get_item("seed_grape")["desc"])
 
+	# vitrine: todas as plantas da folha nova em todos os estágios (2 por linha)
+	var crop_ids := ["apple", "orange", "pear", "lemon", "grape", "raspberry", "strawberry", "plum", "blueberry", "peach",
+		"cherry", "pomegranate", "watermelon", "carrot", "melon", "radish", "pineapple", "beet", "coconut", "tomato",
+		"banana", "mushroom"]
+	var gx := 14
+	var gy := 22
+	for k in crop_ids.size():
+		var cd: CropData = CropDB.get_crop(crop_ids[k])
+		assert(cd != null, "planta %s deveria existir" % crop_ids[k])
+		for st in cd.frames():
+			var c := Vector2i(gx + (k % 2) * 6 + st, gy + k / 2)
+			if w.props.has(c):
+				w.props[c].queue_free()
+				w.props.erase(c)
+			if w.occupied.has(c) or w.ground_at(c) == FarmWorld.Ground.WATER:
+				continue
+			var sc := Agri.new_cell(false)
+			Agri.plant(sc, cd.seed_id())
+			sc["crop"]["stage"] = st
+			if st == cd.frames() - 1:
+				sc["crop"]["state"] = "ready"
+			w.soil[c] = sc
+	w._soil_layer.queue_redraw()
+	p.position = Vector2((gx + 6) * 32, (gy + 5) * 32 + 16)
+	main.camera.reset_smoothing()
+	await _wait(0.4)
+	await _shot("28_plantas")
+
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "coconut"
+name = "Coco-Brisa"
+description = "Palmeira perene. Gosta da beira do rio."
+category = "fruit"
+seed_name = "Muda de Coco-Brisa"
+seed_price = 140
+sell_price = 95
+produce_icon_hd = 28
+stage_days = PackedInt32Array(4, 3, 3, 3)
+seasons = PackedStringArray("summer")
+season_end = "dormant"
+temp_min = 18
+temp_max = 42
+biomes = PackedStringArray("riverbank")
+harvest_type = "regrow"
+regrow_days = 4
+yield_min = 1
+yield_max = 2

@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pineapple"
+name = "Abacaxi-Dourado"
+description = "Demora, mas um só vale muito. Gosta de calor."
+category = "fruit"
+seed_price = 80
+sell_price = 190
+produce_icon_hd = 27
+stage_days = PackedInt32Array(3, 3, 3, 3)
+seasons = PackedStringArray("summer")
+water_min = 0.35
+drought_tolerance = 5
+temp_min = 18
+temp_max = 42
+biomes = PackedStringArray("plains", "riverbank")

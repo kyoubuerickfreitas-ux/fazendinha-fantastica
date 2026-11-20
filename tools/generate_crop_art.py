@@ -121,7 +121,10 @@ def frame(c, stage, frames, height):
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
+    from import_crops import LEFT, RIGHT
     for c in CROPS:
+        if c["id"] in LEFT + RIGHT:
+            continue   # arte de verdade: tools/import_crops.py
         frames = len(c["stage_days"]) + 1
         h = c.get("sprite_height", 32)
         strip = Image.new("RGBA", (32 * frames, h), (0, 0, 0, 0))

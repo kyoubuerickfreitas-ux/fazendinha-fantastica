@@ -53,7 +53,7 @@ ORDER += BAITS
 # sacos de sementes das plantas novas (tools/crops_table.py), com selo do produto
 from crops_table import CROPS as _CROPS  # noqa: E402
 _HD_NAMES = {13: "apple", 14: "pear", 15: "grape", 16: "strawberry", 17: "blueberry", 25: "watermelon",
-             26: "melon", 32: "radish", 33: "beet", 35: "potato", 36: "mushroom", 31: "carrot", 34: "tomato"}
+             26: "melon", 32: "radish", 33: "beet", 35: "potato", 36: "mushroom", 31: "carrot", 34: "tomato", 18: "cherry", 19: "orange", 20: "lemon", 21: "raspberry", 22: "plum", 23: "peach", 24: "pomegranate", 27: "pineapple", 28: "coconut", 29: "banana"}
 NEW_SEEDS = []
 for _c in _CROPS:
     if "seed_item" in _c or "hd" not in _c:

@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "orange"
+name = "Laranja-Brasa"
+description = "Árvore perene. Laranjas quentinhas como brasa no verão."
+category = "fruit"
+seed_name = "Muda de Laranja-Brasa"
+seed_price = 110
+sell_price = 55
+produce_icon_hd = 19
+stage_days = PackedInt32Array(3, 3, 3, 3)
+seasons = PackedStringArray("summer")
+season_end = "dormant"
+temp_min = 12
+temp_max = 38
+biomes = PackedStringArray("plains", "riverbank")
+harvest_type = "regrow"
+regrow_days = 3
+yield_min = 2
+yield_max = 3

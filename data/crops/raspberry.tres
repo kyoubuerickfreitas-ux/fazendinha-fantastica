@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "raspberry"
+name = "Framboesa-Coral"
+description = "Arbusto perene que produz da primavera ao verão."
+category = "fruit"
+seed_name = "Muda de Framboesa-Coral"
+seed_price = 55
+sell_price = 22
+produce_icon_hd = 21
+stage_days = PackedInt32Array(2, 2, 2, 2)
+seasons = PackedStringArray("spring", "summer")
+season_end = "dormant"
+temp_min = 6
+temp_max = 32
+biomes = PackedStringArray("forest_edge")
+harvest_type = "regrow"
+regrow_days = 2
+yield_min = 2
+yield_max = 3

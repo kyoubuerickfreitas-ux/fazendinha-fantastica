@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cherry"
+name = "Cereja-Gota"
+description = "Árvore perene. Cachinhos de cereja a cada dois dias na primavera."
+category = "fruit"
+seed_name = "Muda de Cereja-Gota"
+seed_price = 100
+sell_price = 30
+produce_icon_hd = 18
+stage_days = PackedInt32Array(3, 3, 3, 3)
+seasons = PackedStringArray("spring")
+season_end = "dormant"
+temp_min = 4
+temp_max = 28
+biomes = PackedStringArray("forest_edge", "plains")
+harvest_type = "regrow"
+regrow_days = 2
+yield_min = 3
+yield_max = 4
