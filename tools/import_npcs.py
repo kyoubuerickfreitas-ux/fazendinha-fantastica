@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Importa os personagens-cogumelo de assets/source/npcs_mushroom.webp (fundo xadrez "desenhado")
-e gera assets/sprites/npc_<id>.png no formato do jogo: 2 quadros de 64x64 (parado e "respirando").
+Importa os personagens-cogumelo (fundo xadrez "desenhado") e gera assets/sprites/npc_<id>.png
+no formato do jogo: 2 quadros de 64x64 (parado e "respirando").
 
-Folha: 4 personagens (Fungo, mago, Pipoca, Vó Raiz) em 2 colunas x 5 linhas de poses cada.
+assets/source/npcs_mushroom.webp: Fungo, mago (Mestre Estrelo), Pipoca e Vó Raiz, 2 colunas x 5 linhas cada
+assets/source/npc_carpa.webp:     Dona Carpa, 8 colunas x 4 linhas de poses (a pele veio azulada: corrigida)
 Usamos a primeira pose (de frente). Uso: python3 tools/import_npcs.py
 """
 import os
@@ -18,8 +19,14 @@ SRC = os.path.join(ROOT, "assets", "source", "npcs_mushroom.webp")
 OUT = os.path.join(ROOT, "assets", "sprites")
 FRAME = 64
 HEIGHT = 54                       # altura do personagem dentro do quadro
-# personagem -> (coluna do bloco 0..3, pose escolhida: índice na ordem de leitura do bloco)
-WHO = {"fungo": 0, "estrelo": 1, "pipoca": 2, "raiz": 3}
+# personagem -> (folha, quantos blocos lado a lado, bloco, corrigir pele azulada?)
+WHO = {
+    "fungo": ("npcs_mushroom.webp", 4, 0, False),
+    "estrelo": ("npcs_mushroom.webp", 4, 1, False),
+    "pipoca": ("npcs_mushroom.webp", 4, 2, False),
+    "raiz": ("npcs_mushroom.webp", 4, 3, False),
+    "carpa": ("npc_carpa.webp", 1, 0, True),
+}
 
 
 def segment(im):
@@ -62,6 +69,24 @@ def shrink(img, h):
     return small
 
 
+def neutral_skin(img):
+    """A pele dos cogumelos é preta neutra; tons azul-marinho bem escuros (rosto, mãos, contorno)
+    viram preto neutro. Azuis mais claros (roupa, cabelo, enfeites) ficam como estão."""
+    import colorsys
+    out = img.copy()
+    px = out.load()
+    for y in range(img.height):
+        for x in range(img.width):
+            r, g, b, a = px[x, y]
+            if a == 0:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if v <= 0.22 and 0.5 <= h <= 0.78:
+                r2, g2, b2 = colorsys.hsv_to_rgb(0.08, 0.12, v * 0.8)
+                px[x, y] = (int(r2 * 255), int(g2 * 255), int(b2 * 255), a)
+    return out
+
+
 def frame(char, squash=0):
     img = Image.new("RGBA", (FRAME, FRAME), (0, 0, 0, 0))
     d = ImageDraw.Draw(img)
@@ -72,13 +97,20 @@ def frame(char, squash=0):
 
 
 if __name__ == "__main__":
-    im = remove_fake_checker(Image.open(SRC).convert("RGBA"))
-    comps = segment(im)
-    for name, block in WHO.items():
-        x_lo, x_hi = block * 384, (block + 1) * 384
+    sheets = {}
+    for name, (src, blocks, block, fix_skin) in WHO.items():
+        if src not in sheets:
+            im = remove_fake_checker(Image.open(os.path.join(ROOT, "assets", "source", src)).convert("RGBA"))
+            sheets[src] = (im, segment(im))
+        im, comps = sheets[src]
+        bw = im.width / blocks
+        x_lo, x_hi = block * bw, (block + 1) * bw
         mine = [c for c in comps if x_lo <= (c["bbox"][0] + c["bbox"][2]) / 2 < x_hi]
         mine.sort(key=lambda c: (round(c["bbox"][1] / 100), c["bbox"][0]))
-        pose = shrink(crop(im, mine[0]), HEIGHT)
+        pose = crop(im, mine[0])
+        if fix_skin:
+            pose = neutral_skin(pose)
+        pose = shrink(pose, HEIGHT)
         sheet = Image.new("RGBA", (FRAME * 2, FRAME), (0, 0, 0, 0))
         sheet.alpha_composite(frame(pose), (0, 0))
         sheet.alpha_composite(frame(pose, 1), (FRAME, 0))      # "respirando": 1 pixel mais baixo

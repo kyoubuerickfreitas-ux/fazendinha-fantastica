@@ -48,7 +48,7 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - Segure o prato e toque em usar para comer: recupera energia e vida; alguns dão bônus até dormir (Passo Leve, Fôlego, Sorte na Pesca, Amigo dos Bichos, Banquete)
   - 4 receitas no começo; as outras se compram com o Fungo (algumas só em certas estações) ou se ganham com conquistas (nível de pesca, pedidos, pratos feitos, pescar um lendário)
 - **Moradores** (`data/npcs/*.tres`): Dona Carpa (pescadora, no lago), Pipoca (criança, perto da barraca), Vó Raiz (herbalista, no laguinho) e Mestre Estrelo (mago das estrelas, perto da mina). Andam pela vila de dia e vão para casa à noite
-  - Arte: `tools/import_npcs.py` recorta `assets/source/npcs_mushroom.webp`; a Dona Carpa ainda é a recoloração provisória do Fungo
+  - Arte: `tools/import_npcs.py` recorta `assets/source/npcs_mushroom.webp` e `assets/source/npc_carpa.webp`
   - Toque para conversar (amizade 1x por dia); segure um item e toque para dar de presente (1 por dia). Cada um adora, gosta ou não gosta de coisas diferentes
   - 10 corações de amizade; a cada 2 corações o morador te dá um presente. No aniversário os presentes valem o triplo
   - O calendário mostra os moradores, os corações, os aniversários e os presentes que você já descobriu

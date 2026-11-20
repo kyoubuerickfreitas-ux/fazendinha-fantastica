@@ -12,7 +12,7 @@ from npc_table import NPCS  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # a arte antiga do Fungo serve de base (os moradores com arte própria vêm de tools/import_npcs.py)
 SRC = os.path.join(ROOT, "assets", "source", "npc_fungo_old.png")
-REAL_ART = {"pipoca", "raiz", "estrelo"}
+REAL_ART = {"pipoca", "raiz", "estrelo", "carpa"}
 # cor original -> parte do corpo (paleta do Fungo)
 PARTS = {(181, 85, 58): "cap", (142, 63, 43): "cap", (122, 74, 58): "cap",
          (201, 111, 74): "scarf",
