@@ -6,6 +6,7 @@ var world: FarmWorld
 var player: Player
 var hud: HUD
 var tutorial: Tutorial
+var _resetting := false
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
@@ -59,6 +60,12 @@ func _ready() -> void:
 	world.add_child(tutorial)
 	hud.tutorial_skip_pressed.connect(func():
 		hud.ask("Pular o tutorial?\n(as dicas param de aparecer)", tutorial.skip))
+
+	hud.save_requested.connect(save_now)
+	hud.new_game_requested.connect(_new_game)
+	hud.tutorial_restart_requested.connect(func():
+		Game.tutorial = {"step": 0, "base": -1, "done": false}
+		tutorial._refresh_panel())
 
 	hud.use_pressed.connect(player.use_tool)
 	hud.interact_pressed.connect(player.interact)
@@ -214,7 +221,18 @@ func _sleep(rested: bool) -> void:
 				_new_babies.clear())
 
 
+## Apaga o save e recomeça do zero (botão Opções > Novo jogo).
+func _new_game() -> void:
+	_resetting = true
+	Game.delete_save()
+	Game.reset_new_game()
+	Game.ui_lock = 0
+	get_tree().reload_current_scene()
+
+
 func save_now() -> void:
+	if _resetting:
+		return     # não salvar o jogo antigo por cima enquanto recomeça
 	var data := world.serialize()
 	data["player"] = [player.position.x, player.position.y]
 	Game.save_game(data)

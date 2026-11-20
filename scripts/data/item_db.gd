@@ -15,7 +15,7 @@ const HD_COLUMNS := 16
 const UI_ICON := {
 	"coin": 16, "sun": 17, "rain": 18, "heart": 19, "bolt": 20,
 	"backpack": 21, "hand": 22, "bubble": 23, "moon": 24, "cloud": 25,
-	"heavy_rain": 30, "storm": 31, "snow": 32, "fog": 33, "wind": 34, "heat": 35, "cold": 36, "book": 37,
+	"heavy_rain": 30, "storm": 31, "snow": 32, "fog": 33, "wind": 34, "heat": 35, "cold": 36, "book": 37, "gear": 38,
 }
 
 ## type: tool | seed | crop | resource | product | fish | bait | placeable

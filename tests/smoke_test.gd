@@ -1087,6 +1087,17 @@ func _run() -> void:
 	assert(game.tutorial["done"] and not main.hud._tut_panel.visible)
 	print("tutorial: %d passos concluídos" % Tutorial.STEPS.size())
 
+	# ---- opções
+	main.hud.open_options()
+	await _wait(0.3)
+	assert(main.hud._options.visible)
+	await _shot("34_opcoes")
+	main.hud.close_panel()
+	main.hud.tutorial_restart_requested.emit()
+	assert(main.tutorial.active() and int(game.tutorial["step"]) == 0 and main.hud._tut_panel.visible)
+	game.tutorial["done"] = true
+	main.tutorial._refresh_panel()
+
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")
 	main.hud.close_panel()

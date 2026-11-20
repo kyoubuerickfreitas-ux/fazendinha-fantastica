@@ -51,6 +51,11 @@ var _tut_panel: PanelContainer
 var _tut_title: Label
 var _tut_label: Label
 signal tutorial_skip_pressed
+signal save_requested
+signal new_game_requested
+signal tutorial_restart_requested
+var _options_btn: TouchButton
+var _options: Control
 var _npc_win: Control
 var _npc_body: VBoxContainer
 var _top_right: Control
@@ -91,6 +96,7 @@ func _ready() -> void:
 	_build_fish_book()
 	_build_cooking()
 	_build_npc_dialog()
+	_build_options()
 	_build_animal_card()
 	_build_name_dialog()
 	_build_confirm()
@@ -1148,7 +1154,7 @@ func blocks_point(p: Vector2) -> bool:
 	for c in _blockers:
 		if c.get_global_rect().grow(4).has_point(p):
 			return true
-	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn]:
+	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn, _options_btn]:
 		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
 			return true
 	if _tut_panel and _tut_panel.visible and _tut_panel.get_global_rect().grow(4).has_point(p):
@@ -1379,6 +1385,52 @@ func _refresh_hotbar() -> void:
 	var id := Game.selected_item_id()
 	_use_btn.icon = ItemDB.icon(id) if id != "" else ItemDB.ui_icon("hand")
 	_use_btn.queue_redraw()
+
+
+# ================================================================= opções
+func _build_options() -> void:
+	_options_btn = TouchButton.new()
+	_options_btn.radius = 13
+	_options_btn.icon = ItemDB.ui_icon("gear")
+	_options_btn.icon_scale = 1.3
+	_options_btn.anchor_left = 1.0
+	_options_btn.anchor_right = 1.0
+	_options_btn.offset_left = -36
+	_options_btn.offset_top = 46
+	_options_btn.pressed.connect(open_options)
+	_root.add_child(_options_btn)
+
+	var w := _make_window("Opções", Vector2(300, 0))
+	_options = w[0]
+	var v: VBoxContainer = w[1]
+	v.add_theme_constant_override("separation", 8)
+	var save := Button.new()
+	save.text = "Salvar agora"
+	save.pressed.connect(func():
+		save_requested.emit()
+		close_panel()
+		show_toast("Jogo salvo!"))
+	v.add_child(save)
+	var tut := Button.new()
+	tut.text = "Recomeçar o tutorial"
+	tut.pressed.connect(func():
+		close_panel()
+		tutorial_restart_requested.emit())
+	v.add_child(tut)
+	var reset := Button.new()
+	reset.text = "Novo jogo (apaga o progresso)"
+	reset.add_theme_color_override("font_color", Color("8e3f2b"))
+	reset.pressed.connect(func():
+		close_panel()
+		ask("Começar um jogo novo?\nTodo o progresso salvo será apagado.", func(): new_game_requested.emit()))
+	v.add_child(reset)
+	var ver := UIStyle.label("Fazendinha Fantástica · versão de teste", 9, UIStyle.EARTH)
+	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(ver)
+
+
+func open_options() -> void:
+	_open(_options)
 
 
 # ================================================================= tutorial
