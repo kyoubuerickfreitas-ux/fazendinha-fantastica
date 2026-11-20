@@ -11,6 +11,7 @@ signal selected_slot_changed(index: int)
 signal toast(text: String)
 signal pass_out
 signal season_changed(season_id: String)
+signal look_changed
 
 const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
@@ -55,6 +56,8 @@ var counters := {}
 var mine_deepest := 0
 ## Tutorial: {"step": índice, "base": valor no começo do passo, "done": bool}
 var tutorial := {"step": 0, "base": 0, "done": false}
+## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
+var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
 
@@ -104,6 +107,7 @@ func reset_new_game() -> void:
 	counters = {}
 	mine_deepest = 0
 	tutorial = {"step": 0, "base": -1, "done": false}
+	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -123,6 +127,21 @@ func _process(delta: float) -> void:
 			_passed_out = true
 			pass_out.emit()
 			return
+
+
+func player_name() -> String:
+	var n: String = str(profile.get("name", "")).strip_edges()
+	return n if n != "" else "Fazendeiro"
+
+
+func farm_name() -> String:
+	var n: String = str(profile.get("farm", "")).strip_edges()
+	return n if n != "" else "Fazendinha"
+
+
+func look() -> Dictionary:
+	var l = profile.get("look", {})
+	return l if l is Dictionary and not l.is_empty() else PlayerLook.default_look()
 
 
 func is_night() -> bool:
@@ -344,6 +363,7 @@ func save_game(world_data: Dictionary) -> void:
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
 		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
+		"profile": profile,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -395,6 +415,13 @@ func load_game() -> Dictionary:
 	var tu = data.get("tutorial", null)
 	# saves de antes do tutorial: quem já joga não precisa dele
 	tutorial = tu if tu is Dictionary else {"step": 0, "base": -1, "done": true}
+	var pr = data.get("profile", null)
+	# saves de antes da criação de personagem: nome e visual padrão (dá para mudar nas Opções)
+	if pr is Dictionary:
+		profile = {"name": str(pr.get("name", "")), "farm": str(pr.get("farm", "")),
+			"look": PlayerLook.sanitize(pr.get("look", {})), "created": bool(pr.get("created", true))}
+	else:
+		profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": true}
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:

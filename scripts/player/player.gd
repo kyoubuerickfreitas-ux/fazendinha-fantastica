@@ -38,6 +38,9 @@ var _dir := Dir.DOWN
 var _anim_t := 0.0
 var _busy := 0.0
 var _sprite: Sprite2D
+var _hair: Sprite2D          # cabelo (mesmos quadros do corpo, tingido)
+var _look_mat: ShaderMaterial
+var _look_actions := false
 var _action := {}   # animação de ferramenta em andamento
 var _holding_rod := false
 
@@ -49,6 +52,12 @@ func _ready() -> void:
 	_sprite.vframes = 4
 	_sprite.position = Vector2(0, -26)
 	add_child(_sprite)
+	_look_mat = PlayerLook.make_material()
+	_sprite.material = _look_mat
+	_hair = Sprite2D.new()
+	_sprite.add_child(_hair)
+	refresh_look()
+	Game.look_changed.connect(refresh_look)
 
 	var col := CollisionShape2D.new()
 	var shape := RectangleShape2D.new()
@@ -100,10 +109,31 @@ func _physics_process(delta: float) -> void:
 		_anim_t = 0.0
 		_sprite.frame = _dir * COLS
 
+	_sync_hair()
 	if world:
 		var id := Game.selected_item_id()
 		var c := target_cell()
 		world.set_cursor(c, Game.ui_lock == 0, world.would_act(id, c) or world.can_interact_cell(c))
+
+
+## Aplica a aparência escolhida (cores do corpo e cabelo).
+func refresh_look() -> void:
+	_look_actions = _sprite.texture == ACTIONS
+	PlayerLook.apply(_look_mat, Game.look(), _look_actions)
+	_hair.texture = PlayerLook.hair_texture(Game.look(), _look_actions)
+	_hair.modulate = PlayerLook.hair_color(Game.look())
+	_sync_hair()
+
+
+## O cabelo acompanha o quadro do corpo (caminhada ou animação de ferramenta).
+func _sync_hair() -> void:
+	if (_sprite.texture == ACTIONS) != _look_actions:
+		refresh_look()
+		return
+	if _hair.texture:
+		_hair.hframes = _sprite.hframes
+		_hair.vframes = _sprite.vframes
+		_hair.frame = _sprite.frame
 
 
 ## Som de passo conforme o chão (grama, terra/caminho ou pedra da mina).

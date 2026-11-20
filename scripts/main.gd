@@ -104,7 +104,15 @@ func _ready() -> void:
 	_update_daylight()
 	_update_weather()
 
-	if saved.is_empty():
+	hud.character_created.connect(func(first: bool):
+		save_now()
+		if first:
+			Game.toast.emit("Bem-vindo(a), %s! Esta é a sua fazenda: %s." % [Game.player_name(), Game.farm_name()])
+		else:
+			Game.toast.emit("Visual atualizado!"))
+	if not Game.profile.get("created", true):
+		hud.open_character_creator(true)
+	elif saved.is_empty():
 		Game.toast.emit("Bem-vindo à sua fazendinha!")
 	else:
 		Game.toast.emit("Dia %d" % Game.day)

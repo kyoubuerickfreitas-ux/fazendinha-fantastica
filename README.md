@@ -62,6 +62,21 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
 
+## Criação de personagem
+
+Um jogo novo começa com a tela de criação: **nome**, **nome da fazenda** e aparência, com prévia andando e girando:
+- 8 tons de pele (6 naturais + lilás de fada e verde de duende)
+- 7 penteados (careca, curto, comprido, rabo de cavalo, coque, cacheado, espetado) e 8 cores de cabelo
+- 8 cores de camisa e 6 de calção; botões para sortear nome, fazenda ou tudo
+- Dá para mudar depois em **Opções > Aparência e nomes**. Saves antigos ganham o visual padrão
+- Os moradores chamam você pelo nome quando já são amigos (falas podem usar `{nome}` e `{fazenda}`)
+
+Como funciona: o corpo base é pintado por um shader (`assets/shaders/player_look.gdshader`) com uma máscara que diz
+o que é pele, camisa e calção em cada quadro, mantendo as sombras; o cabelo é uma folha em cinza tingida com a cor
+escolhida, um quadro para cada quadro do corpo (inclusive as animações de ferramenta). Tudo gerado por
+`python3 tools/make_player_layers.py` a partir de `assets/sprites/player.png` e `player_actions.png`.
+Código: `scripts/player/player_look.gd`, `scripts/ui/character_creator.gd`, `scripts/ui/player_portrait.gd`.
+
 ## Som e música
 
 Trilha sonora original, composta e sintetizada por código (sem samples de terceiros, sem problema de direitos):
@@ -170,6 +185,6 @@ godot --path . -s tests/smoke_test.gd -- /caminho/para/capturas
 
 1. Arte definitiva (filhotes, estágios das plantas, máquinas, construções)
 2. Novas regiões do mundo (floresta, vilarejo, montanha) usando os biomas já prontos
-3. Criação de personagem (corpo base + roupas)
+3. Roupas e chapéus extras para a criação de personagem
 4. Missões e moradores
 5. Mineração

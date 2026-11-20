@@ -3,12 +3,12 @@ extends CanvasLayer
 ## Interface do jogo: status no topo, barra rápida e botões embaixo,
 ## joystick à esquerda e os painéis (mochila, loja, confirmação).
 
+signal character_created(first_time: bool)
 signal use_pressed
 signal interact_pressed
 signal sleep_confirmed
 signal quit_confirmed
 
-const PLAYER_SHEET := preload("res://assets/sprites/player.png")
 
 var player: Player
 var world: FarmWorld
@@ -150,16 +150,11 @@ func _build_top_left() -> void:
 	inner_style.set_content_margin_all(0)
 	inner_style.shadow_size = 0
 	inner.add_theme_stylebox_override("panel", inner_style)
-	var face := TextureRect.new()
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
-	var at := AtlasTexture.new()
-	at.atlas = PLAYER_SHEET
-	at.region = Rect2(18, 9, 28, 28)
-	face.texture = at
+	var face := PlayerPortrait.new()       # rosto com a aparência escolhida
+	face.region = Rect2(16, 6, 32, 32)
 	face.custom_minimum_size = Vector2(36, 36)
-	face.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	face.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	face.clip_contents = true
+	Game.look_changed.connect(face.refresh)
 	inner.add_child(face)
 	portrait.add_child(inner)
 	box.add_child(portrait)
@@ -1426,6 +1421,12 @@ func _build_options() -> void:
 		close_panel()
 		show_toast("Jogo salvo!"))
 	v.add_child(save)
+	var look := Button.new()
+	look.text = "Aparência e nomes"
+	look.pressed.connect(func():
+		close_panel()
+		open_character_creator(false))
+	v.add_child(look)
 	var tut := Button.new()
 	tut.text = "Recomeçar o tutorial"
 	tut.pressed.connect(func():
@@ -1469,6 +1470,19 @@ func _volume_row(title: String, value: float, setter: Callable, preview: String)
 	if preview != "":
 		s.drag_ended.connect(func(_c): Sound.play(preview))
 	return h
+
+
+## Tela de criação de personagem (jogo novo) ou de mudar a aparência (Opções).
+func open_character_creator(first_time: bool) -> CharacterCreator:
+	var c := CharacterCreator.new()
+	c.first_time = first_time
+	c.name = "CharacterCreator"
+	Game.ui_lock = 1
+	c.finished.connect(func():
+		Game.ui_lock = 0
+		character_created.emit(first_time))
+	_root.add_child(c)
+	return c
 
 
 ## Escolher o andar da mina (1 e a cada 5 andares já alcançados).

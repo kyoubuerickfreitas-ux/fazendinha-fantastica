@@ -89,7 +89,11 @@ static func line(id: String) -> String:
 			if h >= int(k) and n.lines.has(k):
 				key = k
 		pool = n.lines.get(key, ["..."])
-	return pool[randi() % pool.size()]
+	var t: String = str(pool[randi() % pool.size()]).replace("{nome}", Game.player_name()).replace("{fazenda}", Game.farm_name())
+	# amigos chamam pelo nome
+	if hearts(id) >= 2 and randf() < 0.35 and not t.contains(Game.player_name()):
+		t = "Oi, %s! %s" % [Game.player_name(), t]
+	return t
 
 
 ## Conversa (ganha amizade 1x por dia) e entrega recompensas de coração. Retorna o texto.
