@@ -39,6 +39,8 @@ func _run() -> void:
 	root.add_child(main)
 	await _wait(0.5)
 	await _shot("01_inicio")
+	assert(main.tutorial.active() and main.hud._tut_panel.visible, "jogo novo começa com o tutorial")
+	game.tutorial["done"] = true    # as recompensas mexeriam nas contas dos testes abaixo; testado no fim
 
 	var p = main.player
 	var w = main.world
@@ -1039,6 +1041,51 @@ func _run() -> void:
 	main.camera.reset_smoothing()
 	await _wait(0.4)
 	await _shot("28_plantas")
+
+	# ---- tutorial: cada passo conclui quando o objetivo é cumprido
+	game.tutorial = {"step": 0, "base": -1, "done": false}
+	var tut: Tutorial = main.tutorial
+	p.position = w.player_start
+	for i in Tutorial.STEPS.size():
+		var st: Dictionary = Tutorial.STEPS[i]
+		tut._update_step()                  # marca a base do passo
+		if st.get("abs", false) and int(game.tutorial["step"]) > i:
+			continue                        # já tinha feito antes (pescou, cozinhou...): conclui na hora
+		assert(int(game.tutorial["step"]) == i)
+		var m: String = st["metric"]
+		if i == 5:
+			p.position = w.fungo.position + Vector2(0, 160)
+			main.camera.reset_smoothing()
+			tut._process(0.3)
+			await _wait(0.3)
+			await _shot("33_tutorial")
+		var goal: int = st["goal"]
+		if m.begins_with("counter:"):
+			game.bump(m.trim_prefix("counter:"), goal)
+		elif m.begins_with("item:"):
+			game.add_item(m.trim_prefix("item:"), goal)
+		else:
+			match m:
+				"moved":
+					p.position = w.player_start + Vector2(120, 0)
+				"soil", "planted", "watered":
+					for k in goal:
+						var sc := Agri.new_cell(false)
+						Agri.plant(sc, "seed_kale")
+						sc["moist"] = 1.0
+						w.soil[Vector2i(14 + k + i * 4, 37)] = sc
+				"day":
+					game.day += 1
+				"fish":
+					game.fish_log["fish_silver"] = {"n": 3, "first": 1, "max_size": 9.0, "max_weight": 0.1}
+				"cooked":
+					game.dishes_cooked += 1
+				"stove":
+					game.add_item("stove", 1)
+		tut._update_step()
+		assert(int(game.tutorial["step"]) == i + 1 or game.tutorial["done"], "o passo %d deveria concluir" % i)
+	assert(game.tutorial["done"] and not main.hud._tut_panel.visible)
+	print("tutorial: %d passos concluídos" % Tutorial.STEPS.size())
 
 	main.hud.toggle_backpack()
 	await _shot("04_mochila")

@@ -239,6 +239,7 @@ static func eat(dish_id: String) -> String:
 	if not Game.remove_item(dish_id, 1):
 		return ""
 	Game.energy = minf(Game.max_energy, Game.energy + r.energy)
+	Game.bump("eaten")
 	Game.health = minf(Game.max_health, Game.health + r.health)
 	var t := "Comeu %s. +%d energia" % [r.name, r.energy]
 	if r.health > 0:

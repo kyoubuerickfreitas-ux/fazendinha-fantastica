@@ -202,6 +202,7 @@ func _build_static_scenery() -> void:
 	door.reach = 26.0
 	door.position = house.position + Vector2(-20, 6)
 	door.interacted.connect(func(_w): house_door_used.emit())
+	house_door = door
 	entities.add_child(door)
 
 	# caixa de vendas
@@ -218,6 +219,7 @@ func _build_static_scenery() -> void:
 	_add_rect_collision(bb, Vector2(22, 8), Vector2(0, -4))
 	bin.add_child(bb)
 	bin.interacted.connect(func(_w): bin_used.emit())
+	sell_bin = bin
 	entities.add_child(bin)
 	blocked[bin_cell] = true
 
@@ -239,6 +241,7 @@ func _build_static_scenery() -> void:
 	var npc_cell := Vector2i(15, 10)
 	npc.position = Vector2(npc_cell.x * TILE + TILE / 2, npc_cell.y * TILE + TILE - 4)
 	npc.interacted.connect(func(_w): shop_requested.emit())
+	fungo = npc
 	entities.add_child(npc)
 	blocked[npc_cell] = true
 
@@ -425,6 +428,10 @@ func _enclosure_for(b: Placeable) -> Dictionary:
 
 # ------------------------------------------------------------------ moradores
 var villagers: Array[NPC] = []
+## referências para o tutorial apontar
+var house_door: Interactable
+var sell_bin: Interactable
+var fungo: NPC
 
 
 func _spawn_villagers() -> void:
@@ -1170,6 +1177,7 @@ func _harvest(c: Vector2i, with_scythe: bool) -> String:
 	var r := Agri.harvest(cell)
 	if Game.add_item(r["item"], r["qty"], r["q"]) > 0:
 		return ""
+	Game.bump("harvests")
 	var text := "+%d %s%s" % [r["qty"], ItemDB.item_name(r["item"]),
 		"" if r["q"] == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[r["q"]]]
 	if r["seeds"] > 0 and Game.add_item(r["seed_item"], r["seeds"]) == 0:

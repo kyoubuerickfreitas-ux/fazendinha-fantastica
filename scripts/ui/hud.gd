@@ -47,6 +47,10 @@ var _book_filter := "all"
 var _cook: Control
 var _cook_body: VBoxContainer
 var _buff_label: Label
+var _tut_panel: PanelContainer
+var _tut_title: Label
+var _tut_label: Label
+signal tutorial_skip_pressed
 var _npc_win: Control
 var _npc_body: VBoxContainer
 var _top_right: Control
@@ -161,6 +165,7 @@ func _build_top_left() -> void:
 	_buff_label.add_theme_color_override("font_outline_color", UIStyle.WOOD_DARK)
 	_buff_label.add_theme_constant_override("outline_size", 4)
 	_root.add_child(_buff_label)
+	_build_tutorial_panel()
 
 
 func _make_bar(parent: Control, icon_name: String, color: Color) -> ProgressBar:
@@ -306,8 +311,9 @@ func _build_toast() -> void:
 	_toast = UIStyle.outlined_label("", 13)
 	_toast.anchor_left = 0.5
 	_toast.anchor_right = 0.5
-	_toast.offset_left = -200
-	_toast.offset_right = 200
+	_toast.offset_left = -230
+	_toast.offset_right = 230
+	_toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_toast.offset_top = 62
 	_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_toast.modulate.a = 0.0
@@ -714,6 +720,7 @@ func _build_fish_book() -> void:
 
 
 func open_fish_book(filter: String = "") -> void:
+	Game.bump("book")
 	if filter != "":
 		_book_filter = filter
 	_open(_book)
@@ -1144,6 +1151,8 @@ func blocks_point(p: Vector2) -> bool:
 	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn]:
 		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
 			return true
+	if _tut_panel and _tut_panel.visible and _tut_panel.get_global_rect().grow(4).has_point(p):
+		return true
 	return false
 
 
@@ -1372,6 +1381,44 @@ func _refresh_hotbar() -> void:
 	_use_btn.queue_redraw()
 
 
+# ================================================================= tutorial
+func _build_tutorial_panel() -> void:
+	_tut_panel = PanelContainer.new()
+	_tut_panel.add_theme_stylebox_override("panel", UIStyle.panel())
+	_tut_panel.position = Vector2(176, 50)
+	_tut_panel.custom_minimum_size = Vector2(290, 0)
+	_tut_panel.size = Vector2(290, 0)
+	_tut_panel.visible = false
+	_root.add_child(_tut_panel)
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	_tut_panel.add_child(v)
+	var top := HBoxContainer.new()
+	_tut_title = UIStyle.label("", 9, UIStyle.WOOD)
+	_tut_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	top.add_child(_tut_title)
+	var skip := Button.new()
+	skip.text = "Pular"
+	skip.add_theme_font_size_override("font_size", 8)
+	skip.pressed.connect(func(): tutorial_skip_pressed.emit())
+	top.add_child(skip)
+	v.add_child(top)
+	_tut_label = UIStyle.label("", 10, UIStyle.WOOD_DARK)
+	_tut_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_tut_label.custom_minimum_size = Vector2(280, 0)
+	v.add_child(_tut_label)
+
+
+## Objetivo do tutorial ("" esconde o painel).
+func set_tutorial(text: String, title: String) -> void:
+	if _tut_panel == null:
+		return
+	_tut_panel.visible = text != ""
+	_tut_label.text = text
+	_tut_title.text = title
+	_tut_panel.reset_size()
+
+
 func _refresh_buffs() -> void:
 	if _buff_label:
 		var t := Cooking.buffs_text()
@@ -1408,11 +1455,13 @@ static func _format_money(v: int) -> String:
 
 func show_toast(text: String) -> void:
 	_toast.text = text
+	# com o painel do tutorial aberto, o aviso aparece logo abaixo dele
+	_toast.offset_top = 122.0 if _tut_panel and _tut_panel.visible else 62.0
 	if _toast_tween:
 		_toast_tween.kill()
 	_toast.modulate.a = 1.0
 	_toast_tween = create_tween()
-	_toast_tween.tween_interval(1.6)
+	_toast_tween.tween_interval(1.6 + text.length() / 45.0)   # texto longo fica mais tempo
 	_toast_tween.tween_property(_toast, "modulate:a", 0.0, 0.5)
 
 

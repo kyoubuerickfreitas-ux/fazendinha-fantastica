@@ -49,6 +49,10 @@ var buffs := {}
 var dishes_cooked := 0
 ## Amizade com os moradores (ver Villagers)
 var friends := {}
+## Contadores de ações (tutorial e metas): {"talks": 3, "harvests": 10, ...}
+var counters := {}
+## Tutorial: {"step": índice, "base": valor no começo do passo, "done": bool}
+var tutorial := {"step": 0, "base": 0, "done": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
 var equipped_bait := ""
 
@@ -95,6 +99,8 @@ func reset_new_game() -> void:
 	buffs = {}
 	dishes_cooked = 0
 	friends = {}
+	counters = {}
+	tutorial = {"step": 0, "base": -1, "done": false}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -197,6 +203,14 @@ func season_id() -> String:
 
 
 # ------------------------------------------------------------------ status
+func bump(key: String, n: int = 1) -> void:
+	counters[key] = int(counters.get(key, 0)) + n
+
+
+func counter(key: String) -> int:
+	return int(counters.get(key, 0))
+
+
 func add_money(amount: int) -> void:
 	money = max(0, money + amount)
 	money_changed.emit(money)
@@ -324,7 +338,7 @@ func save_game(world_data: Dictionary) -> void:
 		"bait": equipped_bait, "tools": tool_levels,
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
-		"friends": friends,
+		"friends": friends, "counters": counters, "tutorial": tutorial,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -370,6 +384,11 @@ func load_game() -> Dictionary:
 	dishes_cooked = int(data.get("dishes_cooked", 0))
 	var fr = data.get("friends", {})
 	friends = fr if fr is Dictionary else {}
+	var ct = data.get("counters", {})
+	counters = ct if ct is Dictionary else {}
+	var tu = data.get("tutorial", null)
+	# saves de antes do tutorial: quem já joga não precisa dele
+	tutorial = tu if tu is Dictionary else {"step": 0, "base": -1, "done": true}
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1}
 	if tl is Dictionary:

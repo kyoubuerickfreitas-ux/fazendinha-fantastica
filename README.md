@@ -55,6 +55,14 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
 
+## Tutorial
+
+Um jogo novo começa com um tutorial de 16 passos (andar, arar, plantar, regar, cortar árvore, visitar o Fungo,
+fazer carinho num animal, pescar, conversar com um morador, fabricar o Fogão, cozinhar e comer, vender, dormir,
+colher e abrir o Livro de Pesca). O objetivo aparece num painel no alto da tela, uma setinha mostra onde ir
+(na borda da tela quando o alvo está longe) e alguns passos dão recompensa. O botão "Pular" desliga o tutorial.
+Os passos ficam em `scripts/systems/tutorial.gd` (lista STEPS). Saves antigos não mostram o tutorial.
+
 ## Mira
 
 - **Mira automática:** o botão de usar escolhe sozinho o alvo mais próximo em que a ferramenta da mão faz algo (machado → árvore, regador → terra seca, sementes → canteiro vazio...). A direção em que você anda desempata. O quadrado **verde** mostra o alvo; quadrado apagado = nada para fazer ali.

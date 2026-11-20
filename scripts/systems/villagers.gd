@@ -96,6 +96,7 @@ static func line(id: String) -> String:
 static func talk(id: String) -> String:
 	var r := rec(id)
 	var t := line(id)
+	Game.bump("talks")
 	if int(r["talk_day"]) != Game.day:
 		r["talk_day"] = Game.day
 		_add(id, TALK_PTS)

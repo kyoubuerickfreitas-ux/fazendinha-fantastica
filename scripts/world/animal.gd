@@ -310,6 +310,7 @@ func _on_interact(_who: Node) -> void:
 		pass
 	elif not record.petted_today:
 		record.petted_today = true
+		Game.bump("pets")
 		record.happiness = mini(100, record.happiness + 5)
 		_float_heart()
 		speak()

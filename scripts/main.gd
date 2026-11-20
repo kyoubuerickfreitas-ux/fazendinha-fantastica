@@ -5,6 +5,7 @@ extends Node2D
 var world: FarmWorld
 var player: Player
 var hud: HUD
+var tutorial: Tutorial
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
@@ -50,6 +51,14 @@ func _ready() -> void:
 	hud = HUD.new()
 	hud.player = player
 	add_child(hud)
+
+	tutorial = Tutorial.new()
+	tutorial.world = world
+	tutorial.player = player
+	tutorial.hud = hud
+	world.add_child(tutorial)
+	hud.tutorial_skip_pressed.connect(func():
+		hud.ask("Pular o tutorial?\n(as dicas param de aparecer)", tutorial.skip))
 
 	hud.use_pressed.connect(player.use_tool)
 	hud.interact_pressed.connect(player.interact)
@@ -142,6 +151,7 @@ func _on_villager(id: String) -> void:
 
 
 func _on_shop() -> void:
+	Game.bump("shop")
 	var delivered := FishQuests.try_deliver()
 	if delivered != "":
 		var tt := FishDB.check_titles()
@@ -178,6 +188,7 @@ func _sell_all() -> void:
 		return
 	Game.inventory_changed.emit()
 	Game.add_money(total)
+	Game.bump("sold", count)
 	Game.toast.emit("Vendeu %d itens por %d moedas!" % [count, total])
 
 
