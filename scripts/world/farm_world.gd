@@ -195,7 +195,7 @@ func _build_mine_entrance() -> void:
 	ent.position = Vector2(30 * TILE + TILE / 2, 2 * TILE + 30)
 	var es := Sprite2D.new()
 	es.texture = load("res://assets/sprites/mine/entrance.png")
-	es.position = Vector2(0, -32)
+	es.position = Vector2(0, -es.texture.get_height() / 2.0 + 2)
 	ent.add_child(es)
 	_add_rect_collision(ent, Vector2(30, 14), Vector2(-33, -7))
 	_add_rect_collision(ent, Vector2(30, 14), Vector2(33, -7))

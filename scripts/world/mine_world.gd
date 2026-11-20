@@ -7,10 +7,9 @@ extends FarmWorld
 signal ladder_down_used
 signal exit_used
 
-const TEX := preload("res://assets/sprites/mine/tiles.png")
-const T_FLOOR := [0, 1, 2]
-const T_WALL := 3
-const T_WALL_FACE := 4
+## temas da caverna (arte em assets/sprites/mine/floor_<tema>.png e wall_<tema>.png)
+const THEMES := ["brown", "dark", "blue", "sand", "purple", "teal", "moss", "lava"]
+const DARK := Color("140f0d")
 ## área da caverna dentro do mapa (o resto é rocha)
 const AREA := Rect2i(8, 6, 32, 22)
 
@@ -20,6 +19,24 @@ var spawn_pos := Vector2.ZERO
 var ladder_cell := Vector2i(-1, -1)
 var _ladder_found := false
 var _rng := RandomNumberGenerator.new()
+var theme := 0
+var _floor_tex: Texture2D
+var _wall_tex: Texture2D
+
+
+## Tema pela profundidade: terra, rocha escura, cristal azul, cristal roxo, turquesa, lava.
+static func theme_for(lvl: int) -> int:
+	if lvl < 5:
+		return 0
+	if lvl < 10:
+		return 1
+	if lvl < 15:
+		return 2
+	if lvl < 20:
+		return 4
+	if lvl < 25:
+		return 5
+	return 7
 
 
 func region_id() -> String:
@@ -46,6 +63,9 @@ func can_place(_kind: String, _target: Vector2i) -> bool:
 func generate(saved: Dictionary) -> void:
 	level = int(saved.get("level", 1))
 	_rng.seed = hash([level, Game.day, Game.minutes / 60])
+	theme = theme_for(level)
+	_floor_tex = load("res://assets/sprites/mine/floor_%s.png" % THEMES[theme])
+	_wall_tex = load("res://assets/sprites/mine/wall_%s.png" % THEMES[theme])
 	ground.resize(W * H)
 	variant.resize(W * H)
 	var start := Vector2i(-1, -1)
@@ -171,10 +191,12 @@ func _floor_cells() -> Array:
 ## Pedras e minérios: a mistura muda com a profundidade.
 func _rock_table() -> Array:
 	if level < 5:
-		return [["mine_rock", 70], ["ore_copper", 26], ["gem_rock", 4]]
+		return [["mine_rock", 70], ["ore_copper", 26], ["gem_amethyst", 4]]
 	if level < 10:
-		return [["mine_rock", 55], ["ore_copper", 20], ["ore_iron", 19], ["gem_rock", 6]]
-	return [["mine_rock", 45], ["ore_copper", 8], ["ore_iron", 24], ["ore_crystal", 14], ["gem_rock", 9]]
+		return [["mine_rock", 55], ["ore_copper", 20], ["ore_iron", 19], ["gem_amethyst", 3], ["gem_ruby", 3]]
+	var moon := 2 if level < 15 else 4
+	return [["mine_rock", 43], ["ore_copper", 8], ["ore_iron", 22], ["ore_crystal", 12], ["crystal_big", 4],
+		["gem_ruby", 3], ["gem_emerald", 4], ["gem_moon", moon]]
 
 
 func _spawn_rocks(start: Vector2i) -> void:
@@ -193,7 +215,7 @@ func _spawn_rocks(start: Vector2i) -> void:
 			if pick < 0:
 				kind = t[0]
 				break
-		_spawn_prop(kind, c, -1, _rng.randi())
+		_spawn_prop(kind, c, -1, theme if kind == "mine_rock" else _rng.randi())
 		rock_cells.append(c)
 	# a escada para o próximo andar fica escondida debaixo de uma rocha, longe do começo
 	var far := rock_cells.filter(func(c): return c.distance_to(start) > 8)
@@ -207,12 +229,17 @@ func _spawn_chest(start: Vector2i) -> void:
 	if cells.is_empty():
 		return
 	var c: Vector2i = cells[_rng.randi() % cells.size()]
-	var chest := _interactable("chest", c, "Abrir baú")
+	var look: String = "chest_brown" if level < 5 else ("chest_blue" if level < 10 else ("chest_gold" if level < 20 else "chest_purple"))
+	var chest := _interactable(look, c, "Abrir baú")
 	blocked[c] = true
 	chest.interacted.connect(func(_w):
+		if chest.get_meta("opened", false):
+			return
+		chest.set_meta("opened", true)
 		Game.toast.emit(_open_chest())
-		blocked.erase(c)
-		chest.queue_free())
+		var s: Sprite2D = chest.get_child(0)
+		s.texture = load("res://assets/sprites/mine/%s_open.png" % look)     # fica aberto
+		chest.remove_from_group("interactable"))
 
 
 func _open_chest() -> String:
@@ -276,7 +303,7 @@ func _destroy_prop(prop: Prop) -> void:
 	var c := prop.cell
 	var d: Array = prop.drops()
 	if prop.kind == "gem_rock":
-		d = [_gem_for_depth(), 1]
+		d = [_gem_for_depth(), 1]      # (saves antigos)
 	elif prop.kind == "mine_rock" and _rng.randf() < 0.06:
 		d = ["copper_ore", 1] if level < 5 else ["iron_ore", 1]      # às vezes vem um minério escondido
 	if d.size() == 2 and Game.add_item(d[0], d[1]) == 0:
@@ -315,17 +342,24 @@ func ladder_visible() -> bool:
 
 # ------------------------------------------------------------------ desenho
 func _draw_ground() -> void:
+	# 1) chão e água; o miolo da rocha é escuro
 	for y in H:
 		for x in W:
 			var c := Vector2i(x, y)
 			var dest := Rect2(x * TILE, y * TILE, TILE, TILE)
 			if walls.has(c):
-				var below := Vector2i(x, y + 1)
-				var t := T_WALL_FACE if is_inside(below) and not walls.has(below) else T_WALL
-				_ground_layer.draw_texture_rect_region(TEX, dest, Rect2(t * TILE, 0, TILE, TILE))
+				_ground_layer.draw_rect(dest, DARK)
 			elif ground[y * W + x] == Ground.WATER:
 				var up := y > 0 and ground[(y - 1) * W + x] != Ground.WATER
 				_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_WATER_BANK if up else T_WATER),
 					Color(0.6, 0.75, 0.95))
 			else:
-				_ground_layer.draw_texture_rect_region(TEX, dest, Rect2(T_FLOOR[variant[y * W + x]] * TILE, 0, TILE, TILE))
+				_ground_layer.draw_texture(_floor_tex, dest.position)
+	# 2) paredes da borda: blocos de pedra do tema, um pouco maiores que o quadrado
+	var ws := _wall_tex.get_size()
+	for y in H:
+		for x in W:
+			var c := Vector2i(x, y)
+			if walls.has(c) and _touches_floor(c):
+				var pos := Vector2(x * TILE + TILE / 2.0 - ws.x / 2.0, (y + 1) * TILE - ws.y + 2)
+				_ground_layer.draw_texture(_wall_tex, pos)

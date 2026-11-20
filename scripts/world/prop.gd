@@ -39,7 +39,8 @@ const DEFS := {
 	"crate": {"tex": ["crate"], "tool": "", "hp": 0, "drop": [], "shape": Vector2(24, 10), "pad": 3},
 	"fence": {"tex": ["fence"], "tool": "", "hp": 0, "drop": [], "shape": Vector2(40, 8), "pad": 4},
 	# mina (assets/sprites/mine): o que cai pode mudar com a profundidade (MineWorld)
-	"mine_rock": {"tex": ["res://assets/sprites/mine/rock_a.png", "res://assets/sprites/mine/rock_b.png"], "tool": "pickaxe",
+	# pedra comum: uma variante por tema de caverna (MineWorld.THEMES, na mesma ordem)
+	"mine_rock": {"tex": ["res://assets/sprites/mine/rock_brown.png", "res://assets/sprites/mine/rock_dark.png", "res://assets/sprites/mine/rock_blue.png", "res://assets/sprites/mine/rock_sand.png", "res://assets/sprites/mine/rock_purple.png", "res://assets/sprites/mine/rock_teal.png", "res://assets/sprites/mine/rock_moss.png", "res://assets/sprites/mine/rock_lava.png"], "tool": "pickaxe",
 		"hp": 2, "drop": ["stone", 2], "shape": Vector2(26, 10), "pad": 3},
 	"ore_copper": {"tex": ["res://assets/sprites/mine/ore_copper.png"], "tool": "pickaxe", "hp": 3,
 		"drop": ["copper_ore", 2], "shape": Vector2(26, 10), "pad": 3},
@@ -49,6 +50,17 @@ const DEFS := {
 		"drop": ["crystal", 1], "shape": Vector2(26, 10), "pad": 3},
 	"gem_rock": {"tex": ["res://assets/sprites/mine/gem_rock.png"], "tool": "pickaxe", "hp": 4,
 		"drop": ["amethyst", 1], "shape": Vector2(26, 10), "pad": 3},
+	"gem_amethyst": {"tex": ["res://assets/sprites/mine/gem_amethyst.png"], "tool": "pickaxe", "hp": 4,
+		"drop": ["amethyst", 1], "shape": Vector2(26, 10), "pad": 3},
+	"gem_ruby": {"tex": ["res://assets/sprites/mine/gem_ruby.png"], "tool": "pickaxe", "hp": 4,
+		"drop": ["ruby", 1], "shape": Vector2(26, 10), "pad": 3},
+	"gem_emerald": {"tex": ["res://assets/sprites/mine/gem_emerald.png"], "tool": "pickaxe", "hp": 5,
+		"drop": ["emerald", 1], "shape": Vector2(26, 10), "pad": 3},
+	"gem_moon": {"tex": ["res://assets/sprites/mine/gem_moon.png"], "tool": "pickaxe", "hp": 6,
+		"drop": ["moonstone", 1], "shape": Vector2(26, 10), "pad": 3},
+	"crystal_big": {"tex": ["res://assets/sprites/mine/crystal_purple.png", "res://assets/sprites/mine/crystal_green.png",
+		"res://assets/sprites/mine/crystal_white.png"], "tool": "pickaxe", "hp": 6,
+		"drop": ["crystal", 2], "shape": Vector2(22, 10), "pad": 3},
 }
 
 static var _tex_cache := {}

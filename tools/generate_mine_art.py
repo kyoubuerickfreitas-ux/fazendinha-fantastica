@@ -7,8 +7,9 @@ Arte PROVISÓRIA da Mina (assets/sprites/mine/):
   items/<id>.png       ícones 32x32: minérios, barras, cristal e gemas
   ../craft/furnace.png + icon_furnace.png                   a Fornalha
 
-Para trocar pela arte definitiva, substitua o PNG mantendo o nome.
-Uso: python3 tools/generate_mine_art.py
+A arte definitiva vem de tools/import_mine_art.py (assets/source/mine_art.webp), que sobrescreve
+estes arquivos: se rodar este gerador, rode o importador depois.
+Uso: python3 tools/generate_mine_art.py && python3 tools/import_mine_art.py
 """
 import os
 import random

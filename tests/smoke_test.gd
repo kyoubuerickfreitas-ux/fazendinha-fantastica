@@ -960,7 +960,8 @@ func _run() -> void:
 	game.minutes = 10 * 60
 	await _wait(0.2)
 	print("moradores: ", w.villagers.map(func(n): return "%s em %s" % [n.npc_name, Vector2i(n.position / 32)]))
-	assert(w.villagers.size() == 3 and w.villagers.all(func(n): return n.visible))
+	assert(w.villagers.size() == 4 and w.villagers.all(func(n): return n.visible))
+	assert(Villagers.reaction("estrelo", "moonstone") == "love" and Villagers.reaction("estrelo", "ruby") == "like")
 	var reach: Dictionary = w.walkable_from(Vector2i(w.player_start / 32))
 	for n in w.villagers:
 		assert(reach.has(w.nearest_passable(n.data.home)), "%s deveria ser alcançável a pé" % n.npc_name)
@@ -1147,7 +1148,7 @@ func _run() -> void:
 	await _wait(0.3)
 	await _shot("36_mina_lago")
 	for c in mn.props.keys():
-		if mn.props[c].kind == "gem_rock":
+		if mn.props[c].kind in ["gem_ruby", "gem_emerald", "gem_moon"]:
 			var gems0 := 0
 			for g in ["ruby", "emerald", "moonstone"]:
 				gems0 += game.count_item(g)

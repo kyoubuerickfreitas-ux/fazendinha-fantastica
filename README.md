@@ -47,7 +47,8 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - **Cozinha** (Fogão, fabricado na bancada): 20 receitas em `data/recipes/*.tres` com ingredientes da horta, dos animais e da pesca (aceita grupos como "qualquer peixe" ou "qualquer fruta")
   - Segure o prato e toque em usar para comer: recupera energia e vida; alguns dão bônus até dormir (Passo Leve, Fôlego, Sorte na Pesca, Amigo dos Bichos, Banquete)
   - 4 receitas no começo; as outras se compram com o Fungo (algumas só em certas estações) ou se ganham com conquistas (nível de pesca, pedidos, pratos feitos, pescar um lendário)
-- **Moradores** (`data/npcs/*.tres`): Dona Carpa (pescadora, no lago), Pipoca (criança, perto da barraca) e Vó Raiz (herbalista, no laguinho). Andam pela vila de dia e vão para casa à noite
+- **Moradores** (`data/npcs/*.tres`): Dona Carpa (pescadora, no lago), Pipoca (criança, perto da barraca), Vó Raiz (herbalista, no laguinho) e Mestre Estrelo (mago das estrelas, perto da mina). Andam pela vila de dia e vão para casa à noite
+  - Arte: `tools/import_npcs.py` recorta `assets/source/npcs_mushroom.webp`; a Dona Carpa ainda é a recoloração provisória do Fungo
   - Toque para conversar (amizade 1x por dia); segure um item e toque para dar de presente (1 por dia). Cada um adora, gosta ou não gosta de coisas diferentes
   - 10 corações de amizade; a cada 2 corações o morador te dá um presente. No aniversário os presentes valem o triplo
   - O calendário mostra os moradores, os corações, os aniversários e os presentes que você já descobriu
@@ -55,6 +56,7 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - A escada para o andar de baixo fica escondida debaixo de uma das rochas; às vezes aparece um baú
   - Andares 1–4: cobre · 5–9: cobre e ferro · 10+: ferro e cristal. Rochas de gemas dão Ametista, Rubi, Esmeralda e Pedra-Lua (fundo)
   - A cada 3 andares tem um laguinho subterrâneo com 3 peixes de caverna; o elevador para a cada 5 andares
+  - Cada faixa de profundidade tem seu visual (terra, rocha escura, cristal azul, cristal roxo, turquesa, lava). Arte: `tools/import_mine_art.py` recorta `assets/source/mine_art.webp`
   - **Fornalha** (bancada): 5 minérios viram 1 barra (até 5 barras por vez, prontas no dia seguinte). As barras melhoram regador, enxada, vara e picareta, e fazem os aspersores melhores
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia

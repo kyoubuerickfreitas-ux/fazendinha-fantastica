@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "estrelo"
+name = "Mestre Estrelo"
+role = "Mago das estrelas"
+description = "Estuda as estrelas e as pedras que brilham no fundo da mina. Fala por enigmas."
+sheet = "res://assets/sprites/npc_estrelo.png"
+home = Vector2i(36, 7)
+wander = 3
+scale = 1.0
+birthday_season = "winter"
+birthday_day = 18
+loves = PackedStringArray("moonstone", "crystal", "dish_starflower_tea", "fish_cave_crystal")
+likes = PackedStringArray("any_gem", "pearl", "old_coin", "relic_compass", "starflower")
+dislikes = PackedStringArray("old_boot", "driftwood", "hay")
+lines = {"0": ["As estrelas disseram que você viria. Disseram também que você ia pisar no meu pé. Cuidado.", "A mina ali atrás? Ela canta à noite. Poucos escutam."], "3": ["Cada andar da mina é um céu de cabeça para baixo. Os cristais são as estrelas.", "Dizem que a Pedra-Lua só aparece para quem desce bem fundo. Eu digo: desça."], "6": ["Você trouxe brilho para este vale. E não falo só das gemas.", "Um laguinho dentro da pedra... peixes que nunca viram o céu. Que coisa linda, não?"], "9": ["Vou te contar um segredo das estrelas: elas também ficam cansadas. Por isso piscam.", "Se um dia o céu cair, sei que você vai plantar algo nele."], "rain": ["Nuvens! As estrelas tiraram o dia de folga. Eu também."], "birthday": ["Você lembrou?! Nem as estrelas lembram do meu aniversário!"]}
+rewards = {"2": {"item": "crystal", "qty": 2, "line": "Cristais da minha coleção. Eles gostam de gente curiosa."}, "4": {"item": "moonstone", "qty": 1, "line": "Uma Pedra-Lua. Guarde perto da cama e sonhe bonito."}, "6": {"item": "iron_bar", "qty": 3, "line": "Barras de ferro que eu não uso. Melhore as suas ferramentas!"}, "8": {"item": "sprinkler_c", "qty": 1, "line": "Um aspersor de cristal. Rega como chuva de estrelas."}}
