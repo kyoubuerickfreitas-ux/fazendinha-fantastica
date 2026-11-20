@@ -204,6 +204,7 @@ static func cook(id: String) -> String:
 			_take_group(key, int(r.ingredients[key]))
 	Game.add_item(r.dish_id(), 1)
 	Game.dishes_cooked += 1
+	Sound.play("cook")
 	var t := "Cozinhou %s!" % r.name
 	var u := check_unlocks()
 	return t + ("\n" + u if u != "" else "")
@@ -242,6 +243,7 @@ static func eat(dish_id: String) -> String:
 		return ""
 	Game.energy = minf(Game.max_energy, Game.energy + r.energy)
 	Game.bump("eaten")
+	Sound.play("eat")
 	Game.health = minf(Game.max_health, Game.health + r.health)
 	var t := "Comeu %s. +%d energia" % [r.name, r.energy]
 	if r.health > 0:

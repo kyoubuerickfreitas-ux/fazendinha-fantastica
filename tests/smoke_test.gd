@@ -1208,7 +1208,33 @@ func _run() -> void:
 	await _wait(0.3)
 	assert(main.hud._options.visible)
 	await _shot("34_opcoes")
+	# ---- som: volume nas Opções, música e ambiente por lugar/hora/clima, efeitos existem
+	var snd = root.get_node("Sound")
+	var slider: HSlider = main.hud._options.find_child("VolumeMúsica", true, false)
+	assert(slider != null, "Opções deveriam ter o volume da música")
+	var mv0: float = snd.music_volume
+	slider.value = 0.4
+	assert(is_equal_approx(snd.music_volume, 0.4), "o controle muda o volume da música")
+	assert(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music"))), 0.4))
+	slider.value = mv0
 	main.hud.close_panel()
+	snd.update_scene(false, false, "sunny")
+	assert(snd.current_music == "farm_day" and snd.current_ambience == "amb_birds")
+	snd.update_scene(false, true, "sunny")
+	assert(snd.current_music == "farm_night" and snd.current_ambience == "amb_night")
+	snd.update_scene(false, false, "storm")
+	assert(snd.current_music == "farm_rain" and snd.current_ambience == "amb_rain")
+	snd.update_scene(true, false, "rain")
+	assert(snd.current_music == "mine" and snd.current_ambience == "amb_cave")
+	for t in ["farm_day", "farm_night", "farm_rain", "mine", "amb_birds", "amb_night", "amb_rain", "amb_cave"]:
+		var st = load("res://assets/music/%s.ogg" % t)
+		assert(st is AudioStreamOggVorbis and st.get_length() > 20.0, "faixa %s" % t)
+	for sfx in ["ui_click", "till", "water", "fill", "chop", "pick", "harvest", "cast", "bite", "reel", "catch", "escape",
+			"treasure", "coin", "buy", "cook", "eat", "door", "sleep", "levelup", "success", "chest", "ladder", "talk",
+			"gift", "gem", "build", "step_grass", "step_path", "step_stone", "deny", "ui_open", "ui_close", "weed"]:
+		assert(load("res://assets/sounds/%s.wav" % sfx) is AudioStreamWAV, "efeito %s" % sfx)
+		snd.play(sfx)
+	main._update_daylight()
 	main.hud.tutorial_restart_requested.emit()
 	assert(main.tutorial.active() and int(game.tutorial["step"]) == 0 and main.hud._tut_panel.visible)
 	game.tutorial["done"] = true

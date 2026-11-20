@@ -144,6 +144,7 @@ func _complete(s: Dictionary) -> void:
 		Game.add_money(FINAL_REWARD)
 		text = "Tutorial concluído! +%d moedas. Agora a fazenda é toda sua." % FINAL_REWARD
 	_refresh_panel()
+	Sound.play("success")
 	Game.toast.emit(text)
 
 

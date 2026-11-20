@@ -236,6 +236,7 @@ func _spawn_chest(start: Vector2i) -> void:
 		if chest.get_meta("opened", false):
 			return
 		chest.set_meta("opened", true)
+		Sound.play("chest")
 		Game.toast.emit(_open_chest())
 		var s: Sprite2D = chest.get_child(0)
 		s.texture = load("res://assets/sprites/mine/%s_open.png" % look)     # fica aberto
@@ -308,6 +309,8 @@ func _destroy_prop(prop: Prop) -> void:
 		d = ["copper_ore", 1] if level < 5 else ["iron_ore", 1]      # às vezes vem um minério escondido
 	if d.size() == 2 and Game.add_item(d[0], d[1]) == 0:
 		_popup("+%d %s" % [d[1], ItemDB.item_name(d[0])], prop.position + Vector2(0, -20))
+		if ItemDB.get_item(d[0]).get("type", "") == "gem" or d[0] == "crystal":
+			Sound.play("gem", -3.0)
 	props.erase(c)
 	FX.spawn(self, "break_stone", prop.position + Vector2(0, -10))
 	var tw := prop.create_tween()
@@ -332,6 +335,7 @@ func _reveal_ladder() -> void:
 	var lad := _interactable("ladder_down", ladder_cell, "Descer (andar %d)" % (level + 1))
 	blocked[ladder_cell] = true
 	lad.interacted.connect(func(_w): ladder_down_used.emit())
+	Sound.play("success", -4.0)
 	Game.toast.emit("Achou a escada para o andar %d!" % (level + 1))
 
 

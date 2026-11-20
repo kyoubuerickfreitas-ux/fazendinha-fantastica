@@ -91,7 +91,10 @@ func _physics_process(delta: float) -> void:
 			_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
 		else:
 			_dir = Dir.DOWN if v.y > 0 else Dir.UP
+		var before := int(_anim_t)
 		_anim_t += delta * (8.0 + 6.0 * v.length())
+		if int(_anim_t) != before and int(_anim_t) % 4 == 0:
+			_footstep()
 		_sprite.frame = _dir * COLS + 1 + int(_anim_t) % WALK_FRAMES
 	else:
 		_anim_t = 0.0
@@ -101,6 +104,20 @@ func _physics_process(delta: float) -> void:
 		var id := Game.selected_item_id()
 		var c := target_cell()
 		world.set_cursor(c, Game.ui_lock == 0, world.would_act(id, c) or world.can_interact_cell(c))
+
+
+## Som de passo conforme o chão (grama, terra/caminho ou pedra da mina).
+func _footstep() -> void:
+	if world == null:
+		return
+	var s := "step_grass"
+	if world is MineWorld:
+		s = "step_stone"
+	else:
+		var c := world.cell_of(feet())
+		if world.ground_at(c) == FarmWorld.Ground.PATH or world.soil.has(c):
+			s = "step_path"
+	Sound.play(s, -9.0, 1.0, 0.12)
 
 
 ## Direção (4 lados) para a qual o personagem está virado.

@@ -1109,6 +1109,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 		"watering_can":
 			if ground_at(c) == Ground.WATER:
 				Game.water = Game.water_capacity()
+				Sound.play("fill")
 				Game.inventory_changed.emit()
 				return "Regador cheio!"
 			if Game.water <= 0:
@@ -1133,6 +1134,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 				if not Game.use_energy(ENERGY_COST[item_id]):
 					return ""
 				FX.spawn(self, "hit", prop.position + Vector2(0, -12))
+				Sound.play("pick" if item_id == "pickaxe" else ("weed" if item_id == "scythe" else "chop"), -2.0)
 				if prop.hit(Game.tool_level(item_id)):     # picareta melhorada bate mais forte
 					_destroy_prop(prop)
 				return ""
@@ -1176,6 +1178,7 @@ func _build(kind: String, target: Vector2i) -> String:
 		return "Não dá para construir aqui."
 	Game.remove_from_slot(Game.selected_slot, 1)
 	FX.spawn(self, "hit", p.position + Vector2(0, -8))
+	Sound.play("build")
 	assign_homes()
 	return "%s construído!" % ItemDB.item_name(kind) if kind in ["barn", "coop"] else ""
 

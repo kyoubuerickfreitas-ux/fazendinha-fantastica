@@ -71,7 +71,9 @@ func _ready() -> void:
 
 	hud.use_pressed.connect(player.use_tool)
 	hud.interact_pressed.connect(player.interact)
-	world.house_door_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
+	world.house_door_used.connect(func():
+		Sound.play("door")
+		hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 	world.shop_requested.connect(_on_shop)
 	world.stove_used.connect(func(): hud.open_cooking())
 	world.villager_used.connect(_on_villager)
@@ -166,6 +168,7 @@ func _on_villager(id: String) -> void:
 
 
 func _on_shop() -> void:
+	Villagers.voice("fungo")
 	Game.bump("shop")
 	var delivered := FishQuests.try_deliver()
 	if delivered != "":
@@ -209,6 +212,7 @@ func _sell_all() -> void:
 
 func _sleep(rested: bool) -> void:
 	player.fishing.cancel()
+	Sound.play("sleep" if rested else "escape")
 	var tour_result := FishQuests.finish_tournament()   # dormiu antes das 16h no dia do torneio
 	hud.fade_through(func():
 		Game.start_new_day(rested)
@@ -239,6 +243,7 @@ func _on_mine_entrance() -> void:
 
 ## Vai para um andar da mina (da fazenda ou de outro andar).
 func enter_mine(level: int) -> void:
+	Sound.play("ladder")
 	var old := mine
 	mine = MineWorld.new()
 	mine.name = "Mine"
@@ -266,6 +271,8 @@ func enter_mine(level: int) -> void:
 func exit_mine(silent: bool = false) -> void:
 	if mine == null:
 		return
+	if not silent:
+		Sound.play("ladder")
 	world.visible = true
 	world.process_mode = Node.PROCESS_MODE_INHERIT
 	tutorial.visible = true
@@ -327,6 +334,7 @@ func _update_daylight() -> void:
 	c = c * Game.weather_data().light
 	if mine:
 		c = Color(0.66, 0.6, 0.72)       # caverna: sempre na penumbra
+	Sound.update_scene(mine != null, Game.is_night(), Game.weather)
 	var tw := create_tween()
 	tw.tween_property(daylight, "color", c, 1.0)
 

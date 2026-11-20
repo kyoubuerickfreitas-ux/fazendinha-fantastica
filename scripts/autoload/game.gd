@@ -217,6 +217,8 @@ func counter(key: String) -> int:
 func add_money(amount: int) -> void:
 	money = max(0, money + amount)
 	money_changed.emit(money)
+	if amount != 0:
+		Sound.play("coin" if amount > 0 else "buy", -3.0, 1.0, 0.0)
 
 
 func use_energy(amount: float) -> bool:

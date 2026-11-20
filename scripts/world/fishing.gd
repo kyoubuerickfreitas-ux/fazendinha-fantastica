@@ -68,6 +68,7 @@ func on_use(cell: Vector2i) -> String:
 		State.REELING:
 			_progress += TAP + 1.5 * (rod_level() - 1)     # vara melhor puxa mais por toque
 			_bar.value = _progress
+			Sound.play("reel", -4.0, 0.8 + _progress / 160.0, 0.0)
 			if _progress >= 100.0:
 				_catch()
 	return ""
@@ -76,9 +77,12 @@ func on_use(cell: Vector2i) -> String:
 func cancel(msg: String = "") -> void:
 	if state == State.IDLE:
 		return
+	var was := state
 	state = State.IDLE
 	_panel.visible = false
 	queue_redraw()
+	if was in [State.BITE, State.REELING]:
+		Sound.play("escape", -3.0)
 	if msg != "":
 		Game.toast.emit(msg)
 
@@ -98,12 +102,14 @@ func _cast(cell: Vector2i) -> String:
 		wait *= 0.8
 	_timer = wait
 	state = State.WAITING
+	Sound.play("cast")
 	FX.spawn(world, "water", _bobber_pos)
 	queue_redraw()
 	return "Linha lançada%s." % ("" if _bait == "" else " com " + ItemDB.item_name(_bait))
 
 
 func _hook() -> void:
+	Sound.play("reel", -2.0, 0.8, 0.0)
 	state = State.REELING
 	_progress = 35.0
 	_timer = REEL_TIME
@@ -126,6 +132,7 @@ func _catch() -> void:
 	var reg := FishDB.register_catch(_fish, m)
 	last_catch = {"id": _fish, "size": m["size"], "weight": m["weight"], "q": m["q"], "new": reg["new"], "record": reg["record"]}
 	FX.spawn(world, "harvest", _bobber_pos)
+	Sound.play("levelup" if reg["level_up"] > 0 or f.is_legendary() else "catch")
 	var text := "Pescou %s! %.1f cm · %s" % [f.name, m["size"], f.rarity_name()]
 	if reg["new"]:
 		text = "NOVA ESPÉCIE! " + text + " (registrada no Livro de Pesca)"
@@ -165,6 +172,7 @@ func _catch_treasure() -> void:
 	if tt != "":
 		text += "\n" + tt
 	FX.spawn(world, "harvest", _bobber_pos)
+	Sound.play("treasure")
 	Game.toast.emit(text)
 	treasure_found.emit(id)
 
@@ -192,6 +200,7 @@ func _process(delta: float) -> void:
 				_treasure = TreasureDB.maybe_roll(ctx)
 				_fish = "" if _treasure != "" else FishDB.roll(ctx)
 				state = State.BITE
+				Sound.play("bite")
 				var lvl := FishDB.level()
 				var win: float = 1.1 if _treasure != "" else BITE_WINDOW[FishDB.get_fish(_fish).rarity]
 				_timer = win * (1.0 + 0.04 * (lvl - 1)) * (1.0 + 0.15 * (rod_level() - 1))

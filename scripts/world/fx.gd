@@ -12,6 +12,9 @@ const SHEETS := {
 	"sparkle": preload("res://assets/fx/fx_sparkle.png"),
 	"pop": preload("res://assets/fx/fx_pop.png"),
 }
+## Som de cada efeito (o golpe "hit" toca o som certo em quem chama: madeira ou pedra).
+const SOUNDS := {"till": "till", "water": "water", "break_wood": "break_wood", "break_stone": "break_stone",
+	"harvest": "harvest", "plant": "plant", "weed": "weed"}
 const ROWS := 9
 const FPS := 22.0
 
@@ -37,6 +40,8 @@ var _t := 0.0
 static func spawn(parent: Node, preset: String, pos: Vector2) -> void:
 	if not PRESETS.has(preset):
 		return
+	if SOUNDS.has(preset):
+		Sound.play(SOUNDS[preset], -2.0)
 	var p: Array = PRESETS[preset]
 	var fx := FX.new()
 	fx.texture = SHEETS[p[0]]

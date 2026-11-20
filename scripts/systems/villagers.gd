@@ -93,9 +93,18 @@ static func line(id: String) -> String:
 
 
 ## Conversa (ganha amizade 1x por dia) e entrega recompensas de coração. Retorna o texto.
+## Tom da "voz" de cada morador (o som de fala é o mesmo, mais grave ou mais agudo).
+const VOICE_PITCH := {"carpa": 0.82, "pipoca": 1.35, "raiz": 0.7, "estrelo": 1.05, "fungo": 0.95}
+
+
+static func voice(id: String) -> void:
+	Sound.play("talk", -3.0, float(VOICE_PITCH.get(id, 1.0)), 0.05)
+
+
 static func talk(id: String) -> String:
 	var r := rec(id)
 	var t := line(id)
+	voice(id)
 	Game.bump("talks")
 	if int(r["talk_day"]) != Game.day:
 		r["talk_day"] = Game.day
@@ -152,6 +161,7 @@ static func gift(id: String, item_id: String) -> String:
 	if not Game.remove_item(item_id, 1):
 		return ""
 	var re := reaction(id, item_id)
+	Sound.play("gift" if re in ["love", "like"] else ("deny" if re == "dislike" else "talk"), -2.0)
 	var pts: int = GIFT_PTS[re]
 	var bday := is_birthday(id)
 	if bday and pts > 0:

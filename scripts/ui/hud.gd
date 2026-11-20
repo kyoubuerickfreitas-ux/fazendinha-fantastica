@@ -1177,6 +1177,8 @@ func is_panel_open() -> bool:
 
 
 func _open(p: Control) -> void:
+	if _open_panel == null:
+		Sound.play("ui_open", -6.0)
 	if _open_panel:
 		_open_panel.visible = false
 	_open_panel = p
@@ -1186,6 +1188,7 @@ func _open(p: Control) -> void:
 
 func close_panel() -> void:
 	if _open_panel:
+		Sound.play("ui_close", -7.0)
 		_open_panel.visible = false
 	_open_panel = null
 	_bp_marked = -1
@@ -1414,6 +1417,8 @@ func _build_options() -> void:
 	_options = w[0]
 	var v: VBoxContainer = w[1]
 	v.add_theme_constant_override("separation", 8)
+	v.add_child(_volume_row("Música", Sound.music_volume, Sound.set_music_volume, ""))
+	v.add_child(_volume_row("Efeitos", Sound.sfx_volume, Sound.set_sfx_volume, "harvest"))
 	var save := Button.new()
 	save.text = "Salvar agora"
 	save.pressed.connect(func():
@@ -1437,6 +1442,33 @@ func _build_options() -> void:
 	var ver := UIStyle.label("Fazendinha Fantástica · versão de teste", 9, UIStyle.EARTH)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(ver)
+
+
+## Linha "Música  [-----o--]  80%" da janela de Opções.
+func _volume_row(title: String, value: float, setter: Callable, preview: String) -> Control:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	var l := UIStyle.label(title, 10, UIStyle.WOOD_DARK)
+	l.custom_minimum_size = Vector2(52, 0)
+	h.add_child(l)
+	var s := HSlider.new()
+	s.min_value = 0.0
+	s.max_value = 1.0
+	s.step = 0.05
+	s.value = value
+	s.custom_minimum_size = Vector2(170, 18)
+	s.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	s.name = "Volume" + title
+	h.add_child(s)
+	var pct := UIStyle.label("%d%%" % roundi(value * 100), 9, UIStyle.EARTH)
+	pct.custom_minimum_size = Vector2(30, 0)
+	h.add_child(pct)
+	s.value_changed.connect(func(x: float):
+		setter.call(x)
+		pct.text = "%d%%" % roundi(x * 100))
+	if preview != "":
+		s.drag_ended.connect(func(_c): Sound.play(preview))
+	return h
 
 
 ## Escolher o andar da mina (1 e a cada 5 andares já alcançados).

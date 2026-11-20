@@ -62,6 +62,22 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
 
+## Som e música
+
+Trilha sonora original, composta e sintetizada por código (sem samples de terceiros, sem problema de direitos):
+- **Manhã na Fazendinha** (dia), **Noite Estrelada** (valsa da noite), **Dia de Chuva** e **Lá no Fundo da Mina**.
+  A música troca sozinha, com fade, conforme o lugar, a hora e o clima
+- Ambientes em loop: passarinhos (dia), grilos e sapinhos (noite), chuva e caverna (gotas com eco)
+- Efeitos para quase tudo: enxada, regador, encher o regador, plantar, colher, machado, picareta, pedra e madeira
+  quebrando, gemas, construir, lançar a linha, fisgada, molinete, peixe pego, peixe escapando, tesouro, moedas,
+  cozinhar, comer, porta, dormir, baú, escada, voz dos moradores (cada um com seu tom), presentes, passos
+  (grama, terra e pedra), sucesso do tutorial e cliques da interface
+- **Volume da música e dos efeitos** nas Opções (fica salvo no aparelho, não é apagado pelo "Novo jogo")
+
+Código: `scripts/autoload/sound.gd` (autoload `Sound`: `play()`, `music()`, `ambience()`).
+Gerar de novo: `python3 tools/generate_music.py` (assets/music/*.ogg) e `python3 tools/generate_sfx.py`
+(assets/sounds/*.wav). Para trocar uma música por outra, basta substituir o .ogg com o mesmo nome.
+
 ## Tutorial
 
 Um jogo novo começa com um tutorial de 16 passos (andar, arar, plantar, regar, cortar árvore, visitar o Fungo,
@@ -126,6 +142,9 @@ A Play Store exige **AAB** assinado:
 scenes/main.tscn            cena inicial
 scripts/main.gd             monta mundo, câmera, HUD, dia/noite, chuva, sono, save
 scripts/autoload/game.gd    estado global: dinheiro, energia, tempo, inventário, save
+scripts/autoload/sound.gd   música, ambientes, efeitos e volume
+assets/music/               trilha sonora e ambientes (.ogg, gerados por tools/generate_music.py)
+assets/sounds/              efeitos (.wav, tools/generate_sfx.py) e vozes dos animais
 scripts/data/item_db.gd     itens, receitas e preços
 scripts/systems/            calendário, plantas, agricultura, animais, pesca (fish_db, treasure_db, fish_quests), cozinha (cooking), moradores (villagers)
 data/crops/*.tres           uma ficha por planta  ← para criar uma planta nova, copie uma ficha
