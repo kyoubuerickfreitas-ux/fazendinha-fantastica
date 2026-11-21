@@ -112,13 +112,15 @@ novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de rec
 
 ## Trator
 
-O Fungo vende o trator (2.500 moedas). Ele aparece estacionado ao lado da casa; toque nele com a mão para
-subir. Dirigindo você anda 2,3x mais rápido, sem gastar fôlego nem energia, com barulho de motor; o seu
+Por enquanto (testes) o trator e a caçamba já vêm no jogo novo, estacionados ao lado da casa
+(`Game.START_WITH_VEHICLES`). Depois eles serão vendidos numa loja da cidade (trator 2.500, caçamba 1.500;
+a compra já existe em `HUD.buy_tractor/buy_trailer`, ligada por `HUD.SELL_VEHICLES`). Toque no trator com a
+mão para subir. Dirigindo você anda 2,3x mais rápido, sem gastar fôlego nem energia, com barulho de motor; o seu
 personagem aparece sentado na cabine (de costas, só a cabeça por cima do banco). Toque na mão de novo para
 descer: o trator fica estacionado onde você parou (e fica salvo). As ferramentas não funcionam em cima dele.
 Ao entrar na mina ou dormir você desce sozinho. Arte: `tools/import_tractor.py` (`assets/source/tractor.png`).
 
-**Caçamba** (1.500 moedas no Fungo, depois do trator): vem engatada e segue atrás do trator. Parada, toque nela
+**Caçamba**: vem engatada e segue atrás do trator. Parada, toque nela
 com a mão para abrir a carga (24 espaços): toque num item para passar entre a mochila e a carga (ferramentas
 ficam na mochila). Perto da caixa de vendas dá para vender a carga toda de uma vez; quando a cidade existir,
 é lá que ela vai ser vendida. Arte: `assets/source/trailer.png` (mesmo importador).

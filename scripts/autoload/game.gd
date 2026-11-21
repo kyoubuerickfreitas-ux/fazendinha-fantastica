@@ -65,6 +65,9 @@ var run_held := false       # botão de correr (ou Shift) apertado
 var tractor := {"owned": false, "x": 0.0, "y": 0.0}
 ## Caçamba: engatada atrás do trator; items = carga (lista de espaços como a mochila).
 var trailer := {"owned": false, "items": []}
+## TESTES: trator e caçamba já vêm no jogo novo (e saves antigos ganham). Depois eles serão vendidos
+## numa loja da cidade (HUD.buy_tractor / buy_trailer já existem); aí é só pôr false.
+const START_WITH_VEHICLES := true
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -119,6 +122,9 @@ func reset_new_game() -> void:
 	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
 	tractor = {"owned": false, "x": 0.0, "y": 0.0}
 	trailer = {"owned": false, "items": []}
+	if START_WITH_VEHICLES:
+		tractor["owned"] = true
+		trailer["owned"] = true
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -448,6 +454,9 @@ func load_game() -> Dictionary:
 			if s != null and int(s["q"]) == 0:
 				s.erase("q")
 		trailer["items"] = its
+	if START_WITH_VEHICLES:
+		tractor["owned"] = true
+		trailer["owned"] = true
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:
