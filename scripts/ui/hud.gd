@@ -12,6 +12,7 @@ signal quit_confirmed
 
 const HAND_ICON := preload("res://assets/sprites/ui/hud/hand.png")   # tools/import_hud.py
 const TRACTOR_PRICE := 2500
+const TRAILER_PRICE := 1500
 const SKIN := "res://assets/sprites/ui/hud/"
 var player: Player
 var world: FarmWorld
@@ -39,6 +40,11 @@ var _open_panel: Control = null
 var _blockers: Array[Control] = []
 var _backpack: Control
 var _bp_slots: Array[ItemSlot] = []
+var _cargo: Control
+var _cargo_slots: Array[ItemSlot] = []
+var _cargo_bag: Array[ItemSlot] = []
+var _cargo_sell: Button
+var _cargo_info: Label
 var _bp_marked := -1
 var _bp_desc: Label
 var _shop: Control
@@ -100,6 +106,7 @@ func _ready() -> void:
 	_build_toast()
 	_build_backpack()
 	_build_shop()
+	_build_cargo()
 	_build_crafting()
 	_build_calendar()
 	_build_fish_book()
@@ -448,6 +455,107 @@ func _build_backpack() -> void:
 	_bp_desc.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_bp_desc.custom_minimum_size = Vector2(280, 28)
 	v.add_child(_bp_desc)
+
+
+## Caçamba: toque num item da mochila para pôr na carga, ou na carga para voltar para a mochila.
+func _build_cargo() -> void:
+	var w := _make_window("Caçamba", Vector2(560, 0))
+	_cargo = w[0]
+	var v: VBoxContainer = w[1]
+	v.add_child(UIStyle.label("Toque num item para passar entre a mochila e a carga.", 10, UIStyle.EARTH))
+	var cols := HBoxContainer.new()
+	cols.add_theme_constant_override("separation", 12)
+	v.add_child(cols)
+	for which in ["bag", "cargo"]:
+		var col := VBoxContainer.new()
+		col.add_child(UIStyle.label("Mochila" if which == "bag" else "Carga", 12, UIStyle.WOOD))
+		var grid := GridContainer.new()
+		grid.columns = 6
+		grid.add_theme_constant_override("h_separation", 2)
+		grid.add_theme_constant_override("v_separation", 2)
+		col.add_child(grid)
+		cols.add_child(col)
+		var n: int = Game.INV_SIZE if which == "bag" else Trailer.CARGO_SIZE
+		for i in n:
+			var s := ItemSlot.new(i, 40)
+			s.custom_minimum_size = Vector2(40, 40)
+			s.works_in_panel = true
+			s.cargo = which == "cargo"
+			s.tapped.connect(_on_cargo_slot.bind(which == "cargo"))
+			grid.add_child(s)
+			(_cargo_slots if which == "cargo" else _cargo_bag).append(s)
+	var bar := HBoxContainer.new()
+	_cargo_info = UIStyle.label("", 10, UIStyle.WOOD_DARK)
+	_cargo_info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	bar.add_child(_cargo_info)
+	_cargo_sell = Button.new()
+	_cargo_sell.text = "Vender a carga"
+	_cargo_sell.name = "SellCargo"
+	_cargo_sell.pressed.connect(sell_cargo)
+	bar.add_child(_cargo_sell)
+	v.add_child(bar)
+
+
+func open_cargo() -> void:
+	_open(_cargo)
+	_refresh_cargo()
+
+
+func _on_cargo_slot(i: int, from_cargo: bool) -> void:
+	var cargo := Trailer.items()
+	if from_cargo:
+		if not Trailer.move_stack(cargo, Game.inventory, i):
+			show_toast("A mochila está cheia.")
+	else:
+		var id = Game.inventory[i]["id"] if Game.inventory[i] != null else ""
+		if id != "" and ItemDB.get_item(id).get("type", "") == "tool":
+			show_toast("As ferramentas ficam na mochila.")
+			return
+		if not Trailer.move_stack(Game.inventory, cargo, i):
+			show_toast("A caçamba está cheia.")
+	_refresh_cargo()
+
+
+## A carga só pode ser vendida com a caçamba perto da caixa de vendas (a cidade vem depois).
+func _cargo_value() -> Array:
+	var total := 0
+	var count := 0
+	for s in Trailer.items():
+		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product", "fish"]:
+			total += ItemDB.sell_price(s["id"], int(s.get("q", 0))) * int(s["qty"])
+			count += int(s["qty"])
+	return [total, count]
+
+
+func _cargo_near_bin() -> bool:
+	return world != null and world.trailer != null and world.sell_bin != null \
+		and world.trailer.global_position.distance_to(world.sell_bin.global_position) < 140.0
+
+
+func sell_cargo() -> void:
+	var v := _cargo_value()
+	if v[1] == 0 or not _cargo_near_bin():
+		return
+	var items := Trailer.items()
+	for i in items.size():
+		var s = items[i]
+		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product", "fish"]:
+			items[i] = null
+	Game.add_money(v[0])
+	Game.bump("sold", v[1])
+	show_toast("Vendeu a carga: %d itens por %d moedas!" % [v[1], v[0]])
+	_refresh_cargo()
+
+
+func _refresh_cargo() -> void:
+	for s in _cargo_slots + _cargo_bag:
+		s.queue_redraw()
+	var used := Trailer.items().filter(func(s): return s != null).size()
+	var v := _cargo_value()
+	var near := _cargo_near_bin()
+	_cargo_sell.disabled = not near or v[1] == 0
+	_cargo_info.text = "%d/%d espaços · vale %d moedas%s" % [used, Trailer.CARGO_SIZE, v[0],
+		"" if near else " (leve até a caixa de vendas para vender)"]
 
 
 func _build_shop() -> void:
@@ -1350,6 +1458,20 @@ func _refresh_shop() -> void:
 		trow.add_child(tb)
 		_shop_buy.add_child(trow)
 		_shop_buy.move_child(trow, 0)
+	if Game.tractor.get("owned", false) and not Game.trailer.get("owned", false):
+		var crow := _shop_row("", "Caçamba\nEngata no trator e leva %d espaços de carga · %d moedas" % [Trailer.CARGO_SIZE, TRAILER_PRICE])
+		var cic: TextureRect = crow.get_child(0)
+		cic.texture = preload("res://assets/sprites/tractor/trailer_left.png")
+		cic.custom_minimum_size = Vector2(36, 26)
+		cic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		var cb := Button.new()
+		cb.text = "Comprar"
+		cb.name = "BuyTrailer"
+		cb.disabled = Game.money < TRAILER_PRICE
+		cb.pressed.connect(buy_trailer)
+		crow.add_child(cb)
+		_shop_buy.add_child(crow)
+		_shop_buy.move_child(crow, 0)
 	var buy_list: Array = CropDB.seeds_for(Calendar.season_id(Game.day))
 	for id in ItemDB.SHOP_ITEMS:
 		if ItemDB.get_item(id).get("type", "") != "seed":
@@ -1580,6 +1702,22 @@ func buy_tractor() -> void:
 	Sound.play("honk")
 	close_panel()
 	show_toast("O trator está estacionado ao lado da casa! Toque nele com a mão para subir.")
+
+
+## Compra a caçamba: já vem engatada no trator.
+func buy_trailer() -> void:
+	if Game.trailer.get("owned", false) or not Game.tractor.get("owned", false) or Game.money < TRAILER_PRICE:
+		return
+	var t: Tractor = world.tractor if world.tractor else (player.tractor if player.riding else null)
+	if t == null:
+		return
+	Game.add_money(-TRAILER_PRICE)
+	Game.trailer["owned"] = true
+	Trailer.items()
+	world.spawn_trailer(t)
+	Sound.play("honk")
+	close_panel()
+	show_toast("A caçamba foi engatada no trator! Toque nela com a mão para guardar itens.")
 
 
 ## Linha "Música  [-----o--]  80%" da janela de Opções.

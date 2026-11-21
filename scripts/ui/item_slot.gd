@@ -13,6 +13,8 @@ var works_in_panel := false
 var show_number := false
 ## A arte da barra rápida já desenha o espaço: aqui só o conteúdo e o destaque do selecionado.
 var skin := false
+## Mostra a carga da caçamba (Game.trailer["items"]) em vez da mochila.
+var cargo := false
 
 var _touch := -1
 
@@ -75,7 +77,8 @@ func _draw() -> void:
 		draw_rect(r.grow(-1), Color("f2d16b"), false, 2.0)
 
 	var font := get_theme_default_font()
-	var s = Game.inventory[index] if index < Game.inventory.size() else null
+	var src: Array = Trailer.items() if cargo else Game.inventory
+	var s = src[index] if index < src.size() else null
 	if s != null:
 		var tex := ItemDB.icon(s["id"])
 		var icon_size := Vector2(32, 32) if size.x >= 40 else Vector2(24, 24)

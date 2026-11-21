@@ -295,7 +295,22 @@ func spawn_tractor(pos: Vector2) -> Tractor:
 	tractor = t
 	Game.tractor["x"] = pos.x
 	Game.tractor["y"] = pos.y
+	if Game.trailer.get("owned", false):
+		spawn_trailer(t)
 	return t
+
+
+## Engata a caçamba no trator (comprada agora ou vinda do save).
+func spawn_trailer(t: Tractor) -> Trailer:
+	if trailer:
+		return trailer
+	var c := Trailer.new()
+	c.name = "Trailer"
+	c.open_requested.connect(func(): trailer_open_requested.emit())
+	entities.add_child(c)
+	trailer = c
+	t.attach_trailer(c)
+	return c
 
 	# água bloqueia passagem
 	var water_body := StaticBody2D.new()
@@ -480,6 +495,8 @@ var villagers: Array[NPC] = []
 ## referências para o tutorial apontar
 var house_door: Interactable
 var tractor: Tractor            # estacionado (null se não comprou ou se está dirigindo)
+var trailer: Trailer
+signal trailer_open_requested
 const TRACTOR_PARK := Vector2(112, 300)    # onde o trator novo aparece (ao lado da casa)
 var sell_bin: Interactable
 var fungo: NPC

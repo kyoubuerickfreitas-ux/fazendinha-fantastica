@@ -1287,9 +1287,49 @@ func _run() -> void:
 	await _wait(0.2)
 	assert(not p.riding and w.tractor != null, "desceu: o trator fica estacionado")
 	assert(is_equal_approx(float(game.tractor["x"]), w.tractor.position.x))
+	# caçamba: comprar, seguir o trator, guardar itens, vender perto da caixa
+	main.hud.open_shop()
+	await _wait(0.2)
+	assert(main.hud._shop_buy.find_child("BuyTrailer", true, false) != null, "com o trator, o Fungo vende a caçamba")
+	main.hud.buy_trailer()
+	await _wait(0.2)
+	assert(game.trailer["owned"] and w.trailer != null, "a caçamba vem engatada")
+	p.position = w.tractor.position + Vector2(0, 12)
+	await _wait(0.1)
+	p.interact()
+	for dvec in [Vector2(0, 1), Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0)]:
+		game.joystick_vector = dvec
+		await _wait(0.3)
+		game.joystick_vector = Vector2.ZERO
+		await _wait(0.15)
+		await _shot("46_cacamba_%d_%d" % [int(dvec.x), int(dvec.y)])
+		var behind: Vector2 = p.global_position + Trailer.BEHIND[p.tractor.dir]
+		assert(w.trailer.global_position.distance_to(behind) < 12.0, "a caçamba segue atrás do trator")
+	# leva até a caixa de vendas e desce
+	p.position = w.sell_bin.position + Vector2(20, 40)
+	await _wait(0.4)
+	p.interact()
+	await _wait(0.2)
+	game.inventory[10] = {"id": "kale", "qty": 30}
+	main.hud.open_cargo()
+	main.hud._on_cargo_slot(10, false)
+	assert(game.inventory[10] == null and Trailer.items()[0]["id"] == "kale", "o item foi para a carga")
+	var tool_i := 11
+	var old11 = game.inventory[11]
+	game.inventory[11] = {"id": "hoe", "qty": 1}
+	main.hud._on_cargo_slot(tool_i, false)   # ferramenta fica na mochila
+	assert(game.inventory[tool_i] != null and game.inventory[tool_i]["id"] == "hoe")
+	game.inventory[11] = old11
+	await _wait(0.2)
+	await _shot("47_carga")
+	var m0: int = game.money
+	main.hud.sell_cargo()
+	assert(game.money > m0 and Trailer.items()[0] == null, "vendeu a carga perto da caixa")
+	main.hud.close_panel()
 	main.save_now()
 	game.load_game()
 	assert(game.tractor["owned"], "o trator fica salvo")
+	assert(game.trailer["owned"], "a caçamba fica salva")
 
 	# ---- opções
 	main.hud.open_options()

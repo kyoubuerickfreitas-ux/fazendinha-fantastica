@@ -78,6 +78,7 @@ func _ready() -> void:
 	world.stove_used.connect(func(): hud.open_cooking())
 	world.villager_used.connect(_on_villager)
 	world.mine_entrance_used.connect(_on_mine_entrance)
+	world.trailer_open_requested.connect(func(): hud.open_cargo())
 	hud.floor_chosen.connect(enter_mine)
 	Game.time_changed.connect(func(_d: int, m: int):
 		if m >= FishQuests.TOUR_END and FishQuests.is_tournament_day():

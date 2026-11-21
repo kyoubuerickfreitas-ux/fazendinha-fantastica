@@ -194,6 +194,8 @@ func dismount() -> void:
 	riding = false
 	var t := tractor
 	tractor = null
+	if t.trailer:
+		t.trailer.follow(position + (get_parent() as Node2D).global_position, t.dir, 1.0)
 	remove_child(t)
 	world.entities.add_child(t)
 	t.position = position

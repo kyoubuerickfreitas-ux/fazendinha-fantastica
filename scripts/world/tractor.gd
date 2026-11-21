@@ -4,6 +4,7 @@ extends Node2D
 ## jogador (scripts/player/player.gd: mount/dismount), mostra o personagem sentado na cabine e anda bem
 ## mais rápido. Arte: tools/import_tractor.py (4 direções: 0 baixo, 1 esquerda, 2 direita, 3 cima).
 
+const TRAILER_DIR := 0
 const TEX := [preload("res://assets/sprites/tractor/down.png"), preload("res://assets/sprites/tractor/left.png"),
 	preload("res://assets/sprites/tractor/right.png"), preload("res://assets/sprites/tractor/up.png")]
 const PLAYER_SHEET := preload("res://assets/sprites/player.png")
@@ -15,6 +16,7 @@ signal mount_requested
 
 var dir := 0
 var mounted := false
+var trailer: Trailer            # caçamba engatada (opcional)
 var _sprite: Sprite2D
 var _rider: Sprite2D
 var _rider_hair: Sprite2D
@@ -77,6 +79,17 @@ func set_mounted(on: bool, look_mat: Material = null, hair: Texture2D = null, ha
 	else:
 		_use.add_to_group("interactable")
 	set_dir(dir)
+
+
+func attach_trailer(t: Trailer) -> void:
+	trailer = t
+	t.set_dir(dir)
+	t.global_position = global_position + Trailer.BEHIND[dir]
+
+
+func _process(delta: float) -> void:
+	if trailer and is_inside_tree() and trailer.is_inside_tree():
+		trailer.follow(global_position, dir, delta)
 
 
 ## Balanço do motor quando está andando.

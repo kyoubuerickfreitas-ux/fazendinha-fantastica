@@ -63,6 +63,8 @@ var exhausted := false      # zerou: só volta a correr depois de recuperar um p
 var run_held := false       # botão de correr (ou Shift) apertado
 ## Trator: comprado no Fungo; fica estacionado onde você desceu (x, y na fazenda).
 var tractor := {"owned": false, "x": 0.0, "y": 0.0}
+## Caçamba: engatada atrás do trator; items = carga (lista de espaços como a mochila).
+var trailer := {"owned": false, "items": []}
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -116,6 +118,7 @@ func reset_new_game() -> void:
 	tutorial = {"step": 0, "base": -1, "done": false}
 	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
 	tractor = {"owned": false, "x": 0.0, "y": 0.0}
+	trailer = {"owned": false, "items": []}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -371,7 +374,7 @@ func save_game(world_data: Dictionary) -> void:
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
 		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
-		"profile": profile, "tractor": tractor,
+		"profile": profile, "tractor": tractor, "trailer": trailer,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -433,6 +436,18 @@ func load_game() -> Dictionary:
 	var tr = data.get("tractor", {})
 	tractor = {"owned": bool(tr.get("owned", false)), "x": float(tr.get("x", 0.0)), "y": float(tr.get("y", 0.0))} \
 		if tr is Dictionary else {"owned": false, "x": 0.0, "y": 0.0}
+	var tl_ = data.get("trailer", {})
+	trailer = {"owned": false, "items": []}
+	if tl_ is Dictionary:
+		trailer["owned"] = bool(tl_.get("owned", false))
+		var its: Array = []
+		for s in tl_.get("items", []):
+			its.append({"id": str(s["id"]), "qty": int(s.get("qty", 1)), "q": int(s.get("q", 0))} \
+				if s is Dictionary and ItemDB.has(str(s.get("id", ""))) else null)
+		for s in its:
+			if s != null and int(s["q"]) == 0:
+				s.erase("q")
+		trailer["items"] = its
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:

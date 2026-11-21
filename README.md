@@ -118,6 +118,11 @@ personagem aparece sentado na cabine (de costas, só a cabeça por cima do banco
 descer: o trator fica estacionado onde você parou (e fica salvo). As ferramentas não funcionam em cima dele.
 Ao entrar na mina ou dormir você desce sozinho. Arte: `tools/import_tractor.py` (`assets/source/tractor.png`).
 
+**Caçamba** (1.500 moedas no Fungo, depois do trator): vem engatada e segue atrás do trator. Parada, toque nela
+com a mão para abrir a carga (24 espaços): toque num item para passar entre a mochila e a carga (ferramentas
+ficam na mochila). Perto da caixa de vendas dá para vender a carga toda de uma vez; quando a cidade existir,
+é lá que ela vai ser vendida. Arte: `assets/source/trailer.png` (mesmo importador).
+
 ## Mira
 
 - **Mira automática:** o botão de usar escolhe sozinho o alvo mais próximo em que a ferramenta da mão faz algo (machado → árvore, regador → terra seca, sementes → canteiro vazio...). A direção em que você anda desempata. O quadrado **verde** mostra o alvo; quadrado apagado = nada para fazer ali.
