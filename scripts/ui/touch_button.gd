@@ -8,6 +8,7 @@ signal pressed
 @export var icon: Texture2D
 @export var radius := 24.0
 @export var icon_scale := 2.0
+@export var icon_offset := Vector2.ZERO   # desloca o ícone dentro do botão
 
 var _touch := -1
 var _down := false
@@ -50,4 +51,4 @@ func _draw() -> void:
 	draw_arc(c + off, radius, 0, TAU, 40, Color("2b2118"), 1.5)
 	if icon:
 		var s := Vector2(16, 16) * icon_scale  # tamanho fixo, seja o ícone 16 ou 32 px
-		draw_texture_rect(icon, Rect2(c + off - s / 2.0, s), false)
+		draw_texture_rect(icon, Rect2(c + off + icon_offset - s / 2.0, s), false)

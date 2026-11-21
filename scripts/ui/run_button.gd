@@ -11,6 +11,12 @@ func is_held() -> bool:
 func _draw() -> void:
 	super._draw()
 	var c := _center() + (Vector2(0, 2) if _down else Vector2.ZERO)
+	# riscos de movimento atrás do pé (dentro da parte clara do botão)
+	var ink := Color("553926")
+	for i in 3:
+		var y := -3.5 + i * 3.5
+		var w := 6.0 if i == 1 else 4.0
+		draw_line(c + Vector2(-11.0, y), c + Vector2(-11.0 + w, y), ink, 1.8)
 	# anel do fôlego
 	var f := clampf(Game.stamina / Game.MAX_STAMINA, 0.0, 1.0)
 	var col := Color("e0574a") if Game.exhausted else Color("5fb6e8")

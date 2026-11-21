@@ -300,11 +300,12 @@ func _build_buttons() -> void:
 
 	_run_btn = RunButton.new()        # segure para correr
 	_run_btn.name = "Run"
-	_run_btn.radius = 16
+	_run_btn.radius = 18
 	_run_btn.icon = preload("res://assets/sprites/ui/foot.png")
-	_run_btn.icon_scale = 1.6
+	_run_btn.icon_scale = 1.05
+	_run_btn.icon_offset = Vector2(3, 0)
 	_run_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
-	_run_btn.position = Vector2(170 - 166, 150 - 44)
+	_run_btn.position = Vector2(170 - 172, 150 - 46)
 	area.add_child(_run_btn)
 
 	var bag := TouchButton.new()
