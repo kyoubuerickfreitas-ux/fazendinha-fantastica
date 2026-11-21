@@ -95,6 +95,30 @@ func job_ready() -> bool:
 	return not job.is_empty() and Game.day >= int(job["ready"])
 
 
+# ------------------------------------------------------------------ fogo da fornalha
+## Máquinas com fogo: ponto da boca e da chaminé em pixels da arte (fogo e fumaça só enquanto trabalham).
+const FIRE_AT := {"furnace": [Vector2(17, 35), Vector2(17, 1)]}
+var _fire: FX
+var _smoke: FX
+
+
+func _update_fire() -> void:
+	if not FIRE_AT.has(kind):
+		return
+	var working := not job.is_empty() and not job_ready()
+	if working and (_fire == null or not is_instance_valid(_fire)):
+		var pts: Array = FIRE_AT[kind]
+		_fire = FX.spawn_loop(self, "fire_small", _sprite.offset + pts[0])
+		_smoke = FX.spawn_loop(self, "smoke", _sprite.offset + pts[1] + Vector2(0, -10))
+		_fire.z_index = 1          # na frente da fornalha, mas atrás do que está na frente dela
+		_smoke.z_index = 1
+	elif not working and _fire and is_instance_valid(_fire):
+		_fire.queue_free()
+		_smoke.queue_free()
+		_fire = null
+		_smoke = null
+
+
 func _refresh_texture() -> void:
 	var name := kind
 	if kind == "feeder" and hay > 0:
@@ -135,6 +159,7 @@ func refresh() -> void:
 				_interact.label = "Colocar"
 			else:
 				_interact.label = "Trabalhando..."
+	_update_fire()
 	_bubble.visible = is_machine() and job_ready()
 	if _bubble.visible:
 		var out: String = job["output"]

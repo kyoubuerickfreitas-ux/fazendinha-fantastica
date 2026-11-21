@@ -44,7 +44,9 @@ const PRESETS := {
 	"gem": ["burst", Color9.LILAC, 0.7],             # gema e cristal na mina
 	"fill": ["bubble", Color9.BLUE, 0.5],            # encher o regador
 	"steam": ["steam", Color9.WHITE, 0.55],          # prato pronto
-	"fire": ["fire", Color9.WHITE, 0.5, Color(1.6, 0.95, 0.35)],   # tingido de laranja              # fogo do fogão (em loop)
+	"fire": ["fire", Color9.WHITE, 0.32, Color(1.6, 0.95, 0.35)],  # fogo do fogão (embaixo da panela), tingido de laranja
+	"fire_small": ["fire", Color9.WHITE, 0.24, Color(1.6, 0.85, 0.3)],  # boca da fornalha
+	"smoke": ["steam", Color9.WHITE, 0.45, Color(0.85, 0.85, 0.85, 0.95)],  # fumaça da chaminé              # fogo do fogão (em loop)
 }
 
 var _frames := 1

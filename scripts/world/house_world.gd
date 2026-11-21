@@ -376,7 +376,7 @@ func _process(_delta: float) -> void:
 		return
 	var cooking := Cooking.is_cooking()
 	if cooking and (_fire == null or not is_instance_valid(_fire)):
-		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(0, -18))
+		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(0, -14))
 		_fire.z_index = 1
 	elif not cooking and _fire and is_instance_valid(_fire):
 		_fire.queue_free()

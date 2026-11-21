@@ -1219,6 +1219,11 @@ func _run() -> void:
 	game.select_slot(0)
 	w._on_placeable_used(furnace)
 	assert(int(furnace.job.get("qty", 0)) == 2 and game.count_item("copper_ore") == 2, "12 minérios -> 2 barras, sobram 2")
+	assert(furnace._fire != null and is_instance_valid(furnace._fire), "trabalhando, a fornalha fica com fogo")
+	p.position = furnace.position + Vector2(30, 30)
+	main.camera.reset_smoothing()
+	await _wait(0.4)
+	await _shot("53_fornalha")
 	furnace.job["ready"] = game.day
 	var bars0: int = game.count_item("copper_bar")
 	w._on_placeable_used(furnace)
