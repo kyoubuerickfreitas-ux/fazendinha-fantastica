@@ -10,6 +10,7 @@ signal sleep_confirmed
 signal quit_confirmed
 
 
+const HAND_ICON := preload("res://assets/sprites/ui/hand.png")   # tools/import_ui_buttons.py
 var player: Player
 var world: FarmWorld
 
@@ -290,7 +291,9 @@ func _build_buttons() -> void:
 
 	_hand_btn = TouchButton.new()
 	_hand_btn.radius = 22
-	_hand_btn.icon = ItemDB.ui_icon("hand")
+	_hand_btn.icon = HAND_ICON
+	_hand_btn.icon_scale = 1.7
+	_hand_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_hand_btn.position = Vector2(170 - 128, 150 - 52)
 	_hand_btn.pressed.connect(func(): interact_pressed.emit())
 	area.add_child(_hand_btn)
@@ -298,6 +301,9 @@ func _build_buttons() -> void:
 	_run_btn = RunButton.new()        # segure para correr
 	_run_btn.name = "Run"
 	_run_btn.radius = 16
+	_run_btn.icon = preload("res://assets/sprites/ui/foot.png")
+	_run_btn.icon_scale = 1.6
+	_run_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_run_btn.position = Vector2(170 - 166, 150 - 44)
 	area.add_child(_run_btn)
 
@@ -1454,7 +1460,7 @@ func _refresh_hotbar() -> void:
 		s.selected = s.index == Game.selected_slot
 		s.queue_redraw()
 	var id := Game.selected_item_id()
-	_use_btn.icon = ItemDB.icon(id) if id != "" else ItemDB.ui_icon("hand")
+	_use_btn.icon = ItemDB.icon(id) if id != "" else HAND_ICON
 	_use_btn.queue_redraw()
 
 

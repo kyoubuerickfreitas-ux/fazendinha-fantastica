@@ -105,7 +105,7 @@ Os passos ficam em `scripts/systems/tutorial.gd` (lista STEPS). Saves antigos n�
 
 ## Correr
 
-Segure o botão do tênis (ao lado da mão) ou Shift para correr (70% mais rápido). Correr usa o **fôlego**, separado
+Segure o botão do pé (ao lado da mão) ou Shift para correr (70% mais rápido). Correr usa o **fôlego**, separado
 da energia: o anel azul em volta do botão mostra quanto sobra (~5 s de corrida). Ao parar de correr ele enche de
 novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de recuperar um pouco. O prato com bônus
 "Fôlego" também faz a corrida durar mais.
