@@ -1449,7 +1449,7 @@ func _refresh_shop() -> void:
 	if SELL_VEHICLES and not Game.tractor.get("owned", false):
 		var trow := _shop_row("", "Trator\nAnda bem mais rápido · %d moedas" % TRACTOR_PRICE)
 		var tic: TextureRect = trow.get_child(0)
-		tic.texture = preload("res://assets/sprites/tractor/right.png")
+		tic.texture = _first_frame(preload("res://assets/sprites/tractor/right.png"))
 		tic.custom_minimum_size = Vector2(36, 26)
 		tic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		var tb := Button.new()
@@ -1463,7 +1463,7 @@ func _refresh_shop() -> void:
 	if SELL_VEHICLES and Game.tractor.get("owned", false) and not Game.trailer.get("owned", false):
 		var crow := _shop_row("", "Caçamba\nEngata no trator e leva %d espaços de carga · %d moedas" % [Trailer.CARGO_SIZE, TRAILER_PRICE])
 		var cic: TextureRect = crow.get_child(0)
-		cic.texture = preload("res://assets/sprites/tractor/trailer_left.png")
+		cic.texture = _first_frame(preload("res://assets/sprites/tractor/trailer_left.png"))
 		cic.custom_minimum_size = Vector2(36, 26)
 		cic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		var cb := Button.new()
@@ -1692,6 +1692,14 @@ func _build_options() -> void:
 	var ver := UIStyle.label("Fazendinha Fantástica · versão de teste", 9, UIStyle.EARTH)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(ver)
+
+
+## Primeiro quadro de uma tira (trator e caçamba têm 4 quadros das rodas girando).
+func _first_frame(t: Texture2D) -> AtlasTexture:
+	var a := AtlasTexture.new()
+	a.atlas = t
+	a.region = Rect2(0, 0, t.get_width() / Tractor.WHEEL_FRAMES, t.get_height())
+	return a
 
 
 ## Compra o trator: ele aparece estacionado ao lado da casa.

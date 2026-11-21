@@ -15,6 +15,7 @@ const RIDER_CUT := Rect2(0, 4, 64, 34)     # cabeça e tronco do quadro parado
 signal mount_requested
 
 var dir := 0
+var _wheel := 0.0          # quanto as rodas já giraram (em quadros)
 var mounted := false
 var trailer: Trailer            # caçamba engatada (opcional)
 var _sprite: Sprite2D
@@ -48,13 +49,33 @@ func _ready() -> void:
 	set_dir(dir)
 
 
+const WHEEL_FRAMES := 4
+## Quadros por pixel andado (as rodas giram conforme a distância, então param quando o trator para).
+const WHEEL_SPEED := 0.12
+
+
+## Gira as rodas pela distância andada.
+func roll(distance: float) -> void:
+	_wheel = fmod(_wheel + distance * WHEEL_SPEED, float(WHEEL_FRAMES))
+	if _sprite:
+		_sprite.frame = _wheel_frame()
+
+
+## Na vista "left" e na de costas os quadros vão ao contrário (as rodas giram para o outro lado).
+func _wheel_frame() -> int:
+	var f := int(_wheel) % WHEEL_FRAMES
+	return (WHEEL_FRAMES - 1 - f) if dir in [1, 3] else f
+
+
 func set_dir(d: int) -> void:
 	dir = d
 	if _sprite == null:
 		return
 	var t: Texture2D = TEX[d]
 	_sprite.texture = t
-	_sprite.position = Vector2(-t.get_width() / 2.0, -t.get_height() + 2 + _bob)
+	_sprite.hframes = WHEEL_FRAMES          # tira com as rodas girando (tools/import_tractor.py)
+	_sprite.frame = _wheel_frame()
+	_sprite.position = Vector2(-t.get_width() / WHEEL_FRAMES / 2.0, -t.get_height() + 2 + _bob)
 	_rider.position = RIDER_POS[d] + Vector2(0, _bob)
 	var cut := Rect2(RIDER_CUT.position + Vector2(0, d * 64), RIDER_CUT.size)
 	# de costas o encosto do banco cobriria o personagem: só a cabeça, desenhada por cima do banco
@@ -87,7 +108,14 @@ func attach_trailer(t: Trailer) -> void:
 	t.global_position = global_position + Trailer.BEHIND[dir]
 
 
+var _last_pos := Vector2.INF
+
+
 func _process(delta: float) -> void:
+	if is_inside_tree():
+		if _last_pos != Vector2.INF:
+			roll(global_position.distance_to(_last_pos))
+		_last_pos = global_position
 	if trailer and is_inside_tree() and trailer.is_inside_tree():
 		trailer.follow(global_position, dir, delta)
 

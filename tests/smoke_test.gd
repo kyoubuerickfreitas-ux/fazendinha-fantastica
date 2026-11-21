@@ -1278,6 +1278,7 @@ func _run() -> void:
 	await _wait(0.4)
 	game.joystick_vector = Vector2.ZERO
 	var ride_d: float = p.position.distance_to(tp)
+	assert(p.tractor._wheel > 0.0, "as rodas giram andando")
 	assert(ride_d > 60.0, "de trator anda bem mais rápido (andou %.0f)" % ride_d)
 	p.use_tool()
 	assert(p.riding, "ferramentas não funcionam em cima do trator")

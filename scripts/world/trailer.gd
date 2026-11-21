@@ -15,6 +15,7 @@ const BEHIND := {0: Vector2(0, -34), 1: Vector2(62, 2), 2: Vector2(-62, 2), 3: V
 signal open_requested
 
 var dir := 0
+var _wheel := 0.0          # quanto as rodas já giraram (em quadros)
 var _sprite: Sprite2D
 var _use: Interactable
 
@@ -32,23 +33,45 @@ func _ready() -> void:
 	set_dir(dir)
 
 
+const WHEEL_FRAMES := 4
+## Quadros por pixel andado (as rodas giram conforme a distância, então param quando o trator para).
+const WHEEL_SPEED := 0.12
+
+
+## Gira as rodas pela distância andada.
+func roll(distance: float) -> void:
+	_wheel = fmod(_wheel + distance * WHEEL_SPEED, float(WHEEL_FRAMES))
+	if _sprite:
+		_sprite.frame = _wheel_frame()
+
+
+## Na vista "left" e na de costas os quadros vão ao contrário (as rodas giram para o outro lado).
+func _wheel_frame() -> int:
+	var f := int(_wheel) % WHEEL_FRAMES
+	return (WHEEL_FRAMES - 1 - f) if dir in [1, 3] else f
+
+
 func set_dir(d: int) -> void:
 	dir = d
 	if _sprite == null:
 		return
 	var t: Texture2D = TEX[d]
 	_sprite.texture = t
-	_sprite.position = Vector2(-t.get_width() / 2.0, -t.get_height() + 2)
+	_sprite.hframes = WHEEL_FRAMES          # tira com as rodas girando (tools/import_tractor.py)
+	_sprite.frame = _wheel_frame()
+	_sprite.position = Vector2(-t.get_width() / WHEEL_FRAMES / 2.0, -t.get_height() + 2)
 
 
 ## Vai para trás do trator (com uma suavizada, para parecer puxada).
 func follow(tractor_pos: Vector2, tractor_dir: int, delta: float) -> void:
 	var target: Vector2 = tractor_pos + BEHIND[tractor_dir]
+	var before := global_position
 	if tractor_dir != dir:
 		set_dir(tractor_dir)
 		global_position = target        # virou: encaixa na hora (sem atravessar o trator)
 	else:
 		global_position = global_position.lerp(target, clampf(delta * 14.0, 0.0, 1.0))
+		roll(global_position.distance_to(before))
 
 
 static func items() -> Array:
