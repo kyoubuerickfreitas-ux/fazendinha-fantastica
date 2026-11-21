@@ -152,7 +152,7 @@ const COLORS := {
 		["Esverdeado", 0.18, 0.9, 0.95], ["Lilás", 0.7, 0.6, 1.0]],
 }
 ## Móveis estofados: "Cor" pinta só o tecido (verde na arte), com estas cores (giro a partir do verde)
-const FABRIC := ["sofa", "armchair"]
+const FABRIC := ["sofa", "armchair", "bed"]
 const FABRIC_COLORS := [["Verde", 0.0, 1.0, 1.0], ["Vermelho", -0.19, 1.05, 0.95], ["Laranja", -0.12, 1.1, 1.05],
 	["Amarelo", -0.06, 1.0, 1.15], ["Azul", 0.42, 0.9, 1.0], ["Roxo", 0.55, 0.75, 0.95], ["Rosa", -0.28, 0.6, 1.25],
 	["Cinza", 0.0, 0.08, 1.1], ["Creme", -0.1, 0.22, 1.45]]

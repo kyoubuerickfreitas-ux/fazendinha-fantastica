@@ -19,6 +19,8 @@ Se não houver Idle/rotations, a pose parada é o 1º quadro da caminhada.
 Uso: python3 tools/import_protagonist.py            (protagonista e corpo base)
 """
 import os
+import sys
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -97,6 +99,65 @@ def _shift(f, dy):
     return out
 
 
+def _remove_prop(frames):
+    """Tira o objeto desenhado no chão (montinho de terra / pedra) e as pedrinhas que voam dele,
+    deixando o personagem e a picareta. O objeto é o que fica separado do corpo no 1º quadro do golpe."""
+    import numpy as np
+    from import_animals import components
+    ref = frames[1]
+    comps = sorted(components(ref, 128), key=lambda c: -c["area"])
+    body_area = comps[0]["area"]
+    h = ref.height
+    mask = np.zeros((h, ref.width), bool)
+    for c in comps[1:]:
+        if c["area"] > 30 and c["bbox"][1] > h * 0.55:
+            for x, y in c["pts"]:
+                mask[y, x] = True
+    for _ in range(3):
+        m = np.pad(mask, 1)
+        mask = m[1:-1, 1:-1] | m[:-2, 1:-1] | m[2:, 1:-1] | m[1:-1, :-2] | m[1:-1, 2:]
+    ra = np.array(ref).astype(int)
+    out = [frames[0]]
+    for f in frames[1:]:
+        a = np.array(f).astype(int)
+        same = np.abs(a[:, :, :3] - ra[:, :, :3]).sum(2) < 90
+        clear = mask & (same | (ra[:, :, 3] > 0) & (a[:, :, 3] > 0) & (np.abs(a[:, :, :3] - ra[:, :, :3]).sum(2) < 140))
+        a[clear] = 0
+        img = Image.fromarray(a.astype("uint8")).copy()
+        # pedrinhas soltas na metade de baixo (o corpo e a picareta estão ligados entre si)
+        px = img.load()
+        for c in components(img, 1):
+            if c["area"] < body_area * 0.03 and c["bbox"][1] > h * 0.5:
+                for x, y in c["pts"]:
+                    px[x, y] = (0, 0, 0, 0)
+        out.append(img)
+    return out
+
+
+def _remove_mound_south(frames, box=(126, 212, 204, 256)):
+    """De frente o montinho de terra fica embaixo do pé direito (encostado): apaga o que é montinho na área
+    e põe ali o pé da pose parada (quadro 0)."""
+    import numpy as np
+    ref = np.array(frames[1]).astype(int)
+    idle = np.array(frames[0]).astype(int)
+    x0, y0, x1, y1 = box
+    out = [frames[0]]
+    for f in frames[1:]:
+        a = np.array(f).astype(int)
+        sub, rsub = a[y0:y1, x0:x1], ref[y0:y1, x0:x1]
+        same = (np.abs(sub[:, :, :3] - rsub[:, :, :3]).sum(2) < 120) & (rsub[:, :, 3] > 0)
+        # pedrinhas e terra soltas do golpe: tons do montinho (marrom-acinzentado e preto do contorno)
+        r, g, b = sub[:, :, 0], sub[:, :, 1], sub[:, :, 2]
+        dirt = (sub[:, :, 3] > 0) & (np.abs(r - g) < 45) & (np.abs(g - b) < 30) & (r < 200) & ~((r > 140) & (g > 140) & (b > 140))
+        clear = same | dirt
+        sub[clear] = 0
+        isub = idle[y0:y1, x0:x1]
+        put = (sub[:, :, 3] == 0) & (isub[:, :, 3] > 0)
+        sub[put] = isub[put]
+        out.append(Image.fromarray(a.astype("uint8")).copy())
+    return out
+
+
 def build_actions():
     base = os.path.join(ROOT, "assets", "source", "base_body")
     canvas = round(256 * SCALE)
@@ -110,6 +171,10 @@ def build_actions():
             folder = os.path.join(base, tool, d)
             if os.path.isdir(folder):
                 frames[d] = [Image.open(os.path.join(folder, f"{i}.png")).convert("RGBA") for i in range(ACTION_FRAMES)]
+        if tool == "Pickaxe":
+            frames = {d: _remove_prop(fs) for d, fs in frames.items()}
+            if "south" in frames:
+                frames["south"] = _remove_mound_south(frames["south"])
         # os pés de cada direção na mesma linha que os da frente (a primeira pose como referência)
         if "south" in frames:
             ref = frames["south"][0].getbbox()[3]
