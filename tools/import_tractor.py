@@ -214,5 +214,5 @@ if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     import_sheet(SRC, VIEWS, "", SCALE, TRACTOR_WHEELS)
     import_sheet(SRC, TRAILER_VIEWS, "trailer_", 0.105, TRAILER_WHEELS)
-    import_iso(ISO_TRACTOR, "", 0.14)
-    import_iso(ISO_TRAILER, "trailer_", 0.115)
+    import_iso(ISO_TRACTOR, "", 0.165)
+    import_iso(ISO_TRAILER, "trailer_", 0.135)

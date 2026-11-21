@@ -15,7 +15,7 @@ const TEX := {0: preload("res://assets/sprites/tractor/trailer_down.png"),
 	7: preload("res://assets/sprites/tractor/trailer_up_right.png")}
 ## Onde fica, em relação à base do trator, conforme a direção do trator (0 baixo, 1 esquerda, 2 direita, 3 cima)
 const BEHIND := {0: Vector2(0, -30), 1: Vector2(60, 2), 2: Vector2(-60, 2), 3: Vector2(0, 30),
-	4: Vector2(36, -20), 5: Vector2(-36, -20), 6: Vector2(36, 18), 7: Vector2(-36, 18)}
+	4: Vector2(42, -22), 5: Vector2(-42, -22), 6: Vector2(42, 20), 7: Vector2(-42, 20)}
 
 signal open_requested
 

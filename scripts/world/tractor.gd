@@ -16,9 +16,9 @@ const PLAYER_SHEET := preload("res://assets/sprites/player.png")
 ## Personagem sentado (desenhado por cima do banco): canto de cima do recorte em relação à base do trator,
 ## e quais linhas do quadro parado aparecem (cabeça e ombros), por direção (0 baixo, 1 esquerda, 2 direita, 3 cima)
 const RIDER_POS := [Vector2(-32, -46), Vector2(-25, -46), Vector2(-39, -46), Vector2(-32, -47),
-	Vector2(-26, -39), Vector2(-38, -39), Vector2(-27, -34), Vector2(-37, -34)]
+	Vector2(-25, -45), Vector2(-39, -45), Vector2(-27, -40), Vector2(-37, -40)]
 const RIDER_ROWS := [Vector2i(10, 29), Vector2i(10, 30), Vector2i(10, 30), Vector2i(10, 26),
-	Vector2i(10, 26), Vector2i(10, 26), Vector2i(10, 23), Vector2i(10, 23)]
+	Vector2i(10, 27), Vector2i(10, 27), Vector2i(10, 24), Vector2i(10, 24)]
 
 signal mount_requested
 
