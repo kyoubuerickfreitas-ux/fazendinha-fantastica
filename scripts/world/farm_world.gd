@@ -131,7 +131,7 @@ func generate(saved: Dictionary) -> void:
 				ground[y * W + x] = Ground.WATER
 	# caminhos
 	_path_rect(5, 7, 5, 12)
-	_path_rect(3, 12, 44, 12)
+	_path_rect(0, 12, 44, 12)          # vai até a borda oeste: estrada para a cidade
 	_path_rect(30, 12, 30, 18)
 	_path_rect(14, 11, 14, 12)
 
@@ -154,6 +154,7 @@ func generate(saved: Dictionary) -> void:
 			f.refresh()
 
 	_move_old_workbench()
+	_clear_city_road()
 
 	if saved.has("props"):
 		for p in saved["props"]:
@@ -190,6 +191,27 @@ func generate(saved: Dictionary) -> void:
 	_ground_layer.modulate = CropDB.season(Game.season_id()).tint
 	_ground_layer.queue_redraw()
 	_soil_layer.queue_redraw()
+
+
+## Estrada para a cidade: na borda oeste, na altura do caminho principal (linha 12).
+const CITY_GATE := Rect2(0, 11 * 32, 2 * 32, 3 * 32)
+const CITY_RETURN := Vector2(3 * 32 + 16, 12 * 32 + 20)    # onde você chega de volta da cidade
+
+
+## Saída do mapa no ponto `pos` ("city" na estrada oeste da fazenda; "" em nenhuma).
+func exit_at(pos: Vector2) -> String:
+	return "city" if region_id() == "farm" and CITY_GATE.has_point(pos) else ""
+
+
+## Tira o que estiver em cima do trecho novo da estrada (saves antigos) e as árvores grandes que
+## cobririam quem chega da cidade.
+func _clear_city_road() -> void:
+	for y in range(8, 14):
+		for x in range(0, 7):
+			var c := Vector2i(x, y)
+			if props.has(c) and (y >= 11 and x < 3 or (props[c].kind in TALL and props[c].kind != "pine")):
+				props[c].queue_free()
+				props.erase(c)
 
 
 func _path_rect(x0: int, y0: int, x1: int, y1: int) -> void:

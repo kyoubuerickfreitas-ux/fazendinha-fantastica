@@ -1459,6 +1459,40 @@ func _run() -> void:
 	assert(w.ground_at(w.cell_of(p.position)) != FarmWorld.Ground.WATER or p.position.y < wcell.y * 32 + 10,
 		"não dá para entrar na água")
 
+	# ---- cidade: a estrada oeste leva até lá; lojas por ramo; poço; volta pela estrada
+	main.hud.close_panel()
+	p.dismount()
+	p.position = Vector2(40, 12 * 32 + 16)
+	await _wait(2.2)
+	assert(main.city != null and p.world == main.city, "a estrada oeste leva à cidade")
+	assert(not w.visible, "a fazenda some enquanto você está na cidade")
+	var cw: CityWorld = main.city
+	assert(not cw.would_act("hoe", Vector2i(10, 25)) and not cw.would_act("axe", Vector2i(3, 3)), "na cidade não se ara nem se corta árvore")
+	game.add_item("fish_silver", 2)
+	main._on_city_building("fish")
+	assert(main.hud._shop.visible and main.hud._shop_title.text == "Peixaria")
+	var fish_price: int = main.hud._shop_sell_price("fish_silver", 0)
+	assert(fish_price > ItemDB.sell_price("fish_silver", 0), "a peixaria paga mais pelo peixe")
+	assert(not main.hud._shop_takes("wood"), "a peixaria não compra madeira")
+	await _shot("54_cidade_peixaria")
+	main.hud.close_panel()
+	for k in ["market", "smith", "restaurant", "bakery"]:
+		main.hud.open_shop(k)
+		assert(main.hud._shop_buy_list().size() > 0, "a loja %s vende alguma coisa" % k)
+		main.hud.close_panel()
+	game.add_item("watering_can", 1) if game.count_item("watering_can") == 0 else null
+	game.water = 0
+	main._on_city_building("well")
+	assert(game.water == game.water_capacity(), "o poço enche o regador")
+	p.position = cw.cell_center(Vector2i(25, 21))
+	main.hud.visible = false
+	await _shot("55_cidade")
+	main.hud.visible = true
+	p.position = Vector2(40, 17 * 32)
+	await _wait(2.2)
+	assert(main.city == null and p.world == w and w.visible, "a estrada leva de volta à fazenda")
+	main.hud.close_panel()
+
 	# ---- arrastar itens: na mochila e da mochila para o armário/caçamba
 	main.hud.toggle_backpack()
 	await _wait(0.2)

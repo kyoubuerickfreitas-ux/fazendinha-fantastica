@@ -57,6 +57,9 @@ var _shop: Control
 var _shop_buy: VBoxContainer
 var _shop_sell: VBoxContainer
 var _shop_money: Label
+var _shop_kind := "fungo"      # fungo (barraca da fazenda) ou uma loja da cidade (SHOP_TITLES)
+var _shop_title: Label
+var _shop_animal_titles: Array = []
 var _bag_btn: TouchButton
 var _book_btn: TouchButton
 var _book: Control
@@ -575,6 +578,9 @@ func _refresh_cargo() -> void:
 func _build_shop() -> void:
 	var w := _make_window("Barraca do Fungo", Vector2(440, 0))
 	_shop = w[0]
+	for l in _shop.find_children("*", "Label", true, false):
+		if (l as Label).text == "Barraca do Fungo":
+			_shop_title = l
 	var v: VBoxContainer = w[1]
 	_shop_money = UIStyle.label("", 12, UIStyle.WOOD_DARK)
 	v.add_child(_shop_money)
@@ -599,7 +605,9 @@ func _build_shop() -> void:
 			list.add_child(animals_title)
 			_shop_animals = VBoxContainer.new()
 			list.add_child(_shop_animals)
-			list.add_child(UIStyle.label("Itens", 13, UIStyle.WOOD))
+			var items_title := UIStyle.label("Itens", 13, UIStyle.WOOD)
+			list.add_child(items_title)
+			_shop_animal_titles = [animals_title, items_title]
 		else:
 			_shop_sell = list
 
@@ -1402,9 +1410,77 @@ func toggle_backpack() -> void:
 	_refresh_backpack()
 
 
-func open_shop() -> void:
+## Lojas: "fungo" (a barraca da fazenda, vende de tudo) ou uma loja da cidade, que só vende e compra
+## o que é do seu ramo e paga SHOP_BONUS a mais por isso.
+const SHOP_TITLES := {"fungo": "Barraca do Fungo", "market": "Feira da Cidade", "fish": "Peixaria",
+	"smith": "Ferraria", "restaurant": "Restaurante", "bakery": "Padaria"}
+const SHOP_TAKES := {"market": ["crop", "product"], "fish": ["fish", "treasure"], "smith": ["resource", "gem"],
+	"restaurant": ["food"], "bakery": ["food"]}
+const SHOP_BONUS := 1.2
+
+
+func open_shop(kind := "fungo") -> void:
+	_shop_kind = kind if SHOP_TITLES.has(kind) else "fungo"
+	if _shop_title:
+		_shop_title.text = SHOP_TITLES[_shop_kind]
 	_open(_shop)
 	_refresh_shop()
+
+
+func _sells_vehicles() -> bool:
+	return _shop_kind == "smith" or (SELL_VEHICLES and _shop_kind == "fungo")
+
+
+## O que esta loja vende.
+func _shop_buy_list() -> Array:
+	var season := Calendar.season_id(Game.day)
+	var out: Array = []
+	match _shop_kind:
+		"fungo":
+			out = CropDB.seeds_for(season)
+			for id in ItemDB.SHOP_ITEMS:
+				if ItemDB.get_item(id).get("type", "") != "seed":
+					out.append(id)
+			out += Cooking.shop_scrolls(season)
+		"market":         # sementes de todas as estações (para se planejar)
+			for se in Calendar.SEASONS:
+				for id in CropDB.seeds_for(se):
+					if not out.has(id):
+						out.append(id)
+		"fish":
+			for id in ItemDB.SHOP_ITEMS:
+				if id == "fishing_rod" or ItemDB.get_item(id).get("type", "") == "bait":
+					out.append(id)
+		"smith":
+			for id in ItemDB.SHOP_ITEMS:
+				if ItemDB.get_item(id).get("type", "") == "tool" and id != "fishing_rod":
+					out.append(id)
+		"bakery":         # receitas de todas as estações
+			for se in Calendar.SEASONS:
+				for id in Cooking.shop_scrolls(se):
+					if not out.has(id):
+						out.append(id)
+		"restaurant":     # pratos prontos (do mais barato ao mais caro)
+			for rid in Cooking.recipes:
+				out.append(Cooking.recipes[rid].dish_id())
+			out.sort_custom(func(a, b): return _shop_price(a) < _shop_price(b))
+	return out
+
+
+func _shop_price(id: String) -> int:
+	var it := ItemDB.get_item(id)
+	if it.has("buy"):
+		return int(it["buy"])
+	return maxi(30, int(round(int(it.get("sell", 10)) * 1.5)))      # prato pronto do restaurante
+
+
+func _shop_takes(id: String) -> bool:
+	return _shop_kind == "fungo" or ItemDB.get_item(id).get("type", "") in SHOP_TAKES.get(_shop_kind, [])
+
+
+func _shop_sell_price(id: String, q: int) -> int:
+	var p := ItemDB.sell_price(id, q)
+	return p if _shop_kind == "fungo" else int(round(p * SHOP_BONUS))
 
 
 func ask(text: String, action: Callable) -> void:
@@ -1482,7 +1558,9 @@ func _refresh_shop() -> void:
 			c.queue_free()
 	for c in _shop_animals.get_children():
 		c.queue_free()
-	for sp in AnimalSystem.all_species():
+	for t in _shop_animal_titles:
+		t.visible = _shop_kind == "fungo"
+	for sp in (AnimalSystem.all_species() if _shop_kind == "fungo" else []):
 		var price: int = AnimalSystem.species(sp).price
 		var group := AnimalSystem.species(sp).group
 		var has_room: bool = world != null and world.count_animals(group) < world.capacity(group)
@@ -1518,7 +1596,7 @@ func _refresh_shop() -> void:
 	for c in _shop_sell.get_children():
 		c.queue_free()
 
-	if SELL_VEHICLES and not Game.tractor.get("owned", false):
+	if _sells_vehicles() and not Game.tractor.get("owned", false):
 		var trow := _shop_row("", "Trator\nAnda bem mais rápido · %d moedas" % TRACTOR_PRICE)
 		var tic: TextureRect = trow.get_child(0)
 		tic.texture = _first_frame(preload("res://assets/sprites/tractor/right.png"))
@@ -1532,7 +1610,7 @@ func _refresh_shop() -> void:
 		trow.add_child(tb)
 		_shop_buy.add_child(trow)
 		_shop_buy.move_child(trow, 0)
-	if SELL_VEHICLES and Game.tractor.get("owned", false) and not Game.trailer.get("owned", false):
+	if _sells_vehicles() and Game.tractor.get("owned", false) and not Game.trailer.get("owned", false):
 		var crow := _shop_row("", "Caçamba\nEngata no trator e leva %d espaços de carga · %d moedas" % [Trailer.CARGO_SIZE, TRAILER_PRICE])
 		var cic: TextureRect = crow.get_child(0)
 		cic.texture = _first_frame(preload("res://assets/sprites/tractor/trailer_left.png"))
@@ -1546,15 +1624,11 @@ func _refresh_shop() -> void:
 		crow.add_child(cb)
 		_shop_buy.add_child(crow)
 		_shop_buy.move_child(crow, 0)
-	var buy_list: Array = CropDB.seeds_for(Calendar.season_id(Game.day))
-	for id in ItemDB.SHOP_ITEMS:
-		if ItemDB.get_item(id).get("type", "") != "seed":
-			buy_list.append(id)
-	buy_list += Cooking.shop_scrolls(Calendar.season_id(Game.day))
+	var buy_list: Array = _shop_buy_list()
 	for id in buy_list:
 		if ItemDB.get_item(id).get("type", "") == "tool" and Game.count_item(id) > 0:
 			continue   # não vende de novo uma ferramenta que você já tem
-		var price: int = ItemDB.get_item(id)["buy"]
+		var price: int = _shop_price(id)
 		var row := _shop_row(id, "%s\n%d moedas" % [ItemDB.item_name(id).replace("Sementes de ", ""), price])
 		var b := Button.new()
 		b.text = "Comprar"
@@ -1568,7 +1642,7 @@ func _refresh_shop() -> void:
 
 	var seen := {}
 	for s in Game.inventory:
-		if s == null or ItemDB.sell_price(s["id"]) <= 0:
+		if s == null or ItemDB.sell_price(s["id"]) <= 0 or not _shop_takes(s["id"]):
 			continue
 		var id: String = s["id"]
 		var q: int = int(s.get("q", 0))
@@ -1576,7 +1650,7 @@ func _refresh_shop() -> void:
 		if seen.has(key):
 			continue
 		seen[key] = true
-		var price := ItemDB.sell_price(id, q)
+		var price := _shop_sell_price(id, q)
 		var qty := Game.count_item(id, q)
 		var qname := "" if q == 0 else " (%s)" % AnimalSystem.QUALITY_NAMES[q]
 		var row := _shop_row(id, "%s%s x%d\n%d cada" % [ItemDB.item_name(id), qname, qty, price])
@@ -1597,7 +1671,11 @@ func _refresh_shop() -> void:
 		row.add_child(b2)
 		_shop_sell.add_child(row)
 	if seen.is_empty():
-		_shop_sell.add_child(UIStyle.label("Nada para vender ainda.", 11, UIStyle.EARTH))
+		_shop_sell.add_child(UIStyle.label("Nada para vender ainda." if _shop_kind == "fungo"
+			else "Nada do ramo desta loja na mochila.", 11, UIStyle.EARTH))
+	elif _shop_kind != "fungo":
+		_shop_sell.add_child(UIStyle.label("Aqui pagam 20% a mais!", 10, Color("3f6b2a")))
+		_shop_sell.move_child(_shop_sell.get_child(_shop_sell.get_child_count() - 1), 0)
 
 
 ## Materiais de uma receita com o que você tem: [ícone] Madeira 12/10 (verde = dá, vermelho = falta).

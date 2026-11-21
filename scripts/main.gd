@@ -10,6 +10,8 @@ var _resetting := false
 ## andar da mina em que o jogador está (null = na fazenda)
 var mine: MineWorld = null
 var house: HouseWorld = null
+var city: CityWorld = null
+var _traveling := false
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
@@ -116,6 +118,7 @@ func _ready() -> void:
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")
 		exit_mine(true)
+		exit_city(true)
 		_sleep(false))
 	Game.time_changed.connect(func(_d, _m): _update_daylight())
 	Game.weather_changed.connect(func(_w): _update_weather())
@@ -441,6 +444,115 @@ func exit_mine(silent: bool = false) -> void:
 		Game.toast.emit("De volta à fazenda.")
 
 
+# ------------------------------------------------------------------ cidade
+## Andar até a borda do mapa pela estrada troca de mapa (fazenda <-> cidade).
+func _physics_process(_delta: float) -> void:
+	if _traveling or Game.ui_lock > 0 or player == null or player.world == null:
+		return
+	match player.world.exit_at(player.position):
+		"city":
+			enter_city()
+		"farm":
+			exit_city()
+
+
+## Vai para a cidade pela estrada oeste (o trator fica estacionado na saída da fazenda).
+func enter_city() -> void:
+	if city or mine or house:
+		return
+	_traveling = true
+	player.dismount()
+	hud.fade_through(func():
+		city = CityWorld.new()
+		city.name = "City"
+		add_child(city)
+		city.generate({})
+		city.building_used.connect(_on_city_building)
+		_move_player(city, city.spawn_pos)
+		world.visible = false
+		world.process_mode = Node.PROCESS_MODE_DISABLED
+		tutorial.visible = false
+		Game.bump("city_visits")
+		_update_weather()
+		Game.toast.emit("Cidade"),
+		func(): _traveling = false)
+
+
+## Volta para a fazenda, no começo da estrada.
+func exit_city(silent := false) -> void:
+	if city == null:
+		return
+	_traveling = true
+	var back := func():
+		world.visible = true
+		world.process_mode = Node.PROCESS_MODE_INHERIT
+		tutorial.visible = true
+		_move_player(world, FarmWorld.CITY_RETURN)
+		city.queue_free()
+		city = null
+		_update_weather()
+	if silent:
+		back.call()
+		_traveling = false
+		return
+	hud.fade_through(func():
+		back.call()
+		Game.toast.emit("De volta à fazenda."),
+		func(): _traveling = false)
+
+
+## Portas da cidade: cada loja abre a sua janela.
+func _on_city_building(kind: String) -> void:
+	match kind:
+		"restaurant", "bakery", "smith", "market", "fish":
+			Sound.play("door", -6.0)
+			hud.open_shop(kind)
+		"tailor":
+			hud.open_character_creator(false)
+		"inn":
+			if Game.energy >= Game.max_energy - 0.5:
+				Game.toast.emit("Pousada: Volte quando estiver cansado(a)! Um cochilo custa %d moedas." % INN_PRICE)
+				return
+			hud.ask("Tirar um cochilo na pousada?\nCusta %d moedas e recupera toda a energia." % INN_PRICE, func():
+				if Game.money < INN_PRICE:
+					Game.toast.emit("Moedas insuficientes.")
+					return
+				Game.add_money(-INN_PRICE)
+				Sound.play("sleep")
+				hud.fade_through(func():
+					Game.energy = Game.max_energy
+					Game.stats_changed.emit()
+					Game.toast.emit("Energia renovada!")))
+		"well":
+			if Game.count_item("watering_can") > 0 and Game.water < Game.water_capacity():
+				Game.water = Game.water_capacity()
+				Game.stats_changed.emit()
+				Sound.play("fill")
+				FX.spawn(city, "fill", player.position + Vector2(0, -10))
+				Game.toast.emit("Regador cheio com a água do poço.")
+			else:
+				Game.toast.emit("Um poço antigo de água fresquinha. Dá para encher o regador aqui.")
+		"board":
+			var lines := ["Quadro de avisos · %s" % Calendar.short_text(Game.day)]
+			if FishQuests.is_tournament_day():
+				lines.append("Hoje tem torneio de pesca!")
+			var req: Dictionary = FishQuests.request()
+			if not req.is_empty():
+				lines.append("Pedido do Fungo: " + str(req.get("text", "")))
+			if lines.size() == 1:
+				lines.append("Nenhum aviso novo hoje.")
+			Game.toast.emit("\n".join(lines))
+		"sign":
+			Game.toast.emit("← Fazenda %s" % Game.farm_name())
+		"windmill":
+			Game.toast.emit("O moinho gira devagar. Dizem que logo vai moer farinha.")
+		_:
+			Game.toast.emit("Casa de um morador. A porta está fechada.")
+
+
+const INN_PRICE := 40
+
+
 func _move_player(to: FarmWorld, pos: Vector2) -> void:
 	player.fishing.cancel()
 	player.get_parent().remove_child(player)
@@ -469,6 +581,8 @@ func save_now() -> void:
 		return     # não salvar o jogo antigo por cima enquanto recomeça
 	var data := world.serialize()
 	var pos := world.mine_entrance_pos if mine else player.position   # salvo na mina: volta pela entrada
+	if city:
+		pos = FarmWorld.CITY_RETURN                                    # salvo na cidade: volta pela estrada
 	if house:
 		Game.house["placeables"] = house.serialize_house()
 		pos = world.house_door.position + Vector2(0, 18)           # salvo em casa: volta na porta
