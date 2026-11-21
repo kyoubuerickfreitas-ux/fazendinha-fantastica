@@ -531,20 +531,34 @@ func _on_cargo_slot(i: int, from_cargo: bool) -> void:
 	_refresh_cargo()
 
 
-## A carga só pode ser vendida com a caçamba perto da caixa de vendas (a cidade vem depois).
+## A carga é vendida com a caçamba perto da caixa de vendas da fazenda ou da Feira da cidade
+## (que paga SHOP_BONUS a mais).
 func _cargo_value() -> Array:
 	var total := 0
 	var count := 0
+	var mult := SHOP_BONUS if _cargo_spot() == "market" else 1.0
 	for s in Trailer.items():
 		if s != null and ItemDB.get_item(s["id"]).get("type", "") in ["crop", "product", "fish"]:
-			total += ItemDB.sell_price(s["id"], int(s.get("q", 0))) * int(s["qty"])
+			total += int(round(ItemDB.sell_price(s["id"], int(s.get("q", 0))) * mult)) * int(s["qty"])
 			count += int(s["qty"])
 	return [total, count]
 
 
+## Onde a caçamba está para vender: "bin" (caixa da fazenda), "market" (Feira da cidade) ou "".
+func _cargo_spot() -> String:
+	var w: FarmWorld = player.world if player and player.world else world
+	if w == null or w.trailer == null:
+		return ""
+	var at := w.trailer.global_position
+	if w.sell_bin != null and at.distance_to(w.sell_bin.global_position) < 140.0:
+		return "bin"
+	if w is CityWorld and (w as CityWorld).doors.has("market") and at.distance_to((w as CityWorld).doors["market"]) < 170.0:
+		return "market"
+	return ""
+
+
 func _cargo_near_bin() -> bool:
-	return world != null and world.trailer != null and world.sell_bin != null \
-		and world.trailer.global_position.distance_to(world.sell_bin.global_position) < 140.0
+	return _cargo_spot() != ""
 
 
 func sell_cargo() -> void:
@@ -570,7 +584,8 @@ func _refresh_cargo() -> void:
 	var near := _cargo_near_bin()
 	_cargo_sell.disabled = not near or v[1] == 0
 	_cargo_info.text = "%d/%d espaços · vale %d moedas%s" % [used, Trailer.CARGO_SIZE, v[0],
-		"" if near else " (leve até a caixa de vendas para vender)"]
+		(" (na Feira: +20%)" if _cargo_spot() == "market" else "") if near
+		else " (leve até a caixa de vendas ou à Feira da cidade)"]
 	if Trailer.store == "chest":
 		_cargo_info.text = "%d/%d espaços" % [used, Trailer.CARGO_SIZE]
 

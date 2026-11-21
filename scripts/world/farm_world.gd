@@ -131,7 +131,12 @@ func generate(saved: Dictionary) -> void:
 				ground[y * W + x] = Ground.WATER
 	# caminhos
 	_path_rect(5, 7, 5, 12)
-	_path_rect(0, 12, 44, 12)          # vai até a borda oeste: estrada para a cidade
+	# estrada principal: vai até a borda leste (cidade), cruzando o rio por uma ponte
+	bridge_cells.clear()
+	for x in range(3, W):
+		if ground[12 * W + x] == Ground.WATER:
+			bridge_cells.append(Vector2i(x, 12))
+	_path_rect(3, 12, W - 1, 12)
 	_path_rect(30, 12, 30, 18)
 	_path_rect(14, 11, 14, 12)
 
@@ -193,9 +198,11 @@ func generate(saved: Dictionary) -> void:
 	_soil_layer.queue_redraw()
 
 
-## Estrada para a cidade: na borda oeste, na altura do caminho principal (linha 12).
-const CITY_GATE := Rect2(0, 11 * 32, 2 * 32, 3 * 32)
-const CITY_RETURN := Vector2(3 * 32 + 16, 12 * 32 + 20)    # onde você chega de volta da cidade
+## Estrada para a cidade: na borda leste, na altura do caminho principal (linha 12), depois da ponte.
+const CITY_GATE := Rect2(W * 32 - 70, 11 * 32, 70, 3 * 32)
+const CITY_RETURN := Vector2(W * 32 - 88, 12 * 32 + 20)    # onde você chega de volta da cidade
+const BRIDGE_TEX := preload("res://assets/sprites/bridge.png")   # tools/generate_bridge.py
+var bridge_cells: Array[Vector2i] = []
 
 
 ## Saída do mapa no ponto `pos` ("city" na estrada oeste da fazenda; "" em nenhuma).
@@ -203,13 +210,13 @@ func exit_at(pos: Vector2) -> String:
 	return "city" if region_id() == "farm" and CITY_GATE.has_point(pos) else ""
 
 
-## Tira o que estiver em cima do trecho novo da estrada (saves antigos) e as árvores grandes que
-## cobririam quem chega da cidade.
+## Tira o que estiver em cima do trecho novo da estrada (saves antigos) e as árvores grandes logo
+## abaixo dela, cuja copa cobriria o caminho para a cidade.
 func _clear_city_road() -> void:
-	for y in range(11, 18):         # árvores logo abaixo da estrada têm a copa sobre ela
-		for x in range(0, 7):
+	for y in range(11, 18):
+		for x in range(40, W):
 			var c := Vector2i(x, y)
-			if props.has(c) and (y >= 11 and x < 3 or (props[c].kind in TALL and props[c].kind != "pine")):
+			if props.has(c) and (y <= 12 or (props[c].kind in TALL and (props[c].kind != "pine" or x >= W - 3))):
 				props[c].queue_free()
 				props.erase(c)
 
@@ -318,27 +325,27 @@ func _build_static_scenery() -> void:
 	entities.add_child(npc)
 	blocked[npc_cell] = true
 
-	# placa no fim da estrada oeste: o caminho para a cidade (arte da cidade: tools/import_city.py)
+	# placa no fim da estrada leste: o caminho para a cidade (arte da cidade: tools/import_city.py)
 	var sign_body := StaticBody2D.new()
-	sign_body.position = Vector2(2.5 * TILE, 12 * TILE - 2)
+	sign_body.position = Vector2((W - 2.4) * TILE, 12 * TILE - 2)
 	var sgs := Sprite2D.new()
 	sgs.texture = load("res://assets/sprites/city/signpost.png")
 	sgs.position = Vector2(0, -sgs.texture.get_height() / 2.0)
 	sign_body.add_child(sgs)
 	_add_rect_collision(sign_body, Vector2(40, 10), Vector2(0, -5))
 	entities.add_child(sign_body)
-	for x in range(1, 4):
+	for x in range(W - 4, W):
 		blocked[Vector2i(x, 11)] = true
 	var sign_it := Interactable.new()
 	sign_it.label = "Placa"
 	sign_it.reach = 30.0
 	sign_it.position = sign_body.position + Vector2(0, 6)
-	sign_it.interacted.connect(func(_w): Game.toast.emit("← Cidade\nSiga a estrada até o fim."))
+	sign_it.interacted.connect(func(_w): Game.toast.emit("Cidade →\nAtravesse a ponte e siga a estrada até o fim."))
 	entities.add_child(sign_it)
 
 	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
 	# os moradores agora trabalham nas lojas da cidade (ShopWorld)
-	if Game.tractor.get("owned", false):
+	if Game.tractor.get("owned", false) and Game.tractor.get("where", "farm") == "farm":
 		var p := Vector2(float(Game.tractor["x"]), float(Game.tractor["y"]))
 		spawn_tractor(p if p != Vector2.ZERO else TRACTOR_PARK)
 
@@ -356,6 +363,7 @@ func spawn_tractor(pos: Vector2) -> Tractor:
 	tractor = t
 	Game.tractor["x"] = pos.x
 	Game.tractor["y"] = pos.y
+	Game.tractor["where"] = "city" if region_id() == "city" else "farm"
 	if Game.trailer.get("owned", false):
 		spawn_trailer(t)
 	return t
@@ -1653,8 +1661,12 @@ func _draw_ground() -> void:
 					t = T_WATER_BANK if y > 0 and ground[i - W] != Ground.WATER else T_WATER
 				_:
 					t = T_GRASS[variant[i]]
+			if bridge_cells.has(Vector2i(x, y)):
+				t = T_WATER
 			_ground_layer.draw_texture_rect_region(TILES_TEX,
 				Rect2(x * TILE, y * TILE, TILE, TILE), _tile_rect(t))
+	for b in bridge_cells:
+		_ground_layer.draw_texture(BRIDGE_TEX, Vector2(b.x * TILE, b.y * TILE - 6))
 
 
 func _setup_caustic() -> void:

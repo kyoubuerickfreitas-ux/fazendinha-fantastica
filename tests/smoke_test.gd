@@ -1447,12 +1447,21 @@ func _run() -> void:
 	assert(w.ground_at(w.cell_of(p.position)) != FarmWorld.Ground.WATER or p.position.y < wcell.y * 32 + 10,
 		"não dá para entrar na água")
 
-	# ---- cidade: a estrada oeste leva até lá; lojas por ramo; poço; volta pela estrada
+	# ---- cidade: a estrada leste (pela ponte) leva até lá; lojas por ramo; poço; volta pela estrada
 	main.hud.close_panel()
 	p.dismount()
-	p.position = Vector2(40, 12 * 32 + 16)
+	assert(not w.bridge_cells.is_empty(), "a estrada cruza o rio por uma ponte")
+	var bc: Vector2i = w.bridge_cells[0]
+	assert(w.ground_at(bc) != FarmWorld.Ground.WATER, "dá para andar na ponte")
+	p.position = w.cell_center(bc) + Vector2(-40, 0)
+	main.camera.reset_smoothing()
+	main.hud.visible = false
+	await _wait(0.3)
+	await _shot("58_ponte")
+	main.hud.visible = true
+	p.position = Vector2(w.W * 32 - 40, 12 * 32 + 16)
 	await _wait(2.2)
-	assert(main.city != null and p.world == main.city, "a estrada oeste leva à cidade")
+	assert(main.in_city and p.world == main.city, "a estrada leste leva à cidade")
 	assert(not w.visible, "a fazenda some enquanto você está na cidade")
 	var cw: CityWorld = main.city
 	assert(not cw.would_act("hoe", Vector2i(10, 25)) and not cw.would_act("axe", Vector2i(3, 3)), "na cidade não se ara nem se corta árvore")
@@ -1508,7 +1517,45 @@ func _run() -> void:
 	main.hud.visible = true
 	p.position = Vector2(40, 17 * 32)
 	await _wait(2.2)
-	assert(main.city == null and p.world == w and w.visible, "a estrada leva de volta à fazenda")
+	assert(not main.in_city and p.world == w and w.visible, "a estrada leva de volta à fazenda")
+	assert(p.position.x > w.W * 32 - 200, "volta no lado leste da fazenda")
+	main.hud.close_panel()
+	# de trator (com a caçamba): vai até a cidade dirigindo, estaciona lá e ele continua lá
+	if w.tractor == null:
+		w.spawn_tractor(p.position + Vector2(-60, 0))
+	var trac: Tractor = w.tractor
+	p.mount(trac)
+	assert(p.riding)
+	p.position = Vector2(w.W * 32 - 40, 12 * 32 + 16)
+	await _wait(2.2)
+	assert(main.in_city and p.riding and p.world == main.city, "dá para ir à cidade de trator")
+	if trac.trailer:
+		assert(main.city.entities.is_ancestor_of(trac.trailer), "a caçamba vai junto")
+	main.hud.visible = false
+	await _shot("59_trator_na_cidade")
+	main.hud.visible = true
+	p.position = main.city.cell_center(Vector2i(30, 18))
+	await _wait(0.2)
+	p.dismount()
+	assert(game.tractor["where"] == "city" and main.city.tractor == trac, "estacionado na cidade")
+	p.position = Vector2(40, 17 * 32)
+	await _wait(2.2)
+	assert(not main.in_city and is_instance_valid(trac), "a pé, o trator fica na cidade")
+	p.position = Vector2(w.W * 32 - 40, 12 * 32 + 16)
+	await _wait(2.2)
+	assert(main.in_city and is_instance_valid(trac) and trac.get_parent() == main.city.entities, "continua lá")
+	p.position = trac.position + Vector2(0, 20)
+	trac.mount_requested.emit()
+	assert(p.riding)
+	p.position = Vector2(40, 17 * 32)
+	await _wait(2.2)
+	assert(not main.in_city and p.riding and p.world == w, "volta para a fazenda dirigindo")
+	if trac.trailer:
+		assert(w.entities.is_ancestor_of(trac.trailer))
+	p.position = w.cell_center(Vector2i(42, 14))
+	await _wait(0.2)
+	p.dismount()
+	assert(game.tractor["where"] == "farm" and w.tractor == trac)
 	main.hud.close_panel()
 
 	# ---- arrastar itens: na mochila e da mochila para o armário/caçamba

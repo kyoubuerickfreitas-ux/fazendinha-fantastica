@@ -98,6 +98,8 @@ func generate(_saved: Dictionary) -> void:
 	for d in DECOR:
 		_add_decor(d[0], d[1], d[2])
 	_add_trees(rng)
+	if Game.tractor.get("owned", false) and Game.tractor.get("where", "farm") == "city":
+		spawn_tractor(Vector2(float(Game.tractor["x"]), float(Game.tractor["y"])))     # ficou estacionado aqui
 	_ground_layer.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
 	_ground_layer.modulate = CropDB.season(Game.season_id()).tint
 	_ground_layer.queue_redraw()

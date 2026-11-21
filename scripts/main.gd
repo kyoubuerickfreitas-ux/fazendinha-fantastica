@@ -10,7 +10,8 @@ var _resetting := false
 ## andar da mina em que o jogador está (null = na fazenda)
 var mine: MineWorld = null
 var house: HouseWorld = null
-var city: CityWorld = null
+var city: CityWorld = null       # criada na 1ª visita e guardada (o trator pode ficar estacionado lá)
+var in_city := false
 var shop: ShopWorld = null      # dentro de uma loja da cidade
 var _traveling := false
 var camera: Camera2D
@@ -458,18 +459,22 @@ func _physics_process(_delta: float) -> void:
 			exit_city()
 
 
-## Vai para a cidade pela estrada oeste (o trator fica estacionado na saída da fazenda).
+## Vai para a cidade pela estrada leste. Dirigindo, o trator (e a caçamba engatada) vão junto.
 func enter_city() -> void:
-	if city or mine or house:
+	if in_city or mine or house:
 		return
 	_traveling = true
-	player.dismount()
 	hud.fade_through(func():
-		city = CityWorld.new()
-		city.name = "City"
-		add_child(city)
-		city.generate({})
-		city.building_used.connect(_on_city_building)
+		if city == null:
+			city = CityWorld.new()
+			city.name = "City"
+			add_child(city)
+			city.generate({})
+			city.building_used.connect(_on_city_building)
+			city.trailer_open_requested.connect(func(): hud.open_cargo())
+		city.visible = true
+		city.process_mode = Node.PROCESS_MODE_INHERIT
+		in_city = true
 		_move_player(city, city.spawn_pos)
 		world.visible = false
 		world.process_mode = Node.PROCESS_MODE_DISABLED
@@ -480,20 +485,23 @@ func enter_city() -> void:
 		func(): _traveling = false)
 
 
-## Volta para a fazenda, no começo da estrada.
+## Volta para a fazenda, no fim da estrada (a cidade fica guardada, com o trator se ele ficou lá).
 func exit_city(silent := false) -> void:
-	if city == null:
+	if not in_city:
 		return
 	_traveling = true
 	var back := func():
 		world.visible = true
 		world.process_mode = Node.PROCESS_MODE_INHERIT
 		tutorial.visible = true
+		in_city = false
 		_move_player(world, FarmWorld.CITY_RETURN)
-		city.queue_free()
-		city = null
+		city.visible = false
+		city.process_mode = Node.PROCESS_MODE_DISABLED
 		_update_weather()
 	if silent:
+		if player.riding:
+			player.dismount()
 		back.call()
 		_traveling = false
 		return
@@ -559,12 +567,13 @@ const INN_PRICE := 40
 
 ## Entra numa loja da cidade (o morador atende das 6h às 20h).
 func enter_shop(kind: String) -> void:
-	if shop or city == null:
+	if shop or not in_city:
 		return
 	if Game.minutes < NPC.DAY_START or Game.minutes >= NPC.DAY_END:
 		var who := Villagers.get_npc(ShopWorld.KEEPERS[kind]).name
 		Game.toast.emit("Fechado. %s atende das 6h às 20h." % who)
 		return
+	player.dismount()            # o trator fica estacionado na frente da loja
 	Sound.play("door")
 	_traveling = true
 	hud.fade_through(func():
@@ -604,11 +613,21 @@ func exit_shop(silent := false) -> void:
 
 func _move_player(to: FarmWorld, pos: Vector2) -> void:
 	player.fishing.cancel()
+	var from := player.world
 	player.get_parent().remove_child(player)
 	to.entities.add_child(player)
 	player.world = to
 	player.position = pos
 	to.player = player
+	# dirigindo: a caçamba engatada vai junto para o outro mapa
+	if player.riding and player.tractor.trailer and from != to:
+		var tr: Trailer = player.tractor.trailer
+		tr.get_parent().remove_child(tr)
+		to.entities.add_child(tr)
+		to.trailer = tr
+		if from:
+			from.trailer = null
+		tr.follow(player.global_position, player.tractor.dir, 1.0)
 	var f := player.fishing
 	f.get_parent().remove_child(f)
 	to.add_child(f)
@@ -630,15 +649,17 @@ func save_now() -> void:
 		return     # não salvar o jogo antigo por cima enquanto recomeça
 	var data := world.serialize()
 	var pos := world.mine_entrance_pos if mine else player.position   # salvo na mina: volta pela entrada
-	if city:
+	if in_city:
 		pos = FarmWorld.CITY_RETURN                                    # salvo na cidade: volta pela estrada
 	if house:
 		Game.house["placeables"] = house.serialize_house()
 		pos = world.house_door.position + Vector2(0, 18)           # salvo em casa: volta na porta
 	data["player"] = [pos.x, pos.y]
-	if player.riding:            # dirigindo: o trator fica onde você está
-		Game.tractor["x"] = player.position.x
-		Game.tractor["y"] = player.position.y
+	if player.riding:            # dirigindo: o trator fica onde você está (na cidade: no fim da estrada da fazenda)
+		var tp := player.position if not in_city else FarmWorld.CITY_RETURN + Vector2(-40, 0)
+		Game.tractor["x"] = tp.x
+		Game.tractor["y"] = tp.y
+		Game.tractor["where"] = "farm"
 	Game.save_game(data)
 
 

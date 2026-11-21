@@ -211,7 +211,10 @@ func dismount() -> void:
 	t.set_mounted(false)
 	Game.tractor["x"] = t.position.x
 	Game.tractor["y"] = t.position.y
+	Game.tractor["where"] = "city" if world.region_id() == "city" else "farm"
 	world.tractor = t
+	if t.trailer:
+		world.trailer = t.trailer
 	_sprite.visible = true
 	_restore_sheet()
 	position += Vector2(30, 6) if _dir in [Dir.DOWN, Dir.UP] else Vector2(0, 22)
