@@ -11,6 +11,8 @@ var marked := false
 ## Se true, funciona mesmo com painéis abertos (para slots dentro da mochila).
 var works_in_panel := false
 var show_number := false
+## A arte da barra rápida já desenha o espaço: aqui só o conteúdo e o destaque do selecionado.
+var skin := false
 
 var _touch := -1
 
@@ -41,12 +43,24 @@ func _input(event: InputEvent) -> void:
 
 func _draw() -> void:
 	var r := Rect2(Vector2.ZERO, size)
-	var bg := UIStyle.SLOT_BG
-	draw_rect(r, UIStyle.WOOD_DARK)
-	draw_rect(r.grow(-2), UIStyle.WOOD_LIGHT if selected else UIStyle.WOOD)
-	draw_rect(r.grow(-4), bg)
-	if selected:
-		draw_rect(r.grow(-1), UIStyle.GREEN_LIGHT, false, 2.0)
+	if skin:
+		if selected:
+			var sb := StyleBoxFlat.new()
+			sb.draw_center = true
+			sb.bg_color = Color(0.6, 0.85, 0.3, 0.12)
+			sb.set_border_width_all(2)
+			sb.border_color = Color("a6dc4f")
+			sb.set_corner_radius_all(5)
+			sb.shadow_color = Color(0.65, 0.9, 0.3, 0.45)
+			sb.shadow_size = 3
+			draw_style_box(sb, r.grow(1))
+	else:
+		var bg := UIStyle.SLOT_BG
+		draw_rect(r, UIStyle.WOOD_DARK)
+		draw_rect(r.grow(-2), UIStyle.WOOD_LIGHT if selected else UIStyle.WOOD)
+		draw_rect(r.grow(-4), bg)
+		if selected:
+			draw_rect(r.grow(-1), UIStyle.GREEN_LIGHT, false, 2.0)
 	if marked:
 		draw_rect(r.grow(-1), Color("f2d16b"), false, 2.0)
 

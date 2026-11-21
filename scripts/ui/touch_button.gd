@@ -9,6 +9,10 @@ signal pressed
 @export var radius := 24.0
 @export var icon_scale := 2.0
 @export var icon_offset := Vector2.ZERO   # desloca o ícone dentro do botão
+## Arte do botão (madeira redonda da HUD). base_circle = onde fica o círculo na imagem (frações 0..1);
+## o círculo é desenhado do tamanho de `radius` (folhinhas e sombra podem passar para fora).
+var base_tex: Texture2D
+var base_circle := Rect2(0, 0, 1, 1)
 
 var _touch := -1
 var _down := false
@@ -44,11 +48,18 @@ func _input(event: InputEvent) -> void:
 func _draw() -> void:
 	var c := _center()
 	var off := Vector2(0, 2) if _down else Vector2.ZERO
-	draw_circle(c + Vector2(0, 3), radius, Color(0.1, 0.07, 0.05, 0.35))
-	draw_circle(c + off, radius, Color("765137"))
-	draw_circle(c + off, radius - 3, Color("a8784f") if not _down else Color("8e6340"))
-	draw_circle(c + off, radius - 6, Color("e9ddbb"))
-	draw_arc(c + off, radius, 0, TAU, 40, Color("2b2118"), 1.5)
+	if base_tex:
+		var ts := base_tex.get_size()
+		var cr := Rect2(base_circle.position * ts, base_circle.size * ts)
+		var k := radius * 2.0 / cr.size.x
+		var pos := c + off - (cr.position + cr.size / 2.0) * k
+		draw_texture_rect(base_tex, Rect2(pos, ts * k), false, Color(0.82, 0.78, 0.74) if _down else Color.WHITE)
+	else:
+		draw_circle(c + Vector2(0, 3), radius, Color(0.1, 0.07, 0.05, 0.35))
+		draw_circle(c + off, radius, Color("765137"))
+		draw_circle(c + off, radius - 3, Color("a8784f") if not _down else Color("8e6340"))
+		draw_circle(c + off, radius - 6, Color("e9ddbb"))
+		draw_arc(c + off, radius, 0, TAU, 40, Color("2b2118"), 1.5)
 	if icon:
 		var s := Vector2(16, 16) * icon_scale  # tamanho fixo, seja o ícone 16 ou 32 px
 		draw_texture_rect(icon, Rect2(c + off + icon_offset - s / 2.0, s), false)

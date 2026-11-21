@@ -4,6 +4,8 @@ extends Control
 ## Suporta multitoque (dá para andar e apertar botões ao mesmo tempo).
 
 const RADIUS := 34.0
+const BASE_TEX := preload("res://assets/sprites/ui/hud/joy_base.png")
+const KNOB_TEX := preload("res://assets/sprites/ui/hud/joy_knob.png")
 const KNOB := 15.0
 
 var _touch := -1
@@ -12,6 +14,7 @@ var _knob := Vector2.ZERO
 
 
 func _ready() -> void:
+	texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
@@ -56,9 +59,11 @@ func _update() -> void:
 func _draw() -> void:
 	var base := _base if _touch != -1 else _rest_position()
 	var knob := _knob if _touch != -1 else base
-	var a := 0.85 if _touch != -1 else 0.4
-	draw_circle(base, RADIUS + 4, Color(0.17, 0.13, 0.09, 0.35 * a))
-	draw_arc(base, RADIUS + 4, 0, TAU, 40, Color(0.91, 0.87, 0.73, 0.6 * a), 2.0)
-	draw_circle(knob, KNOB, Color(0.91, 0.87, 0.73, 0.75 * a))
-	draw_arc(knob, KNOB, 0, TAU, 28, Color(0.46, 0.32, 0.22, a), 2.0)
-	draw_circle(knob, 4, Color(0.47, 0.58, 0.36, a))
+	# arte de tools/import_hud.py: base de madeira com setas e o botão com a folhinha
+	var d := (RADIUS + 10.0) * 2.0
+	var tint := Color(1, 1, 1, 0.95 if _touch != -1 else 0.7)
+	var bs := BASE_TEX.get_size()
+	var bsz := Vector2(d, d * bs.y / bs.x)
+	draw_texture_rect(BASE_TEX, Rect2(base - bsz / 2.0, bsz), false, tint)
+	var kd := d * float(HudLayout.L["joy"]["knob_d"])
+	draw_texture_rect(KNOB_TEX, Rect2(knob - Vector2(kd, kd) / 2.0, Vector2(kd, kd)), false, tint)

@@ -453,7 +453,13 @@ static func icon(id: String) -> Texture2D:
 	return icon_index_texture(int(item.get("icon", 0)))
 
 
-static func ui_icon(name: String) -> AtlasTexture:
+## Ícone da interface. Clima, sol/lua e temperatura usam a arte nova (assets/sprites/ui/weather/) quando existe.
+static func ui_icon(name: String) -> Texture2D:
+	var path := "res://assets/sprites/ui/weather/%s.png" % ("day" if name == "sun" else name)
+	if not _tex_cache.has(path):
+		_tex_cache[path] = load(path) if ResourceLoader.exists(path) else null
+	if _tex_cache[path] != null:
+		return _tex_cache[path]
 	return icon_index_texture(int(UI_ICON.get(name, 0)))
 
 

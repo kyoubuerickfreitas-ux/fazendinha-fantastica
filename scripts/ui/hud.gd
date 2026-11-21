@@ -10,16 +10,18 @@ signal sleep_confirmed
 signal quit_confirmed
 
 
-const HAND_ICON := preload("res://assets/sprites/ui/hand.png")   # tools/import_ui_buttons.py
+const HAND_ICON := preload("res://assets/sprites/ui/hud/hand.png")   # tools/import_hud.py
+const SKIN := "res://assets/sprites/ui/hud/"
 var player: Player
 var world: FarmWorld
 
 var _root: Control
-var _health_bar: ProgressBar
-var _energy_bar: ProgressBar
+var _health_bar: HudBar
+var _energy_bar: HudBar
 var _money_label: Label
 var _time_label: Label
 var _time_icon: TextureRect
+var _date_label: Label
 var _weather_icon: TextureRect
 var _hotbar: Array[ItemSlot] = []
 var _use_btn: TouchButton
@@ -139,137 +141,153 @@ func _build_joystick() -> void:
 
 
 func _build_top_left() -> void:
-	var box := HBoxContainer.new()
-	box.position = Vector2(8, 8)
-	box.add_theme_constant_override("separation", 4)
+	var box := Control.new()
+	box.position = Vector2(4, 3)
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_root.add_child(box)
 	_blockers.append(box)
-
-	var portrait := PanelContainer.new()
-	portrait.add_theme_stylebox_override("panel", UIStyle.wood_panel())
-	var inner := PanelContainer.new()
-	var inner_style := UIStyle.panel(Color("526a23"), UIStyle.WOOD_DARK, 1, 4)
-	inner_style.set_content_margin_all(0)
-	inner_style.shadow_size = 0
-	inner.add_theme_stylebox_override("panel", inner_style)
+	# retrato: fundo + seu personagem + moldura por cima
+	var ptex: Texture2D = preload(SKIN + "portrait_frame.png")
+	var psize := ptex.get_size() * 0.5
+	var inner := HudLayout.rect("portrait", "inner", psize)
+	var bg := ColorRect.new()
+	bg.color = Color("4f6a2a")
+	bg.position = inner.position
+	bg.size = inner.size
+	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	box.add_child(bg)
 	var face := PlayerPortrait.new()       # rosto com a aparência escolhida
 	face.region = Rect2(16, 6, 32, 32)
-	face.custom_minimum_size = Vector2(36, 36)
+	face.position = inner.position
+	face.size = inner.size
 	face.clip_contents = true
 	Game.look_changed.connect(face.refresh)
-	inner.add_child(face)
-	portrait.add_child(inner)
-	box.add_child(portrait)
-
-	var bars := PanelContainer.new()
-	bars.add_theme_stylebox_override("panel", UIStyle.wood_panel())
-	var v := VBoxContainer.new()
-	v.add_theme_constant_override("separation", 3)
-	v.alignment = BoxContainer.ALIGNMENT_CENTER
-	bars.add_child(v)
-	_health_bar = _make_bar(v, "heart", Color("c8503c"))
-	_energy_bar = _make_bar(v, "bolt", Color("78945b"))
-	box.add_child(bars)
+	box.add_child(face)
+	box.add_child(_skin_rect(ptex, Vector2.ZERO, psize))
+	# vida e energia: o preenchimento vai dentro dos trilhos da arte
+	var btex: Texture2D = preload(SKIN + "bars.png")
+	var bsize := btex.get_size() * 0.5
+	var bpos := Vector2(psize.x + 1, (psize.y - bsize.y) / 2.0)
+	box.add_child(_skin_rect(btex, bpos, bsize))
+	_health_bar = _make_bar(box, HudLayout.rect("bars", "health", bsize), bpos, Color("e5493f"))
+	_energy_bar = _make_bar(box, HudLayout.rect("bars", "energy", bsize), bpos, Color("6cbf3a"))
+	box.size = Vector2(bpos.x + bsize.x, psize.y)
 	# bônus de comida ativos (some quando não há nenhum)
 	_buff_label = UIStyle.label("", 9, UIStyle.CREAM)
-	_buff_label.position = Vector2(10, 60)
+	_buff_label.position = Vector2(8, psize.y + 4)
 	_buff_label.add_theme_color_override("font_outline_color", UIStyle.WOOD_DARK)
 	_buff_label.add_theme_constant_override("outline_size", 4)
 	_root.add_child(_buff_label)
 	_build_tutorial_panel()
 
 
-func _make_bar(parent: Control, icon_name: String, color: Color) -> ProgressBar:
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 3)
-	var ic := TextureRect.new()
-	ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
-	ic.texture = ItemDB.ui_icon(icon_name)
-	ic.custom_minimum_size = Vector2(16, 16)
-	h.add_child(ic)
-	var bar := ProgressBar.new()
-	bar.custom_minimum_size = Vector2(84, 11)
-	bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.show_percentage = false
-	bar.add_theme_stylebox_override("fill", UIStyle.bar_fill(color))
-	h.add_child(bar)
-	parent.add_child(h)
+## Uma peça da HUD (arte de tools/import_hud.py) desenhada em `size` (metade do tamanho da imagem).
+func _skin_rect(tex: Texture2D, pos: Vector2, size: Vector2) -> TextureRect:
+	var t := TextureRect.new()
+	t.texture = tex
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_SCALE
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	t.position = pos
+	t.size = size
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	return t
+
+
+func _make_bar(parent: Control, r: Rect2, offset: Vector2, color: Color) -> HudBar:
+	var bar := HudBar.new()
+	bar.color = color
+	bar.position = offset + r.position
+	bar.size = r.size
+	bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(bar)
 	return bar
 
 
 func _build_top_right() -> void:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIStyle.wood_panel())
+	var tex: Texture2D = preload(SKIN + "topbar.png")
+	var size := tex.get_size() * 0.5
+	var panel := _skin_rect(tex, Vector2.ZERO, size)
 	panel.anchor_left = 1.0
 	panel.anchor_right = 1.0
-	panel.offset_right = -8
-	panel.offset_top = 8
-	panel.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.offset_left = -size.x - 4
+	panel.offset_right = -4
+	panel.offset_top = 3
+	panel.offset_bottom = 3 + size.y
 	_root.add_child(panel)
 	_blockers.append(panel)
 	_top_right = panel
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 5)
-	panel.add_child(h)
-
-	var coin := TextureRect.new()
-	coin.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	coin.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
-	coin.texture = ItemDB.ui_icon("coin")
-	coin.custom_minimum_size = Vector2(16, 16)
-	h.add_child(coin)
-	_money_label = UIStyle.outlined_label("0", 13)
-	_money_label.custom_minimum_size.x = 44
-	h.add_child(_money_label)
-	h.add_child(_vsep())
-	_time_icon = TextureRect.new()
-	_time_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_time_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
-	_time_icon.custom_minimum_size = Vector2(16, 16)
-	h.add_child(_time_icon)
-	_time_label = UIStyle.outlined_label("", 13)
-	h.add_child(_time_label)
-	h.add_child(_vsep())
-	_weather_icon = TextureRect.new()
-	_weather_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_weather_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED   # nunca distorcer o ícone
-	_weather_icon.custom_minimum_size = Vector2(16, 16)
-	h.add_child(_weather_icon)
+	_money_label = _panel_label(panel, HudLayout.rect("top", "money", size), 12)
+	_time_icon = _panel_icon(panel, HudLayout.rect("top", "time_icon", size))
+	_time_label = _panel_label(panel, HudLayout.rect("top", "time", size), 12)
+	_weather_icon = _panel_icon(panel, HudLayout.rect("top", "weather", size))
+	# estação, dia e temperatura logo abaixo do painel
+	_date_label = UIStyle.outlined_label("", 10)
+	_date_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	_date_label.anchor_left = 1.0
+	_date_label.anchor_right = 1.0
+	_date_label.offset_left = -size.x - 4
+	_date_label.offset_right = -40
+	_date_label.offset_top = 3 + size.y
+	_root.add_child(_date_label)
 
 
-func _vsep() -> Control:
-	var c := ColorRect.new()
-	c.color = UIStyle.WOOD_DARK
-	c.custom_minimum_size = Vector2(2, 14)
-	c.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	return c
+func _panel_label(parent: Control, r: Rect2, font_size: int) -> Label:
+	var l := UIStyle.outlined_label("", font_size)
+	l.position = r.position
+	l.size = r.size
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	parent.add_child(l)
+	return l
+
+
+func _panel_icon(parent: Control, r: Rect2) -> TextureRect:
+	var t := TextureRect.new()
+	t.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	t.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	t.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	t.position = r.position
+	t.size = r.size
+	t.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(t)
+	return t
 
 
 func _build_hotbar() -> void:
-	var panel := PanelContainer.new()
-	panel.add_theme_stylebox_override("panel", UIStyle.wood_panel())
+	var tex: Texture2D = preload(SKIN + "hotbar.png")
+	var size := tex.get_size() * 0.5
+	var panel := _skin_rect(tex, Vector2.ZERO, size)
 	panel.anchor_left = 0.5
 	panel.anchor_right = 0.5
 	panel.anchor_top = 1.0
 	panel.anchor_bottom = 1.0
-	panel.offset_bottom = -6
-	panel.grow_horizontal = Control.GROW_DIRECTION_BOTH
-	panel.grow_vertical = Control.GROW_DIRECTION_BEGIN
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.offset_left = -size.x / 2.0
+	panel.offset_right = size.x / 2.0
+	panel.offset_top = -size.y - 2
+	panel.offset_bottom = -2
 	_root.add_child(panel)
 	_blockers.append(panel)
-	var h := HBoxContainer.new()
-	h.add_theme_constant_override("separation", 3)
-	panel.add_child(h)
 	for i in Game.HOTBAR_SIZE:
-		var s := ItemSlot.new(i, 40)
+		var r := HudLayout.slot(i, size)
+		var s := ItemSlot.new(i, r.size.x)
+		s.skin = true                # o espaço já está desenhado na arte
 		s.show_number = true
+		s.position = r.position
+		s.custom_minimum_size = r.size
+		s.size = r.size
 		s.tapped.connect(func(idx): Game.select_slot(idx))
-		h.add_child(s)
+		panel.add_child(s)
 		_hotbar.append(s)
+
+
+## Botão redondo com a arte de madeira da HUD.
+func _skin_button(b: TouchButton, bag := false) -> void:
+	b.base_tex = preload(SKIN + "btn_bag.png") if bag else preload(SKIN + "btn_round.png")
+	var key := "bag" if bag else "button"
+	var f: Array = HudLayout.L[key]["circle"]
+	b.base_circle = Rect2(f[0], f[1], f[2] - f[0], f[3] - f[1])
+	b.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 
 
 func _build_buttons() -> void:
@@ -287,12 +305,14 @@ func _build_buttons() -> void:
 	_use_btn.radius = 30
 	_use_btn.position = Vector2(170 - 72, 150 - 70)
 	_use_btn.pressed.connect(func(): use_pressed.emit())
+	_skin_button(_use_btn)
 	area.add_child(_use_btn)
 
 	_hand_btn = TouchButton.new()
 	_hand_btn.radius = 22
 	_hand_btn.icon = HAND_ICON
-	_hand_btn.icon_scale = 1.7
+	_hand_btn.icon_scale = 1.55
+	_skin_button(_hand_btn)
 	_hand_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_hand_btn.position = Vector2(170 - 128, 150 - 52)
 	_hand_btn.pressed.connect(func(): interact_pressed.emit())
@@ -304,15 +324,14 @@ func _build_buttons() -> void:
 	_run_btn.icon = preload("res://assets/sprites/ui/foot.png")
 	_run_btn.icon_scale = 1.05
 	_run_btn.icon_offset = Vector2(3, 0)
+	_skin_button(_run_btn)
 	_run_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_run_btn.position = Vector2(170 - 172, 150 - 46)
 	area.add_child(_run_btn)
 
 	var bag := TouchButton.new()
 	bag.radius = 20
-	bag.icon = preload("res://assets/sprites/ui/backpack.png")   # arte de tools/import_ui_buttons.py
-	bag.icon_scale = 2.0
-	bag.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_skin_button(bag, true)      # a mochila já vem desenhada no botão (tools/import_hud.py)
 	bag.position = Vector2(170 - 62, 150 - 120)
 	bag.pressed.connect(toggle_backpack)
 	area.add_child(bag)
@@ -321,7 +340,8 @@ func _build_buttons() -> void:
 	_book_btn = TouchButton.new()
 	_book_btn.radius = 17
 	_book_btn.icon = preload("res://assets/sprites/ui/book.png")
-	_book_btn.icon_scale = 1.75
+	_book_btn.icon_scale = 1.5
+	_skin_button(_book_btn)
 	_book_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_book_btn.position = Vector2(170 - 108, 150 - 112)
 	_book_btn.pressed.connect(open_fish_book)
@@ -1470,7 +1490,8 @@ func _build_options() -> void:
 	_options_btn = TouchButton.new()
 	_options_btn.radius = 13
 	_options_btn.icon = ItemDB.ui_icon("gear")
-	_options_btn.icon_scale = 1.3
+	_options_btn.icon_scale = 1.2
+	_skin_button(_options_btn)
 	_options_btn.anchor_left = 1.0
 	_options_btn.anchor_right = 1.0
 	_options_btn.offset_left = -36
@@ -1635,7 +1656,8 @@ func _refresh_stats() -> void:
 
 
 func _refresh_time() -> void:
-	_time_label.text = "%s  %s  %d°" % [Calendar.short_text(Game.day), Game.clock_text(), int(Game.temperature)]
+	_time_label.text = Game.clock_text()
+	_date_label.text = "%s · %d°C" % [Calendar.short_text(Game.day), int(Game.temperature)]
 	_time_icon.texture = ItemDB.ui_icon("moon" if Game.is_night() else "sun")
 	_weather_icon.texture = ItemDB.ui_icon(Game.weather_data().icon)
 	_weather_icon.visible = true

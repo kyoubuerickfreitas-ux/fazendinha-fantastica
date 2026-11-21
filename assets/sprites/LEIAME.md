@@ -32,3 +32,9 @@ São gerados a partir das folhas originais em `assets/source/animals/` por `tool
 
 ## Fabricação e construção
 `craft/`: construções, máquinas, ícones e troféus. Arte definitiva importada de `assets/source/props_sheet.png` por `tools/import_props_sheet.py` (fundo verde, peças na ordem da lista ORDER), junto com as comidas (`food/`) e os itens de pesca (`fishing/`). Se rodar os geradores provisórios (`generate_craft_art.py`, `generate_food_art.py`, `generate_fishing_art.py`), rode o importador depois. Para trocar, substitua o PNG com o mesmo nome (o tamanho pode mudar; a base da imagem fica na base do objeto).
+
+## HUD
+`ui/hud/`: retrato, barras, painel de dinheiro/hora/clima, barra rápida, joystick e botões redondos, recortados do
+modelo `assets/source/hud_mockup.png` por `tools/import_hud.py` (que também gera `scripts/ui/hud_layout.gd` com a
+posição de cada coisa dentro das peças). `ui/weather/`: ícones de clima, sol/lua e temperatura
+(`tools/import_weather_icons.py`, de `assets/source/weather_sheet.png`).
