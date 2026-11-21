@@ -154,13 +154,13 @@ func generate(saved: Dictionary) -> void:
 			f.refresh()
 
 	_move_old_workbench()
-	_clear_city_road()
 
 	if saved.has("props"):
 		for p in saved["props"]:
 			_spawn_prop(str(p[0]), Vector2i(int(p[1]), int(p[2])), int(p[3]), int(p[4]) if p.size() > 4 else 0)
 	else:
 		_generate_props(rng)
+	_clear_city_road()
 
 	var has_grass := false
 	for c in props:
@@ -206,7 +206,7 @@ func exit_at(pos: Vector2) -> String:
 ## Tira o que estiver em cima do trecho novo da estrada (saves antigos) e as árvores grandes que
 ## cobririam quem chega da cidade.
 func _clear_city_road() -> void:
-	for y in range(8, 14):
+	for y in range(11, 18):         # árvores logo abaixo da estrada têm a copa sobre ela
 		for x in range(0, 7):
 			var c := Vector2i(x, y)
 			if props.has(c) and (y >= 11 and x < 3 or (props[c].kind in TALL and props[c].kind != "pine")):
@@ -317,6 +317,24 @@ func _build_static_scenery() -> void:
 	fungo = npc
 	entities.add_child(npc)
 	blocked[npc_cell] = true
+
+	# placa no fim da estrada oeste: o caminho para a cidade (arte da cidade: tools/import_city.py)
+	var sign_body := StaticBody2D.new()
+	sign_body.position = Vector2(2.5 * TILE, 12 * TILE - 2)
+	var sgs := Sprite2D.new()
+	sgs.texture = load("res://assets/sprites/city/signpost.png")
+	sgs.position = Vector2(0, -sgs.texture.get_height() / 2.0)
+	sign_body.add_child(sgs)
+	_add_rect_collision(sign_body, Vector2(40, 10), Vector2(0, -5))
+	entities.add_child(sign_body)
+	for x in range(1, 4):
+		blocked[Vector2i(x, 11)] = true
+	var sign_it := Interactable.new()
+	sign_it.label = "Placa"
+	sign_it.reach = 30.0
+	sign_it.position = sign_body.position + Vector2(0, 6)
+	sign_it.interacted.connect(func(_w): Game.toast.emit("← Cidade\nSiga a estrada até o fim."))
+	entities.add_child(sign_it)
 
 	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
 	# os moradores agora trabalham nas lojas da cidade (ShopWorld)
