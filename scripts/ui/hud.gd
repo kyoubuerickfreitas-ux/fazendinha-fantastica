@@ -471,7 +471,7 @@ func _build_cargo() -> void:
 	v.add_child(cols)
 	for which in ["bag", "cargo"]:
 		var col := VBoxContainer.new()
-		col.add_child(UIStyle.label("Mochila" if which == "bag" else "Carga", 12, UIStyle.WOOD))
+		col.add_child(UIStyle.label("Mochila" if which == "bag" else "Guardado", 12, UIStyle.WOOD))
 		var grid := GridContainer.new()
 		grid.columns = 6
 		grid.add_theme_constant_override("h_separation", 2)
@@ -499,7 +499,12 @@ func _build_cargo() -> void:
 	v.add_child(bar)
 
 
-func open_cargo() -> void:
+## store: "trailer" (caçamba) ou "chest" (baú de casa)
+func open_cargo(store := "trailer") -> void:
+	Trailer.store = store
+	var title: Label = (_cargo.get_child(0).get_child(0).get_child(0).get_child(0) as Node).get_child(0)
+	title.text = "Baú" if store == "chest" else "Caçamba"
+	_cargo_sell.visible = store == "trailer"
 	_open(_cargo)
 	_refresh_cargo()
 
@@ -515,7 +520,7 @@ func _on_cargo_slot(i: int, from_cargo: bool) -> void:
 			show_toast("As ferramentas ficam na mochila.")
 			return
 		if not Trailer.move_stack(Game.inventory, cargo, i):
-			show_toast("A caçamba está cheia.")
+			show_toast("Está cheio.")
 	_refresh_cargo()
 
 
@@ -559,6 +564,8 @@ func _refresh_cargo() -> void:
 	_cargo_sell.disabled = not near or v[1] == 0
 	_cargo_info.text = "%d/%d espaços · vale %d moedas%s" % [used, Trailer.CARGO_SIZE, v[0],
 		"" if near else " (leve até a caixa de vendas para vender)"]
+	if Trailer.store == "chest":
+		_cargo_info.text = "%d/%d espaços" % [used, Trailer.CARGO_SIZE]
 
 
 func _build_shop() -> void:

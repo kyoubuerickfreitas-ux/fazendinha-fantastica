@@ -68,6 +68,8 @@ var trailer := {"owned": false, "items": []}
 ## TESTES: trator e caçamba já vêm no jogo novo (e saves antigos ganham). Depois eles serão vendidos
 ## numa loja da cidade (HUD.buy_tractor / buy_trailer já existem); aí é só pôr false.
 const START_WITH_VEHICLES := true
+## Casa: baú (24 espaços) e objetos colocados dentro (aquários...).
+var house := {"chest": [], "placeables": []}
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -122,6 +124,7 @@ func reset_new_game() -> void:
 	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
 	tractor = {"owned": false, "x": 0.0, "y": 0.0}
 	trailer = {"owned": false, "items": []}
+	house = {"chest": [], "placeables": []}
 	if START_WITH_VEHICLES:
 		tractor["owned"] = true
 		trailer["owned"] = true
@@ -380,7 +383,7 @@ func save_game(world_data: Dictionary) -> void:
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
 		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
-		"profile": profile, "tractor": tractor, "trailer": trailer,
+		"profile": profile, "tractor": tractor, "trailer": trailer, "house": house,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -457,6 +460,19 @@ func load_game() -> Dictionary:
 	if START_WITH_VEHICLES:
 		tractor["owned"] = true
 		trailer["owned"] = true
+	var hs = data.get("house", {})
+	house = {"chest": [], "placeables": []}
+	if hs is Dictionary:
+		for s in hs.get("chest", []):
+			if s is Dictionary and ItemDB.has(str(s.get("id", ""))):
+				var it := {"id": str(s["id"]), "qty": int(s.get("qty", 1))}
+				if int(s.get("q", 0)) > 0:
+					it["q"] = int(s["q"])
+				house["chest"].append(it)
+			else:
+				house["chest"].append(null)
+		var pls = hs.get("placeables", [])
+		house["placeables"] = pls if pls is Array else []
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:

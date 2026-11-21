@@ -110,6 +110,17 @@ da energia: o anel azul em volta do botão mostra quanto sobra (~5 s de corrida)
 novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de recuperar um pouco. O prato com bônus
 "Fôlego" também faz a corrida durar mais.
 
+## Casa
+
+A porta da casa agora leva para dentro (com uma transição). Lá dentro: **cama** (dormir passa o dia e salva),
+**cozinha** com pia e fogão (cozinhar: o fogão não se fabrica mais), **armário** para guardar itens (24 espaços),
+sala com sofá, poltrona, mesinha, tapete e estante, quarto com criado-mudo. **Aquários só podem ser colocados
+dentro de casa** (ficam salvos). Sai pela porta do fundo. Música calma lá dentro.
+Arte: `tools/import_house_interior.py` (`assets/source/house_interior.png`); mundo: `scripts/world/house_world.gd`.
+
+Outras regras: a bancada fica ao lado da porta e não dá para arar em volta dela; tocar de mão vazia num
+canteiro vazio pergunta se quer desfazê-lo (volta a ser grama); água tem colisão.
+
 ## Trator
 
 Por enquanto (testes) o trator e a caçamba já vêm no jogo novo, estacionados ao lado da casa

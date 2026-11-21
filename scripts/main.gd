@@ -9,6 +9,7 @@ var tutorial: Tutorial
 var _resetting := false
 ## andar da mina em que o jogador está (null = na fazenda)
 var mine: MineWorld = null
+var house: HouseWorld = null
 var camera: Camera2D
 var daylight: CanvasModulate
 var weather_fx: WeatherFX
@@ -74,13 +75,13 @@ func _ready() -> void:
 
 	hud.use_pressed.connect(player.use_tool)
 	hud.interact_pressed.connect(player.interact)
-	world.house_door_used.connect(func():
-		Sound.play("door")
-		hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
+	world.house_door_used.connect(enter_house)
 	world.shop_requested.connect(_on_shop)
 	world.stove_used.connect(func(): hud.open_cooking())
 	world.villager_used.connect(_on_villager)
 	world.mine_entrance_used.connect(_on_mine_entrance)
+	world.untill_requested.connect(func(c: Vector2i):
+		hud.ask("Desfazer este canteiro?\n(volta a ser grama)", func(): world.untill(c)))
 	world.trailer_open_requested.connect(func(): hud.open_cargo())
 	hud.floor_chosen.connect(enter_mine)
 	Game.time_changed.connect(func(_d: int, m: int):
@@ -293,7 +294,7 @@ func _sleep(rested: bool) -> void:
 		for extra in [FishQuests.on_new_day(), tour_result, Cooking.check_unlocks(), Villagers.on_new_day()]:
 			if extra != "":
 				notes = extra if notes == "" else notes + "\n" + extra
-		player.position = world.player_start
+		player.position = house.bed_spot + Vector2(0, 24) if house else world.player_start
 		camera.reset_smoothing()
 		save_now()
 		var head := "%s · %d°C%s" % [Calendar.short_text(Game.day), int(Game.temperature),
@@ -312,6 +313,57 @@ func _on_mine_entrance() -> void:
 		hud.open_floor_chooser(Game.mine_deepest)     # elevador: a cada 5 andares
 	else:
 		enter_mine(1)
+
+
+# ------------------------------------------------------------------ casa
+## Entra em casa: o interior é um mundo à parte (como a mina).
+func enter_house() -> void:
+	if house:
+		return
+	player.dismount()
+	Sound.play("door")
+	hud.fade_through(func():
+		house = HouseWorld.new()
+		house.name = "House"
+		add_child(house)
+		house.generate({})
+		house.exit_used.connect(exit_house)
+		house.bed_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
+		house.chest_used.connect(func(): hud.open_cargo("chest"))
+		house.stove_used.connect(func(): hud.open_cooking())
+		_move_player(house, house.spawn_pos)
+		world.visible = false
+		world.process_mode = Node.PROCESS_MODE_DISABLED
+		tutorial.visible = false
+		_set_camera_free(true)
+		Game.bump("house_visits")
+		_update_weather())
+
+
+## Sai de casa pela porta (de volta à fazenda, na frente da porta).
+func exit_house() -> void:
+	if house == null:
+		return
+	Sound.play("door")
+	hud.fade_through(func():
+		Game.house["placeables"] = house.serialize_house()
+		world.visible = true
+		world.process_mode = Node.PROCESS_MODE_INHERIT
+		tutorial.visible = true
+		_move_player(world, world.house_door.position + Vector2(0, 18))
+		house.queue_free()
+		house = null
+		_set_camera_free(false)
+		_update_weather())
+
+
+## Dentro de casa a câmera não fica presa às bordas do mapa (o cômodo é menor que a tela).
+func _set_camera_free(free: bool) -> void:
+	camera.limit_left = -100000 if free else 0
+	camera.limit_top = -100000 if free else 0
+	camera.limit_right = 100000 if free else int(world.world_size().x)
+	camera.limit_bottom = 100000 if free else int(world.world_size().y)
+	camera.reset_smoothing()
 
 
 ## Vai para um andar da mina (da fazenda ou de outro andar).
@@ -386,6 +438,9 @@ func save_now() -> void:
 		return     # não salvar o jogo antigo por cima enquanto recomeça
 	var data := world.serialize()
 	var pos := world.mine_entrance_pos if mine else player.position   # salvo na mina: volta pela entrada
+	if house:
+		Game.house["placeables"] = house.serialize_house()
+		pos = world.house_door.position + Vector2(0, 18)           # salvo em casa: volta na porta
 	data["player"] = [pos.x, pos.y]
 	if player.riding:            # dirigindo: o trator fica onde você está
 		Game.tractor["x"] = player.position.x
@@ -411,7 +466,9 @@ func _update_daylight() -> void:
 	c = c * Game.weather_data().light
 	if mine:
 		c = Color(0.66, 0.6, 0.72)       # caverna: sempre na penumbra
-	Sound.update_scene(mine != null, Game.is_night(), Game.weather)
+	if house:
+		c = Color(1.0, 0.95, 0.88) if not Game.is_night() else Color(0.86, 0.76, 0.66)   # luz da lareira
+	Sound.update_scene(mine != null, Game.is_night(), Game.weather, house != null)
 	var tw := create_tween()
 	tw.tween_property(daylight, "color", c, 1.0)
 
@@ -423,7 +480,7 @@ func _build_rain() -> void:
 
 func _update_weather() -> void:
 	weather_fx.set_weather(Game.weather)
-	weather_fx.visible = mine == null       # não chove dentro da mina
+	weather_fx.visible = mine == null and house == null      # não chove dentro da mina nem de casa
 	_update_daylight()
 
 

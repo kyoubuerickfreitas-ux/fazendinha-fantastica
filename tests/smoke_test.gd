@@ -1095,8 +1095,6 @@ func _run() -> void:
 					game.fish_log["fish_silver"] = {"n": 3, "first": 1, "max_size": 9.0, "max_weight": 0.1}
 				"cooked":
 					game.dishes_cooked += 1
-				"stove":
-					game.add_item("stove", 1)
 		tut._update_step()
 		assert(int(game.tutorial["step"]) == i + 1 or game.tutorial["done"], "o passo %d deveria concluir" % i)
 	assert(game.tutorial["done"] and not main.hud._tut_panel.visible)
@@ -1330,6 +1328,58 @@ func _run() -> void:
 	game.load_game()
 	assert(game.tractor["owned"], "o trator fica salvo")
 	assert(game.trailer["owned"], "a caçamba fica salva")
+
+	# ---- bancada perto de casa, sem arar em volta; desfazer canteiro
+	var wb = w.placeables.filter(func(x): return x.kind == "workbench")[0]
+	assert(wb.origin == FarmWorld.WORKBENCH_AT, "a bancada começa ao lado da porta de casa")
+	assert(not w._is_free_grass(FarmWorld.WORKBENCH_AT + Vector2i(0, 1)), "não dá para arar em volta da bancada")
+	assert(ItemDB.RECIPES.filter(func(r): return r["result"] == "stove").is_empty(), "o fogão não se fabrica mais")
+	var tc := Vector2i(36, 20)
+	w.soil[tc] = Agri.new_cell(false)
+	var asked := [false]
+	var conn := func(_c): asked[0] = true
+	w.untill_requested.connect(conn)
+	w.interact_cell(tc)
+	w.untill_requested.disconnect(conn)
+	main.hud.close_panel()           # fecha a pergunta que o jogo abriu
+	assert(asked[0], "tocar de mão vazia num canteiro vazio pergunta se quer desfazer")
+	assert(w.untill(tc) and not w.soil.has(tc), "o canteiro volta a ser grama")
+	# aquário só dentro de casa
+	game.inventory[12] = {"id": "aquarium_small", "qty": 1}
+	game.select_slot(12)
+	assert(w._build("aquarium_small", Vector2i(36, 22)).contains("dentro de casa"))
+
+	# ---- casa: entrar, baú, colocar aquário, fogão, dormir na cama e sair
+	p.position = w.house_door.position + Vector2(0, 12)
+	await _wait(0.2)
+	assert(p.find_interactable() != null and p.find_interactable().label == "Entrar em casa")
+	p.interact()
+	await _wait(1.8)
+	var hw = main.house
+	assert(hw != null and p.world == hw and not w.visible, "entrou em casa")
+	await _shot("49_casa")
+	main.hud.open_cargo("chest")
+	game.inventory[13] = {"id": "wood", "qty": 7}
+	main.hud._on_cargo_slot(13, false)
+	assert(game.house["chest"][0]["id"] == "wood", "guardou no baú")
+	main.hud.close_panel()
+	var cell_in := HouseWorld.ROOM.position + Vector2i(4, 5)
+	p.position = hw.cell_center(cell_in + Vector2i(0, 1))
+	assert(hw.place("aquarium_small", cell_in) != null, "dentro de casa dá para pôr o aquário")
+	assert(hw.kitchen != null, "a cozinha (pia e fogão) já está em casa")
+	var opened := [false]
+	var c2 := func(): opened[0] = true
+	hw.stove_used.connect(c2)
+	hw.kitchen.interact(p)
+	assert(opened[0], "tocar no fogão abre a cozinha")
+	main.hud.close_panel()
+	main.save_now()
+	assert(game.house["placeables"].size() == 1, "o aquário de casa fica salvo")
+	hw.exit_used.emit()
+	await _wait(1.8)
+	assert(main.house == null and p.world == w and w.visible, "saiu de casa")
+	game.inventory[12] = null
+	game.inventory[13] = null
 
 	# ---- não dá para andar sobre a água (a pé)
 	var wcell := Vector2i(-1, -1)

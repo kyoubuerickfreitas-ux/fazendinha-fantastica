@@ -217,7 +217,6 @@ const RECIPES := [
 	{"result": "fence", "qty": 4, "cost": {"wood": 5}},
 	{"result": "stone_path", "qty": 4, "cost": {"stone": 3}},
 	{"result": "bait_fly", "qty": 2, "cost": {"fiber": 4, "wood": 1}},
-	{"result": "stove", "qty": 1, "cost": {"stone": 15, "wood": 10}},
 	{"result": "fert_fish", "qty": 3, "cost": {"any_fish": 1, "fiber": 2}},
 	{"result": "smoker", "qty": 1, "cost": {"wood": 20, "stone": 15}},
 	{"result": "aquarium_small", "qty": 1, "cost": {"wood": 8, "stone": 4}},

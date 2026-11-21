@@ -79,12 +79,22 @@ func follow(tractor_pos: Vector2, tractor_dir: int, delta: float) -> void:
 		roll(global_position.distance_to(before))
 
 
+## Qual guarda a janela de carga está mostrando: "trailer" (caçamba) ou "chest" (baú de casa).
+static var store := "trailer"
+
+
 static func items() -> Array:
-	var a = Game.trailer.get("items", [])
+	var owner_: Dictionary = Game.house if store == "chest" else Game.trailer
+	var key := "chest" if store == "chest" else "items"
+	var a = owner_.get(key, [])
 	if not (a is Array) or a.size() != CARGO_SIZE:
-		a = []
-		a.resize(CARGO_SIZE)
-		Game.trailer["items"] = a
+		var fixed := []
+		fixed.resize(CARGO_SIZE)
+		if a is Array:
+			for i in mini(a.size(), CARGO_SIZE):
+				fixed[i] = a[i]
+		a = fixed
+		owner_[key] = a
 	return a
 
 

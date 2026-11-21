@@ -32,6 +32,9 @@ signal stove_used
 signal villager_used(npc_id: String)
 signal mine_entrance_used
 signal workbench_used
+signal untill_requested(c: Vector2i)
+## Bancada logo à direita da porta de casa (saves antigos com a bancada em (11, 9) são mudados para cá)
+const WORKBENCH_AT := Vector2i(8, 9)
 signal baby_born(record: AnimalRecord)
 signal animal_card_requested(record: AnimalRecord)
 signal animal_list_requested(records: Array, title: String, building: Placeable)
@@ -136,11 +139,13 @@ func generate(saved: Dictionary) -> void:
 					pl.restore(d)
 	else:
 		# começo: bancada perto de casa e comedouro com feno no pasto
-		place("workbench", Vector2i(11, 9), true)
+		place("workbench", WORKBENCH_AT, true)
 		var f := place("feeder", Vector2i(PASTURE.position.x + 1, PASTURE.position.y), true)
 		if f:
 			f.hay = 10
 			f.refresh()
+
+	_move_old_workbench()
 
 	if saved.has("props"):
 		for p in saved["props"]:
@@ -229,7 +234,7 @@ func _build_static_scenery() -> void:
 			blocked[Vector2i(x, y)] = true
 
 	var door := Interactable.new()
-	door.label = "Dormir"
+	door.label = "Entrar em casa"
 	door.reach = 26.0
 	door.position = house.position + Vector2(-32, 6)     # porta no meio da arte (tools/import_buildings.py)
 	door.interacted.connect(func(_w): house_door_used.emit())
@@ -784,7 +789,14 @@ func count_animals(group: String) -> int:
 
 # =================================================================== construção
 ## Pode construir `kind` mirando a célula `target`? (célula de baixo, no meio)
+## Só dentro de casa (aquários).
+func indoor_only(kind: String) -> bool:
+	return ItemDB.PLACEABLES.get(kind, {}).has("aquarium")
+
+
 func can_place(kind: String, target: Vector2i) -> bool:
+	if indoor_only(kind) and not is_indoor():
+		return false
 	var r := Placeable.footprint(kind, target)
 	var pc := cell_of(player.position) if player else Vector2i(-99, -99)
 	var floor_obj: bool = ItemDB.PLACEABLES[kind].get("floor", false)
@@ -966,7 +978,48 @@ func soil_at(c: Vector2i) -> String:
 
 func _is_free_grass(c: Vector2i) -> bool:
 	return is_inside(c) and ground_at(c) == Ground.GRASS and not blocked.has(c) \
-		and not props.has(c) and not soil.has(c) and not occupied.has(c)
+		and not props.has(c) and not soil.has(c) and not occupied.has(c) and not near_workbench(c)
+
+
+## Em volta da bancada não dá para arar (o caminho até ela fica sempre livre).
+func near_workbench(c: Vector2i) -> bool:
+	for dy in range(-1, 2):
+		for dx in range(-1, 2):
+			var p = occupied.get(c + Vector2i(dx, dy))
+			if p != null and p.kind == "workbench":
+				return true
+	return false
+
+
+## Saves antigos: a bancada que começava longe da casa vem para perto da porta.
+func _move_old_workbench() -> void:
+	for p in placeables.duplicate():
+		if p.kind == "workbench" and _key(p) == "%d,%d" % [11, 9]:
+			for x in range(WORKBENCH_AT.x, WORKBENCH_AT.x + 2):
+				var c := Vector2i(x, WORKBENCH_AT.y)
+				if occupied.has(c) or blocked.has(c):
+					return
+				soil.erase(c)
+				if props.has(c):
+					props[c].queue_free()
+					props.erase(c)
+			for c in occupied.keys():
+				if occupied[c] == p:
+					occupied.erase(c)
+			placeables.erase(p)
+			p.queue_free()
+			place("workbench", WORKBENCH_AT, true)
+			return
+
+
+## Desfaz um canteiro vazio (volta a ser grama).
+func untill(c: Vector2i) -> bool:
+	if not soil.has(c) or (Agri.has_crop(soil[c]) and not Agri.is_dead(soil[c])):
+		return false
+	soil.erase(c)
+	FX.spawn(self, "till", _cell_center(c))
+	_soil_layer.queue_redraw()
+	return true
 
 
 ## Tipo de água: river (rio do nordeste), pond (laguinho do sul) ou lake.
@@ -1216,6 +1269,9 @@ func interact_cell(c: Vector2i) -> String:
 		_destroy_prop(prop)
 		return ""
 	if soil.has(c):
+		if not Agri.has_crop(soil[c]):
+			untill_requested.emit(c)        # canteiro vazio, de mão vazia: pergunta se quer desfazer
+			return ""
 		return Agri.describe(soil[c])
 	return ""
 
@@ -1227,7 +1283,14 @@ func can_interact_cell(c: Vector2i) -> bool:
 	return prop != null and prop.kind == "weed"
 
 
+## A casa (HouseWorld) devolve true.
+func is_indoor() -> bool:
+	return false
+
+
 func _build(kind: String, target: Vector2i) -> String:
+	if indoor_only(kind) and not is_indoor():
+		return "%s só pode ser colocado dentro de casa." % ItemDB.item_name(kind)
 	if not can_place(kind, target):
 		return "Não dá para construir aqui."
 	var r := Placeable.footprint(kind, target)

@@ -133,8 +133,12 @@ func _crossfade(players: Array[AudioStreamPlayer], cur: int, track: String, db: 
 
 
 ## Escolhe a música e o ambiente pelo lugar, hora e clima.
-func update_scene(in_mine: bool, night: bool, weather: String) -> void:
+func update_scene(in_mine: bool, night: bool, weather: String, in_house := false) -> void:
 	var wet := weather in ["rain", "heavy_rain", "storm"]
+	if in_house:
+		music("farm_night")          # a valsa calma; lá fora a chuva ainda se ouve baixinho
+		ambience("amb_rain" if wet else "")
+		return
 	if in_mine:
 		music("mine")
 		ambience("amb_cave")
