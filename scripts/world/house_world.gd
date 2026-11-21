@@ -389,11 +389,12 @@ func _process(_delta: float) -> void:
 		_pot = Sprite2D.new()
 		_pot.texture = POT_TEX
 		_pot.centered = false
+		_pot.flip_h = true          # cabo para a esquerda (à direita fica o armário)
 		_pot.z_index = 2
 		k.add_child(_pot)
 	_pot.visible = not Cooking.queue().is_empty()
 	var bob := 1.0 if cooking and fmod(Time.get_ticks_msec() / 260.0, 2.0) < 1.0 else 0.0
-	_pot.position = STOVE_OFFSET + Vector2(-12, -22 - bob)
+	_pot.position = STOVE_OFFSET + Vector2(-24, -22 - bob)   # virada: o corpo continua sobre a boca
 	_steam_t -= _delta
 	if Cooking.ready_count() > 0 and _steam_t <= 0.0:
 		_steam_t = 1.3
