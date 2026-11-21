@@ -125,6 +125,11 @@ com a mão para abrir a carga (24 espaços): toque num item para passar entre a 
 ficam na mochila). Perto da caixa de vendas dá para vender a carga toda de uma vez; quando a cidade existir,
 é lá que ela vai ser vendida. Arte: `assets/source/trailer.png` (mesmo importador).
 
+## Zoom da câmera
+
+Pinça com dois dedos no mapa (fora dos botões), rodinha do mouse no PC, ou o controle "Zoom" nas Opções.
+Vai de 0,75x (vê mais longe) até 2x (mais perto) e fica salvo no aparelho (user://settings.cfg).
+
 ## Mira
 
 - **Mira automática:** o botão de usar escolhe sozinho o alvo mais próximo em que a ferramenta da mão faz algo (machado → árvore, regador → terra seca, sementes → canteiro vazio...). A direção em que você anda desempata. O quadrado **verde** mostra o alvo; quadrado apagado = nada para fazer ali.

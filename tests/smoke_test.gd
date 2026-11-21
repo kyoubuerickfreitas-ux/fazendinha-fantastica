@@ -1298,6 +1298,7 @@ func _run() -> void:
 		await _shot("46_cacamba_%d_%d" % [int(dvec.x), int(dvec.y)])
 		var behind: Vector2 = p.global_position + Trailer.BEHIND[p.tractor.dir]
 		assert(w.trailer.global_position.distance_to(behind) < 12.0, "a caçamba segue atrás do trator")
+	assert(w.trailer._wheel > 0.0, "as rodas da caçamba giram quando ela é puxada")
 	# leva até a caixa de vendas e desce
 	p.position = w.sell_bin.position + Vector2(20, 40)
 	await _wait(0.4)
@@ -1338,7 +1339,34 @@ func _run() -> void:
 	assert(is_equal_approx(snd.music_volume, 0.4), "o controle muda o volume da música")
 	assert(is_equal_approx(db_to_linear(AudioServer.get_bus_volume_db(AudioServer.get_bus_index("Music"))), 0.4))
 	slider.value = mv0
+	# zoom da câmera: pelo controle das Opções e por pinça com dois dedos
+	var zs: HSlider = main.hud._options.find_child("Zoom", true, false)
+	zs.value = 1.5
+	assert(is_equal_approx(main.camera.zoom.x, 1.5), "o controle muda o zoom")
 	main.hud.close_panel()
+	await _wait(0.2)
+	await _shot("48_zoom")
+	main.set_zoom(1.0)
+	var t1 := InputEventScreenTouch.new()
+	t1.index = 5
+	t1.position = Vector2(300, 150)
+	t1.pressed = true
+	var t2 := InputEventScreenTouch.new()
+	t2.index = 6
+	t2.position = Vector2(340, 150)
+	t2.pressed = true
+	main._unhandled_input(t1)
+	main._unhandled_input(t2)
+	var dr := InputEventScreenDrag.new()
+	dr.index = 6
+	dr.position = Vector2(380, 150)
+	main._unhandled_input(dr)
+	assert(is_equal_approx(main.camera.zoom.x, 2.0), "a pinça aproxima (zoom %.2f)" % main.camera.zoom.x)
+	t1.pressed = false
+	t2.pressed = false
+	main._unhandled_input(t1)
+	main._unhandled_input(t2)
+	main.set_zoom(1.0)
 	snd.update_scene(false, false, "sunny")
 	assert(snd.current_music == "farm_day" and snd.current_ambience == "amb_birds")
 	snd.update_scene(false, true, "sunny")

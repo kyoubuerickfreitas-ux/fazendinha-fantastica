@@ -64,6 +64,9 @@ func _ready() -> void:
 		hud.ask("Pular o tutorial?\n(as dicas param de aparecer)", tutorial.skip))
 
 	hud.save_requested.connect(save_now)
+	hud.zoom_requested.connect(func(z): set_zoom(z))
+	_load_zoom()
+	hud.zoom_changed(zoom_level)
 	hud.new_game_requested.connect(_new_game)
 	hud.tutorial_restart_requested.connect(func():
 		Game.tutorial = {"step": 0, "base": -1, "done": false}
@@ -120,13 +123,73 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	# zoom: pinça com dois dedos no mapa, ou a rodinha do mouse
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			_touches[event.index] = event.position
+			if _touches.size() == 2:
+				_pinch_start = _pinch_dist()
+				_pinch_zoom = zoom_level
+				return
+		else:
+			_touches.erase(event.index)
+	if event is InputEventScreenDrag and _touches.has(event.index):
+		_touches[event.index] = event.position
+		if _touches.size() == 2 and _pinch_start > 10.0:
+			set_zoom(_pinch_zoom * _pinch_dist() / _pinch_start, false)
+		return
+	if event is InputEventMouseButton and event.pressed and Game.ui_lock == 0:
+		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+			set_zoom(zoom_level + 0.1)
+		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+			set_zoom(zoom_level - 0.1)
 	if event is InputEventScreenTouch and event.pressed:
-		_on_world_tap(event.position)
+		if _touches.size() == 1:
+			_on_world_tap(event.position)
 		return
 	if event.is_action_pressed("use_tool"):
 		player.use_tool()
 	elif event.is_action_pressed("interact"):
 		player.interact()
+
+
+# ------------------------------------------------------------------ zoom da câmera
+const ZOOM_MIN := 0.75
+const ZOOM_MAX := 2.0
+const SETTINGS := "user://settings.cfg"
+var zoom_level := 1.0
+var _touches := {}
+var _pinch_start := 0.0
+var _pinch_zoom := 1.0
+
+
+func _pinch_dist() -> float:
+	var p: Array = _touches.values()
+	return (p[0] as Vector2).distance_to(p[1])
+
+
+## Muda o zoom (1 = normal; maior = mais perto). Fica salvo no aparelho.
+func set_zoom(z: float, save := true) -> void:
+	zoom_level = clampf(z, ZOOM_MIN, ZOOM_MAX)
+	if camera:
+		camera.zoom = Vector2(zoom_level, zoom_level)
+	hud.zoom_changed(zoom_level)
+	if save:
+		save_zoom()
+
+
+func save_zoom() -> void:
+	var cfg := ConfigFile.new()
+	cfg.load(SETTINGS)
+	cfg.set_value("view", "zoom", zoom_level)
+	cfg.save(SETTINGS)
+
+
+func _load_zoom() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS) == OK:
+		zoom_level = clampf(float(cfg.get_value("view", "zoom", 1.0)), ZOOM_MIN, ZOOM_MAX)
+	camera.zoom = Vector2(zoom_level, zoom_level)
 
 
 # ------------------------------------------------------------------ toque no mundo

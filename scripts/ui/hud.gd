@@ -3,6 +3,7 @@ extends CanvasLayer
 ## Interface do jogo: status no topo, barra rápida e botões embaixo,
 ## joystick à esquerda e os painéis (mochila, loja, confirmação).
 
+signal zoom_requested(zoom: float)
 signal character_created(first_time: bool)
 signal use_pressed
 signal interact_pressed
@@ -1663,6 +1664,7 @@ func _build_options() -> void:
 	v.add_theme_constant_override("separation", 8)
 	v.add_child(_volume_row("Música", Sound.music_volume, Sound.set_music_volume, ""))
 	v.add_child(_volume_row("Efeitos", Sound.sfx_volume, Sound.set_sfx_volume, "harvest"))
+	v.add_child(_zoom_row())
 	var save := Button.new()
 	save.text = "Salvar agora"
 	save.pressed.connect(func():
@@ -1728,6 +1730,40 @@ func buy_trailer() -> void:
 	Sound.play("honk")
 	close_panel()
 	show_toast("A caçamba foi engatada no trator! Toque nela com a mão para guardar itens.")
+
+
+var _zoom_slider: HSlider
+var _zoom_pct: Label
+
+
+## Zoom da câmera nas Opções (também dá para fazer pinça com dois dedos no mapa).
+func _zoom_row() -> Control:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	var l := UIStyle.label("Zoom", 10, UIStyle.WOOD_DARK)
+	l.custom_minimum_size = Vector2(52, 0)
+	h.add_child(l)
+	_zoom_slider = HSlider.new()
+	_zoom_slider.min_value = 0.75
+	_zoom_slider.max_value = 2.0
+	_zoom_slider.step = 0.05
+	_zoom_slider.value = 1.0
+	_zoom_slider.custom_minimum_size = Vector2(170, 18)
+	_zoom_slider.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_zoom_slider.name = "Zoom"
+	h.add_child(_zoom_slider)
+	_zoom_pct = UIStyle.label("1,0x", 9, UIStyle.EARTH)
+	_zoom_pct.custom_minimum_size = Vector2(30, 0)
+	h.add_child(_zoom_pct)
+	_zoom_slider.value_changed.connect(func(x: float): zoom_requested.emit(x))
+	return h
+
+
+## Atualiza o controle quando o zoom muda (pinça, rodinha).
+func zoom_changed(z: float) -> void:
+	if _zoom_slider:
+		_zoom_slider.set_value_no_signal(z)
+		_zoom_pct.text = ("%.1fx" % z).replace(".", ",")
 
 
 ## Linha "Música  [-----o--]  80%" da janela de Opções.

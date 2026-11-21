@@ -37,7 +37,9 @@ def _is_tread(p):
     h, s_, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
     if v < 0.3:
         return True                         # contornos e frestas entre os gomos
-    return 0.03 <= h <= 0.13 and s_ > 0.35 and v < 0.85     # madeira
+    if 0.03 <= h <= 0.13 and s_ > 0.35 and v < 0.85:
+        return True                         # madeira
+    return (h < 0.03 or h > 0.97) and s_ > 0.5 and v < 0.6     # madeira avermelhada escura (caçamba), não o para-lama
 
 
 def _hub(im, hint):
