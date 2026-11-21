@@ -219,9 +219,9 @@ func _build_static_scenery() -> void:
 	house.position = Vector2(6 * TILE + TILE / 2, 7 * TILE + 4)
 	var hs := Sprite2D.new()
 	hs.texture = HOUSE_TEX
-	hs.position = Vector2(-23, -52)      # a porta (meio da arte) fica em frente ao caminho
+	hs.position = Vector2(-32, -52)      # a porta (meio da arte) fica em frente ao caminho
 	house.add_child(hs)
-	_add_rect_collision(house, Vector2(104, 30), Vector2(-21, -17))
+	_add_rect_collision(house, Vector2(104, 30), Vector2(-30, -17))
 	entities.add_child(house)
 	for y in range(3, 8):
 		for x in range(3, 9):
@@ -230,7 +230,7 @@ func _build_static_scenery() -> void:
 	var door := Interactable.new()
 	door.label = "Dormir"
 	door.reach = 26.0
-	door.position = house.position + Vector2(-20, 6)     # porta no meio da arte (tools/import_buildings.py)
+	door.position = house.position + Vector2(-32, 6)     # porta no meio da arte (tools/import_buildings.py)
 	door.interacted.connect(func(_w): house_door_used.emit())
 	house_door = door
 	entities.add_child(door)
