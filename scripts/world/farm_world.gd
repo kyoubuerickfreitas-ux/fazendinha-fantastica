@@ -214,23 +214,23 @@ func _build_mine_entrance() -> void:
 
 func _build_static_scenery() -> void:
 	_build_mine_entrance()
-	# casa (ocupa x 4..8, y 3..7). A porta fica à esquerda do centro.
+	# casa (ocupa x 4..8, y 3..7). A porta fica no meio.
 	var house := StaticBody2D.new()
 	house.position = Vector2(6 * TILE + TILE / 2, 7 * TILE + 4)
 	var hs := Sprite2D.new()
 	hs.texture = HOUSE_TEX
-	hs.position = Vector2(0, -52)
+	hs.position = Vector2(-23, -52)      # a porta (meio da arte) fica em frente ao caminho
 	house.add_child(hs)
-	_add_rect_collision(house, Vector2(104, 30), Vector2(2, -17))
+	_add_rect_collision(house, Vector2(104, 30), Vector2(-21, -17))
 	entities.add_child(house)
 	for y in range(3, 8):
-		for x in range(4, 9):
+		for x in range(3, 9):
 			blocked[Vector2i(x, y)] = true
 
 	var door := Interactable.new()
 	door.label = "Dormir"
 	door.reach = 26.0
-	door.position = house.position + Vector2(-20, 6)
+	door.position = house.position + Vector2(-20, 6)     # porta no meio da arte (tools/import_buildings.py)
 	door.interacted.connect(func(_w): house_door_used.emit())
 	house_door = door
 	entities.add_child(door)
