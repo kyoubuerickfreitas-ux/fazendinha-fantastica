@@ -2,16 +2,23 @@ class_name Tractor
 extends Node2D
 ## Trator: fica estacionado no mapa; toque com a mão para subir. Com o jogador em cima, vira filho do
 ## jogador (scripts/player/player.gd: mount/dismount), mostra o personagem sentado na cabine e anda bem
-## mais rápido. Arte: tools/import_tractor.py (4 direções: 0 baixo, 1 esquerda, 2 direita, 3 cima).
+## mais rápido. Arte: tools/import_tractor.py. 8 direções: 0 baixo, 1 esquerda, 2 direita, 3 cima,
+## 4 baixo-esquerda, 5 baixo-direita, 6 cima-esquerda, 7 cima-direita.
 
 const TRAILER_DIR := 0
 const TEX := [preload("res://assets/sprites/tractor/down.png"), preload("res://assets/sprites/tractor/left.png"),
-	preload("res://assets/sprites/tractor/right.png"), preload("res://assets/sprites/tractor/up.png")]
+	preload("res://assets/sprites/tractor/right.png"), preload("res://assets/sprites/tractor/up.png"),
+	preload("res://assets/sprites/tractor/down_left.png"), preload("res://assets/sprites/tractor/down_right.png"),
+	preload("res://assets/sprites/tractor/up_left.png"), preload("res://assets/sprites/tractor/up_right.png")]
+## Quadro do personagem usado em cada direção (as diagonais usam o de frente ou o de costas)
+const RIDER_FACE := [0, 1, 2, 3, 0, 0, 3, 3]
 const PLAYER_SHEET := preload("res://assets/sprites/player.png")
 ## Personagem sentado (desenhado por cima do banco): canto de cima do recorte em relação à base do trator,
 ## e quais linhas do quadro parado aparecem (cabeça e ombros), por direção (0 baixo, 1 esquerda, 2 direita, 3 cima)
-const RIDER_POS := [Vector2(-32, -46), Vector2(-25, -46), Vector2(-39, -46), Vector2(-32, -47)]
-const RIDER_ROWS := [Vector2i(10, 29), Vector2i(10, 30), Vector2i(10, 30), Vector2i(10, 26)]
+const RIDER_POS := [Vector2(-32, -46), Vector2(-25, -46), Vector2(-39, -46), Vector2(-32, -47),
+	Vector2(-26, -39), Vector2(-38, -39), Vector2(-27, -34), Vector2(-37, -34)]
+const RIDER_ROWS := [Vector2i(10, 29), Vector2i(10, 30), Vector2i(10, 30), Vector2i(10, 26),
+	Vector2i(10, 26), Vector2i(10, 26), Vector2i(10, 23), Vector2i(10, 23)]
 
 signal mount_requested
 
@@ -79,7 +86,7 @@ func set_dir(d: int) -> void:
 	_sprite.position = Vector2(-t.get_width() / WHEEL_FRAMES / 2.0, -t.get_height() + 2 + _bob)
 	_rider.position = RIDER_POS[d] + Vector2(0, _bob)
 	var rows: Vector2i = RIDER_ROWS[d]
-	var cut := Rect2(0, d * 64 + rows.x, 64, rows.y - rows.x)
+	var cut := Rect2(0, RIDER_FACE[d] * 64 + rows.x, 64, rows.y - rows.x)
 	_rider.z_index = 1
 	_rider.region_rect = cut
 	_rider_hair.region_rect = cut

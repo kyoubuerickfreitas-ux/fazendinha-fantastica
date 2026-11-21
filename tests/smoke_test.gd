@@ -38,6 +38,7 @@ func _run() -> void:
 	var main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main)
 	await _wait(0.5)
+	main.set_zoom(1.0)      # o zoom fica salvo no aparelho: o teste sempre começa no normal
 	# ---- criação de personagem (jogo novo)
 	var ccr = main.hud._root.get_node_or_null("CharacterCreator")
 	assert(ccr != null and game.ui_lock == 1, "jogo novo abre a criação de personagem")
@@ -1273,6 +1274,11 @@ func _run() -> void:
 		game.joystick_vector = Vector2.ZERO
 		await _wait(0.1)
 		await _shot("45_trator_%d_%d" % [int(dvec.x), int(dvec.y)])
+	game.joystick_vector = Vector2(1, 1).normalized()       # diagonal: vista em 3/4
+	await _wait(0.25)
+	assert(p.tractor.dir == 5, "na diagonal o trator usa a vista diagonal (dir %d)" % p.tractor.dir)
+	game.joystick_vector = Vector2.ZERO
+	await _wait(0.1)
 	var tp: Vector2 = p.position
 	game.joystick_vector = Vector2(1, 0)
 	await _wait(0.4)

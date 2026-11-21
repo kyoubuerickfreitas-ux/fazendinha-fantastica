@@ -176,7 +176,43 @@ def import_sheet(src, views, prefix, scale=SCALE, wheels=()):
         print(prefix + name, strip.size)
 
 
+# ------------------------------------------------------------------ diagonais (assets/source/tractor_iso.png)
+ISO_SRC = os.path.join(ROOT, "assets", "source", "tractor_iso.png")
+# direções do trator: down_right, down_left, up_right, up_left; a caçamba diagonal tem engate nos dois lados
+ISO_TRACTOR = {"down_right": (181, 23, 569, 394), "down_left": (801, 23, 1164, 394),
+               "up_right": (180, 398, 541, 698), "up_left": (809, 399, 1170, 706)}
+ISO_TRAILER = {"down_left": (129, 696, 546, 980), "up_right": (129, 696, 546, 980),
+               "down_right": (794, 704, 1231, 988), "up_left": (794, 704, 1231, 988)}
+
+
+def import_iso(boxes, prefix, scale):
+    """Diagonais: as rodas ficam em perspectiva, então não giram (a tira tem FRAMES quadros iguais)."""
+    im = key_flood(Image.open(ISO_SRC).convert("RGBA"))
+    px = im.load()
+    for y in range(im.height):          # verde de fundo preso dentro da cabine
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a and g > 170 and g - max(r, b) > 80:
+                px[x, y] = (0, 0, 0, 0)
+    for name, box in boxes.items():
+        p = im.crop(box)
+        p = p.crop(p.getbbox())
+        small = p.resize((round(p.width * scale), round(p.height * scale)), Image.LANCZOS)
+        sp = small.load()
+        for y in range(small.height):
+            for x in range(small.width):
+                r, g, b, a = sp[x, y]
+                sp[x, y] = (r, g, b, 255) if a >= 110 else (0, 0, 0, 0)
+        strip = Image.new("RGBA", (small.width * FRAMES, small.height), (0, 0, 0, 0))
+        for k in range(FRAMES):
+            strip.paste(small, (k * small.width, 0))
+        strip.save(os.path.join(OUT, prefix + name + ".png"))
+        print(prefix + name, small.size)
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     import_sheet(SRC, VIEWS, "", SCALE, TRACTOR_WHEELS)
     import_sheet(SRC, TRAILER_VIEWS, "trailer_", 0.105, TRAILER_WHEELS)
+    import_iso(ISO_TRACTOR, "", 0.14)
+    import_iso(ISO_TRAILER, "trailer_", 0.115)

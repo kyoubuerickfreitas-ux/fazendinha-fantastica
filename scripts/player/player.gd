@@ -45,6 +45,7 @@ var _dir := Dir.DOWN
 var _anim_t := 0.0
 var _busy := 0.0
 var running := false
+var _dir8 := -1              # direção do trator (8 direções, Tractor.TEX)
 var riding := false
 var tractor: Tractor          # o trator em que está (filho do jogador enquanto dirige)
 var _engine: AudioStreamPlayer
@@ -111,12 +112,13 @@ func _physics_process(delta: float) -> void:
 
 	if riding:
 		if v.length() > 0.15:
+			_dir8 = dir8_of(v)
 			facing = v.normalized()
 			if abs(v.x) > abs(v.y) * 1.1:
 				_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
 			else:
 				_dir = Dir.DOWN if v.y > 0 else Dir.UP
-		tractor.set_dir(_dir)
+		tractor.set_dir(_dir8 if v.length() > 0.15 or _dir8 >= 0 else _dir)
 		tractor.shake(v.length() > 0.15, delta)
 		_engine.pitch_scale = lerpf(_engine.pitch_scale, 1.3 if v.length() > 0.15 else 0.9, delta * 4.0)
 	elif not _action.is_empty() or _holding_rod:
@@ -161,6 +163,12 @@ func _update_run(v: Vector2, delta: float) -> void:
 
 
 # ------------------------------------------------------------------ trator
+## 8 direções para o trator: 0 baixo, 1 esquerda, 2 direita, 3 cima, 4 baixo-esq., 5 baixo-dir., 6 cima-esq., 7 cima-dir.
+static func dir8_of(v: Vector2) -> int:
+	var a := fposmod(rad_to_deg(v.angle()), 360.0)     # 0 = direita, 90 = baixo
+	var sector := int(round(a / 45.0)) % 8
+	return [2, 5, 0, 4, 1, 6, 3, 7][sector]
+
 ## Sobe no trator: ele passa a andar junto (filho do jogador) e o personagem aparece sentado.
 func mount(t: Tractor) -> void:
 	if riding or (fishing and fishing.is_active()):
@@ -171,7 +179,8 @@ func mount(t: Tractor) -> void:
 	t.get_parent().remove_child(t)
 	add_child(t)
 	t.position = Vector2.ZERO
-	t.set_dir(_dir)
+	_dir8 = t.dir
+	t.set_dir(_dir8)
 	t.set_mounted(true, _look_mat, PlayerLook.hair_texture(Game.look(), false), PlayerLook.hair_color(Game.look()))
 	_sprite.visible = false
 	if _engine == null:

@@ -8,9 +8,14 @@ const CARGO_SIZE := 24
 const TEX := {0: preload("res://assets/sprites/tractor/trailer_down.png"),
 	1: preload("res://assets/sprites/tractor/trailer_left.png"),
 	2: preload("res://assets/sprites/tractor/trailer_right.png"),
-	3: preload("res://assets/sprites/tractor/trailer_up.png")}
+	3: preload("res://assets/sprites/tractor/trailer_up.png"),
+	4: preload("res://assets/sprites/tractor/trailer_down_left.png"),
+	5: preload("res://assets/sprites/tractor/trailer_down_right.png"),
+	6: preload("res://assets/sprites/tractor/trailer_up_left.png"),
+	7: preload("res://assets/sprites/tractor/trailer_up_right.png")}
 ## Onde fica, em relação à base do trator, conforme a direção do trator (0 baixo, 1 esquerda, 2 direita, 3 cima)
-const BEHIND := {0: Vector2(0, -30), 1: Vector2(60, 2), 2: Vector2(-60, 2), 3: Vector2(0, 30)}
+const BEHIND := {0: Vector2(0, -30), 1: Vector2(60, 2), 2: Vector2(-60, 2), 3: Vector2(0, 30),
+	4: Vector2(36, -20), 5: Vector2(-36, -20), 6: Vector2(36, 18), 7: Vector2(-36, 18)}
 
 signal open_requested
 
