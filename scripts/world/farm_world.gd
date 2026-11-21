@@ -62,6 +62,13 @@ var player_start := Vector2.ZERO
 
 var _ground_layer := Node2D.new()
 var _soil_layer := Node2D.new()
+## Luz dançando no fundo da água (cáustica: assets/fx/caustic/1..10.png, emenda nas bordas).
+const CAUSTIC_FRAMES := 10
+const CAUSTIC_FPS := 8.0
+const CAUSTIC_ALPHA := 0.3
+var _caustic := Node2D.new()
+var _caustic_tex: Array[Texture2D] = []
+var _caustic_frame := 0
 var _cursor := Node2D.new()
 var _cursor_cell := Vector2i(-1, -1)
 var _cursor_visible := false
@@ -75,6 +82,7 @@ func _ready() -> void:
 	_soil_layer.z_index = -9
 	_cursor.z_index = -8
 	add_child(_ground_layer)
+	_setup_caustic()
 	add_child(_soil_layer)
 	add_child(_cursor)
 	_ground_layer.draw.connect(_draw_ground)
@@ -1604,6 +1612,41 @@ func _draw_ground() -> void:
 					t = T_GRASS[variant[i]]
 			_ground_layer.draw_texture_rect_region(TILES_TEX,
 				Rect2(x * TILE, y * TILE, TILE, TILE), _tile_rect(t))
+
+
+func _setup_caustic() -> void:
+	for i in CAUSTIC_FRAMES:
+		_caustic_tex.append(load("res://assets/fx/caustic/%d.png" % (i + 1)))
+	_caustic.z_index = -10                      # logo acima do chão (desenhado depois dele)
+	_caustic.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
+	_caustic.modulate = Color(1, 1, 1, CAUSTIC_ALPHA)
+	var mat := CanvasItemMaterial.new()
+	mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	_caustic.material = mat
+	add_child(_caustic)
+	_caustic.draw.connect(_draw_caustic)
+	var t := Timer.new()
+	t.wait_time = 1.0 / CAUSTIC_FPS
+	t.autostart = true
+	add_child(t)
+	t.timeout.connect(func():
+		_caustic_frame = (_caustic_frame + 1) % CAUSTIC_FRAMES
+		_caustic.queue_redraw())
+
+
+## Desenha a cáustica só sobre a água (no tile de margem, só abaixo da borda de terra).
+func _draw_caustic() -> void:
+	if ground.is_empty():
+		return
+	var tex := _caustic_tex[_caustic_frame]
+	for y in H:
+		for x in W:
+			var i := y * W + x
+			if ground[i] != Ground.WATER:
+				continue
+			var top := 9 if y > 0 and ground[i - W] != Ground.WATER else 0
+			var r := Rect2(x * TILE, y * TILE + top, TILE, TILE - top)
+			_caustic.draw_texture_rect_region(tex, r, r)
 
 
 func _crop_texture(id: String) -> Texture2D:
