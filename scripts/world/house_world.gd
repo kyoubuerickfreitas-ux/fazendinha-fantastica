@@ -21,7 +21,6 @@ var kitchen: Interactable      # a bancada com pia e fogão (cozinhar)
 var _floor: Texture2D
 var _wall: Texture2D
 var _side: Texture2D
-var _rug: Texture2D
 var _win: Texture2D
 var _door: Texture2D
 
@@ -57,7 +56,6 @@ func generate(_saved: Dictionary) -> void:
 	_floor = load(DIR + "floor_big.png")
 	_wall = load(DIR + "wall_plain.png")
 	_side = load(DIR + "wall_side.png")
-	_rug = load(DIR + "rug.png")              # carregar aqui (não dentro do desenho: saía branco)
 	_win = load(DIR + "wall_window.png")
 	_door = load(DIR + "door.png")
 	ground.resize(W * H)
@@ -78,30 +76,20 @@ func generate(_saved: Dictionary) -> void:
 	_add_rect_collision(body, Vector2(32, rs.y), rp + Vector2(-16, rs.y / 2.0))                # esquerda
 	_add_rect_collision(body, Vector2(32, rs.y), rp + Vector2(rs.x + 16, rs.y / 2.0))          # direita
 
-	# móveis (arte de tools/import_house_interior.py)
+	# porta (fixa) e móveis (podem ser mudados de lugar no modo decorar)
 	var door := _use_point(DOOR_CELL, "Sair de casa")
 	door.interacted.connect(func(_w): exit_used.emit())
-	_furniture("bookshelf", Vector2i(21, 14), Vector2i(1, 1))
-	_furniture("kitchen", Vector2i(23, 14), Vector2i(3, 1))
-	kitchen = _use_point(Vector2i(24, 14), "Cozinhar")
-	kitchen.interacted.connect(func(_w): stove_used.emit())
-	_furniture("cupboard", Vector2i(26, 14), Vector2i(1, 1))
-	var ch := _use_point(Vector2i(26, 14), "Abrir o armário")
-	ch.interacted.connect(func(_w): chest_used.emit())
-	_furniture("nightstand", Vector2i(29, 14), Vector2i(1, 1))
-	_furniture("bed", Vector2i(30, 14), Vector2i(2, 2))
-	bed_spot = cell_center(Vector2i(30, 16))
-	var b := _use_point(Vector2i(30, 16), "Dormir")
-	b.position.y -= 14
-	b.interacted.connect(func(_w): bed_used.emit())
-	_furniture("sofa", Vector2i(20, 17), Vector2i(3, 1))
-	_furniture("coffee_table", Vector2i(21, 19), Vector2i(1, 1))
-	_furniture("armchair", Vector2i(23, 19), Vector2i(1, 1))
-	_furniture("tv_side", Vector2i(18, 19), Vector2i(1, 1))
-	_furniture("side_table", Vector2i(27, 18), Vector2i(2, 1))
-	_furniture("crate", Vector2i(31, 19), Vector2i(1, 1))
-	_furniture("plant_pot", Vector2i(18, 21), Vector2i(1, 1))
-	_furniture("flower_box", Vector2i(31, 21), Vector2i(1, 1))
+	var layout: Dictionary = Game.house.get("layout", {})
+	for id in DEFAULT_LAYOUT:
+		var d: Array = DEFAULT_LAYOUT[id]
+		var sv = layout.get(id)
+		var cell := Vector2i(int(d[1]), int(d[2]))
+		var view := 0
+		if sv is Array and sv.size() >= 3:
+			cell = Vector2i(int(sv[0]), int(sv[1]))
+			view = int(sv[2])
+		_add_furniture(id, str(d[0]), cell, view)
+	_rebuild_blocked()
 	# objetos que você colocou aqui dentro
 	for d in Game.house.get("placeables", []):
 		if d is Dictionary and ItemDB.PLACEABLES.has(str(d.get("kind", ""))) and str(d["kind"]) != "stove":
@@ -112,25 +100,211 @@ func generate(_saved: Dictionary) -> void:
 	_ground_layer.queue_redraw()
 
 
-## Móvel: sprite com a base na base das células (centrado nelas); bloqueia as células (block=false: só enfeite).
-func _furniture(name_: String, cell: Vector2i, size: Vector2i, block := true) -> Sprite2D:
-	var s := Sprite2D.new()
-	s.texture = load(DIR + name_ + ".png")
-	s.centered = false
-	var foot := Vector2(cell * TILE) + Vector2(size.x * TILE / 2.0, size.y * TILE)
-	s.position = Vector2(-s.texture.get_width() / 2.0, -s.texture.get_height() + 2)
-	var holder := Node2D.new()          # o nó fica na base (para ordenar por Y com o jogador)
-	holder.position = foot
-	holder.add_child(s)
-	entities.add_child(holder)
-	if block:
-		for y in range(cell.y, cell.y + size.y):
-			for x in range(cell.x, cell.x + size.x):
-				blocked[Vector2i(x, y)] = true
+## Móveis da casa: id -> [peça, x, y]. Peças em PIECES.
+const DEFAULT_LAYOUT := {
+	"bookshelf": ["bookshelf", 21, 14], "kitchen": ["kitchen", 23, 14], "cupboard": ["cupboard", 26, 14],
+	"nightstand": ["nightstand", 29, 14], "bed": ["bed", 30, 14], "sofa": ["sofa", 20, 17],
+	"rug": ["rug", 20, 19], "coffee_table": ["coffee_table", 21, 19], "armchair": ["armchair", 23, 19],
+	"tv": ["tv", 18, 19], "side_table": ["side_table", 27, 18], "crate": ["crate", 31, 19],
+	"plant1": ["plant_pot", 18, 21], "plant2": ["flower_box", 31, 21],
+}
+## Peça -> vistas [imagem, tamanho em células, espelhar]. A 1ª é de frente; as outras, de lado (Girar).
+const PIECES := {
+	"bed": [["bed", Vector2i(2, 2), false], ["bed_side", Vector2i(2, 1), false], ["bed_side", Vector2i(2, 1), true]],
+	"armchair": [["armchair", Vector2i(1, 1), false], ["armchair_side", Vector2i(1, 1), false],
+		["armchair_side", Vector2i(1, 1), true]],
+	"tv": [["tv_side", Vector2i(1, 1), false], ["tv_side", Vector2i(1, 1), true], ["tv", Vector2i(2, 1), false]],
+	"bookshelf": [["bookshelf", Vector2i(1, 1), false]], "kitchen": [["kitchen", Vector2i(3, 1), false]],
+	"cupboard": [["cupboard", Vector2i(1, 1), false]], "nightstand": [["nightstand", Vector2i(1, 1), false]],
+	"sofa": [["sofa", Vector2i(3, 1), false]], "coffee_table": [["coffee_table", Vector2i(1, 1), false]],
+	"side_table": [["side_table", Vector2i(2, 1), false]], "crate": [["crate", Vector2i(1, 1), false]],
+	"plant_pot": [["plant_pot", Vector2i(1, 1), false]], "flower_box": [["flower_box", Vector2i(1, 1), false]],
+	"rug": [["rug", Vector2i(3, 2), false]],
+}
+const FLOOR_PIECES := ["rug"]       # ficam no chão (dá para andar e pôr móveis em cima)
+
+var furniture := {}                 # id -> nó do móvel (Node2D com metadados)
+var decorating := false
+var selected: Node2D
+var _bed_use: Interactable
+
+
+func _add_furniture(id: String, piece: String, cell: Vector2i, view: int) -> void:
+	var holder := Node2D.new()
+	holder.name = "F_" + id
+	holder.set_meta("id", id)
+	holder.set_meta("piece", piece)
+	var spr := Sprite2D.new()
+	spr.centered = false
+	spr.name = "Sprite"
+	holder.add_child(spr)
+	if piece in FLOOR_PIECES:
+		holder.z_index = -5
+	else:
 		var body := StaticBody2D.new()
-		_add_rect_collision(body, Vector2(size.x * TILE - 4, size.y * TILE - 10), Vector2(0, -size.y * TILE / 2.0 + 1))
+		body.name = "Body"
 		holder.add_child(body)
-	return s
+	# usos que vão junto com o móvel
+	match id:
+		"kitchen":
+			kitchen = _use_point_on(holder, "Cozinhar")
+			kitchen.interacted.connect(func(_w): stove_used.emit())
+		"cupboard":
+			var ch := _use_point_on(holder, "Abrir o armário")
+			ch.interacted.connect(func(_w): chest_used.emit())
+		"bed":
+			_bed_use = _use_point_on(holder, "Dormir")
+			_bed_use.interacted.connect(func(_w): bed_used.emit())
+	entities.add_child(holder)
+	furniture[id] = holder
+	_set_furniture(holder, cell, view)
+
+
+func _use_point_on(holder: Node2D, label: String) -> Interactable:
+	var it := Interactable.new()
+	it.label = label
+	it.reach = 30.0
+	holder.add_child(it)
+	return it
+
+
+static func view_of(piece: String, view: int) -> Array:
+	var vs: Array = PIECES[piece]
+	return vs[posmod(view, vs.size())]
+
+
+func furniture_cells(holder: Node2D) -> Array:
+	var v := view_of(holder.get_meta("piece"), holder.get_meta("view"))
+	var c: Vector2i = holder.get_meta("cell")
+	var size: Vector2i = v[1]
+	var out := []
+	for y in range(c.y, c.y + size.y):
+		for x in range(c.x, c.x + size.x):
+			out.append(Vector2i(x, y))
+	return out
+
+
+## Põe o móvel numa célula (canto de cima à esquerda) com uma vista.
+func _set_furniture(holder: Node2D, cell: Vector2i, view: int) -> void:
+	var piece: String = holder.get_meta("piece")
+	view = posmod(view, (PIECES[piece] as Array).size())
+	var v := view_of(piece, view)
+	var size: Vector2i = v[1]
+	holder.set_meta("cell", cell)
+	holder.set_meta("view", view)
+	var spr: Sprite2D = holder.get_node("Sprite")
+	spr.texture = load(DIR + str(v[0]) + ".png")
+	spr.flip_h = bool(v[2])
+	var foot := Vector2(cell * TILE) + Vector2(size.x * TILE / 2.0, size.y * TILE)
+	holder.position = foot
+	spr.position = Vector2(-spr.texture.get_width() / 2.0, -spr.texture.get_height() + 2)
+	if piece in FLOOR_PIECES:
+		spr.position = Vector2(-spr.texture.get_width() / 2.0, -size.y * TILE / 2.0 - spr.texture.get_height() / 2.0)
+	var body = holder.get_node_or_null("Body")
+	if body:
+		for ch in body.get_children():
+			ch.free()
+		_add_rect_collision(body, Vector2(size.x * TILE - 4, size.y * TILE - 10), Vector2(0, -size.y * TILE / 2.0 + 1))
+	for it in holder.get_children():
+		if it is Interactable:
+			it.position = Vector2(0, -size.y * TILE / 2.0 + 4)
+	if holder.get_meta("id") == "bed":
+		bed_spot = holder.position
+	queue_redraw()
+	Game.house["layout"] = Game.house.get("layout", {})
+	Game.house["layout"][holder.get_meta("id")] = [cell.x, cell.y, view]
+
+
+## Células ocupadas: fora do cômodo e os móveis (o tapete não conta).
+func _rebuild_blocked() -> void:
+	blocked.clear()
+	for y in H:
+		for x in W:
+			if not ROOM.has_point(Vector2i(x, y)):
+				blocked[Vector2i(x, y)] = true
+	for h in furniture.values():
+		if h.get_meta("piece") in FLOOR_PIECES:
+			continue
+		for c in furniture_cells(h):
+			blocked[c] = true
+
+
+## Dá para pôr o móvel ali? (dentro do cômodo, sem cobrir outro móvel, a porta ou um aquário)
+func can_put(holder: Node2D, cell: Vector2i, view: int) -> bool:
+	var piece: String = holder.get_meta("piece")
+	var size: Vector2i = view_of(piece, view)[1]
+	var floor_piece: bool = piece in FLOOR_PIECES
+	var others := {}
+	if not floor_piece:
+		for h in furniture.values():
+			if h != holder and not (h.get_meta("piece") in FLOOR_PIECES):
+				for c in furniture_cells(h):
+					others[c] = true
+	for y in range(cell.y, cell.y + size.y):
+		for x in range(cell.x, cell.x + size.x):
+			var c := Vector2i(x, y)
+			if not ROOM.has_point(c) or others.has(c):
+				return false
+			if not floor_piece and (occupied.has(c) or c == DOOR_CELL or c == DOOR_CELL + Vector2i(0, 1)):
+				return false
+	return true
+
+
+# ------------------------------------------------------------------ modo decorar
+func set_decorating(on: bool) -> void:
+	decorating = on
+	select(null)
+
+
+func select(h: Node2D) -> void:
+	if selected and is_instance_valid(selected):
+		selected.modulate = Color.WHITE
+	selected = h
+	if selected:
+		selected.modulate = Color(1.25, 1.25, 0.85)
+	queue_redraw()
+
+
+## Toque no modo decorar: num móvel escolhe; no chão leva o escolhido para lá. Devolve um aviso ("" se nada).
+func decor_tap(wp: Vector2) -> String:
+	var c := cell_of(wp)
+	var hit: Node2D = null
+	for h in furniture.values():
+		if c in furniture_cells(h) and (hit == null or not (h.get_meta("piece") in FLOOR_PIECES)):
+			hit = h
+	if hit and hit != selected and (selected == null or not (hit.get_meta("piece") in FLOOR_PIECES)):
+		select(hit)
+		return ""
+	if selected == null:
+		return "Toque num móvel para escolher."
+	# o toque marca o meio de baixo do móvel
+	var size: Vector2i = view_of(selected.get_meta("piece"), selected.get_meta("view"))[1]
+	var cell := Vector2i(c.x - (size.x - 1) / 2, c.y - size.y + 1)
+	if not can_put(selected, cell, selected.get_meta("view")):
+		return "Não cabe aí."
+	_set_furniture(selected, cell, selected.get_meta("view"))
+	_rebuild_blocked()
+	Sound.play("build", -4.0)
+	return ""
+
+
+## Gira o móvel escolhido (frente / lado / outro lado). Devolve um aviso.
+func rotate_selected() -> String:
+	if selected == null:
+		return "Toque num móvel para escolher."
+	var piece: String = selected.get_meta("piece")
+	var n := (PIECES[piece] as Array).size()
+	if n < 2:
+		return "Este móvel só tem a vista de frente."
+	var cell: Vector2i = selected.get_meta("cell")
+	for k in range(1, n):
+		var v: int = (int(selected.get_meta("view")) + k) % n
+		if can_put(selected, cell, v):
+			_set_furniture(selected, cell, v)
+			_rebuild_blocked()
+			Sound.play("ui_click")
+			return ""
+	return "Não dá para girar aqui: falta espaço."
 
 
 func _use_point(c: Vector2i, label: String) -> Interactable:
@@ -151,6 +325,14 @@ func serialize_house() -> Array:
 	return out
 
 
+func _draw() -> void:
+	# modo decorar: contorno do móvel escolhido
+	if decorating and selected and is_instance_valid(selected):
+		for c in furniture_cells(selected):
+			draw_rect(Rect2(Vector2(c * TILE), Vector2(TILE, TILE)), Color(1, 0.95, 0.4, 0.25))
+			draw_rect(Rect2(Vector2(c * TILE), Vector2(TILE, TILE)), Color(1, 0.9, 0.3, 0.8), false, 1.0)
+
+
 func _draw_ground() -> void:
 	var g := _ground_layer
 	g.draw_rect(Rect2(0, 0, W * TILE, H * TILE), DARK)
@@ -168,9 +350,6 @@ func _draw_ground() -> void:
 			x += fs.x
 		y += fs.y
 		row += 1
-	# tapete da sala
-	var rug := _rug
-	g.draw_texture(rug, Vector2(21 * TILE + 16 - rug.get_width() / 2.0, 18 * TILE + 26))
 	# parede do fundo: reboco com lambri, a janela em cima da cozinha e a porta
 	var wall_top := r.position.y - _wall.get_height() + 4
 	var x0 := r.position.x

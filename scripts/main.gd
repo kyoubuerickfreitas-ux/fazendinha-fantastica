@@ -66,6 +66,16 @@ func _ready() -> void:
 
 	hud.save_requested.connect(save_now)
 	hud.zoom_requested.connect(func(z): set_zoom(z))
+	hud.decorate_toggled.connect(func(on: bool):
+		if house:
+			house.set_decorating(on)
+			if on:
+				Game.toast.emit("Decorar: toque num móvel e depois no chão para mudar de lugar. \"Girar\" vira os que têm vista de lado."))
+	hud.rotate_pressed.connect(func():
+		if house:
+			var m := house.rotate_selected()
+			if m != "":
+				Game.toast.emit(m))
 	_load_zoom()
 	hud.zoom_changed(zoom_level)
 	hud.new_game_requested.connect(_new_game)
@@ -199,6 +209,11 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 	if Game.ui_lock > 0 or hud.blocks_point(screen_pos):
 		return
 	var wp := get_viewport().get_canvas_transform().affine_inverse() * screen_pos
+	if house and house.decorating:
+		var msg := house.decor_tap(wp)
+		if msg != "":
+			Game.toast.emit(msg)
+		return
 
 	# personagens, animais, caixa, porta
 	var best: Interactable = null
@@ -336,6 +351,7 @@ func enter_house() -> void:
 		world.process_mode = Node.PROCESS_MODE_DISABLED
 		tutorial.visible = false
 		_set_camera_free(true)
+		hud.set_house_mode(true)
 		Game.bump("house_visits")
 		_update_weather())
 
@@ -354,6 +370,7 @@ func exit_house() -> void:
 		house.queue_free()
 		house = null
 		_set_camera_free(false)
+		hud.set_house_mode(false)
 		_update_weather())
 
 

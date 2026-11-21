@@ -23,6 +23,7 @@ OUT = os.path.join(ROOT, "assets", "app_icon")
 ICON = (1262, 12, 1520, 286)      # moldura inteira (com as folhinhas)
 INNER = (1299, 66, 1489, 258)     # a cena dentro da moldura (sem a borda)
 FACE = (1442, 166)                # centro do rosto do porquinho
+BG_COLOR = (104, 150, 66, 255)    # verde do fundo do ícone adaptável
 BG_SIZE = 220                     # lado do recorte do fundo (o miolo visível fica ~147 px em volta do rosto)
 
 if __name__ == "__main__":
@@ -34,14 +35,11 @@ if __name__ == "__main__":
     sq.alpha_composite(icon, ((side - icon.width) // 2, (side - icon.height) // 2))
     sq.resize((512, 512), Image.LANCZOS).save(os.path.join(ROOT, "icon.png"))
     sq.resize((192, 192), Image.LANCZOS).save(os.path.join(OUT, "icon_192.png"))
-    # fundo do ícone adaptável: centrado no rosto do porquinho (o Android mostra só o miolo, ~2/3).
-    # A cena é estendida espelhando as bordas para o recorte poder passar da moldura.
-    scene = np.array(Image.open(SRC).convert("RGB").crop(INNER))
-    pad = 80
-    big = np.pad(scene, ((pad, pad), (pad, pad), (0, 0)), mode="symmetric")
-    fx, fy = FACE[0] - INNER[0] + pad, FACE[1] - INNER[1] + pad
-    half = BG_SIZE // 2
-    crop = Image.fromarray(big[fy - half:fy + half, fx - half:fx + half].astype("uint8"))
-    crop.resize((432, 432), Image.LANCZOS).save(os.path.join(OUT, "background.png"))
-    Image.new("RGBA", (432, 432), (0, 0, 0, 0)).save(os.path.join(OUT, "foreground.png"))
+    # ícone adaptável: a imagem INTEIRA (moldura e folhas) no primeiro plano, dentro da área que o Android
+    # nunca corta (66 de 108); o fundo tem a cor da grama de trás, para não aparecer borda.
+    fg = Image.new("RGBA", (432, 432), (0, 0, 0, 0))
+    inner = round(432 * 64 / 108)
+    fg.alpha_composite(sq.resize((inner, inner), Image.LANCZOS), ((432 - inner) // 2, (432 - inner) // 2))
+    fg.save(os.path.join(OUT, "foreground.png"))
+    Image.new("RGBA", (432, 432), BG_COLOR).save(os.path.join(OUT, "background.png"))
     print("ícone do app atualizado")

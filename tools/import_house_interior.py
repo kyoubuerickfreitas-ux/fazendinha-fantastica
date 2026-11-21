@@ -31,19 +31,25 @@ PIECES = {
     "plant_pot": (1396, 890, 1485, 996),
 }
 
-if __name__ == "__main__":
-    os.makedirs(OUT, exist_ok=True)
-    im = key_flood(Image.open(SRC).convert("RGBA"))
+# vistas de lado de outros móveis (assets/source/house_furniture_1.png, escala para bater com a cama de frente)
+SIDE_SRC = os.path.join(ROOT, "assets", "source", "house_furniture_1.png")
+SIDE_SCALE = SCALE * 237 / 313
+SIDE_PIECES = {"bed_side": (421, 53, 769, 341), "armchair_side": (449, 455, 637, 663),
+               "tv_side2": (879, 261, 1043, 464)}
+
+
+def import_sheet(src, pieces, scale):
+    im = key_flood(Image.open(src).convert("RGBA"))
     px = im.load()
     for y in range(im.height):          # verde de fundo preso (entre pernas de móvel, janelas)
         for x in range(im.width):
             r, g, b, a = px[x, y]
             if a and g > 190 and r < 90 and b < 90:
                 px[x, y] = (0, 0, 0, 0)
-    for name, box in PIECES.items():
+    for name, box in pieces.items():
         p = im.crop(box)
         p = p.crop(p.getbbox())
-        small = p.resize((max(1, round(p.width * SCALE)), max(1, round(p.height * SCALE))), Image.LANCZOS)
+        small = p.resize((max(1, round(p.width * scale)), max(1, round(p.height * scale))), Image.LANCZOS)
         sp = small.load()
         opaque = name.startswith("floor") or name.startswith("wall")
         for y in range(small.height):
@@ -52,3 +58,9 @@ if __name__ == "__main__":
                 sp[x, y] = (r, g, b, 255) if (a >= 110 or (opaque and a > 0)) else (0, 0, 0, 0)
         small.save(os.path.join(OUT, name + ".png"))
         print(name, small.size)
+
+
+if __name__ == "__main__":
+    os.makedirs(OUT, exist_ok=True)
+    import_sheet(SRC, PIECES, SCALE)
+    import_sheet(SIDE_SRC, SIDE_PIECES, SIDE_SCALE)

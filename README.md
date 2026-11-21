@@ -114,7 +114,7 @@ novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de rec
 
 A porta da casa agora leva para dentro (com uma transição). Lá dentro: **cama** (dormir passa o dia e salva),
 **cozinha** com pia e fogão (cozinhar: o fogão não se fabrica mais), **armário** para guardar itens (24 espaços),
-sala com sofá, poltrona, mesinha, tapete e estante, quarto com criado-mudo. **Aquários só podem ser colocados
+sala com sofá, poltrona, mesinha, tapete e estante, quarto com criado-mudo. **Decorar**: o botão "Decorar" (dentro de casa) deixa tocar num móvel e depois no chão para mudar ele de lugar; "Girar" vira a cama, a poltrona e a TV para a vista de lado. Tudo fica salvo. **Aquários só podem ser colocados
 dentro de casa** (ficam salvos). Sai pela porta do fundo. Música calma lá dentro.
 Arte: `tools/import_house_interior.py` (`assets/source/house_interior.png`); mundo: `scripts/world/house_world.gd`.
 

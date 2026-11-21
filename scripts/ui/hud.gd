@@ -3,6 +3,8 @@ extends CanvasLayer
 ## Interface do jogo: status no topo, barra rápida e botões embaixo,
 ## joystick à esquerda e os painéis (mochila, loja, confirmação).
 
+signal decorate_toggled(on: bool)
+signal rotate_pressed
 signal zoom_requested(zoom: float)
 signal character_created(first_time: bool)
 signal use_pressed
@@ -1331,7 +1333,7 @@ func _build_confirm() -> void:
 ## O ponto da tela está sobre algum elemento da HUD?
 func blocks_point(p: Vector2) -> bool:
 	for c in _blockers:
-		if c.get_global_rect().grow(4).has_point(p):
+		if c.is_visible_in_tree() and c.get_global_rect().grow(4).has_point(p):
 			return true
 	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn, _options_btn, _run_btn]:
 		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
@@ -1710,6 +1712,61 @@ func _first_frame(t: Texture2D) -> AtlasTexture:
 	a.atlas = t
 	a.region = Rect2(0, 0, t.get_width() / Tractor.WHEEL_FRAMES, t.get_height())
 	return a
+
+
+# ------------------------------------------------------------------ decorar a casa
+var _decor_btn: Button
+var _decor_bar: HBoxContainer
+var _decor_on := false
+
+
+## Dentro de casa aparece o botão "Decorar".
+func set_house_mode(inside: bool) -> void:
+	if _decor_btn == null:
+		_decor_btn = Button.new()
+		_decor_btn.text = "Decorar"
+		_decor_btn.name = "Decorate"
+		_decor_btn.anchor_left = 1.0
+		_decor_btn.anchor_right = 1.0
+		_decor_btn.offset_left = -96
+		_decor_btn.offset_right = -44
+		_decor_btn.offset_top = 66
+		_decor_btn.offset_bottom = 90
+		_decor_btn.add_theme_font_size_override("font_size", 10)
+		_decor_btn.pressed.connect(func(): _set_decor(not _decor_on))
+		_root.add_child(_decor_btn)
+		_blockers.append(_decor_btn)
+		_decor_bar = HBoxContainer.new()
+		_decor_bar.anchor_left = 0.5
+		_decor_bar.anchor_right = 0.5
+		_decor_bar.anchor_top = 1.0
+		_decor_bar.anchor_bottom = 1.0
+		_decor_bar.offset_left = -80
+		_decor_bar.offset_right = 80
+		_decor_bar.offset_top = -86
+		_decor_bar.offset_bottom = -60
+		_decor_bar.add_theme_constant_override("separation", 8)
+		for pair in [["Girar", func(): rotate_pressed.emit()], ["Pronto", func(): _set_decor(false)]]:
+			var b := Button.new()
+			b.text = pair[0]
+			b.name = pair[0]
+			b.custom_minimum_size = Vector2(72, 26)
+			b.pressed.connect(pair[1])
+			_decor_bar.add_child(b)
+		_root.add_child(_decor_bar)
+		_blockers.append(_decor_bar)
+	_decor_btn.visible = inside
+	if not inside:
+		_set_decor(false)
+	_decor_bar.visible = _decor_on and inside
+
+
+func _set_decor(on: bool) -> void:
+	_decor_on = on
+	if _decor_bar:
+		_decor_bar.visible = on
+		_decor_btn.text = "Decorando" if on else "Decorar"
+	decorate_toggled.emit(on)
 
 
 ## Compra o trator: ele aparece estacionado ao lado da casa.
