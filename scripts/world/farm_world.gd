@@ -377,6 +377,28 @@ static func _img_pt(s: Sprite2D, px: Vector2) -> Vector2:
 static var _glow_tex: GradientTexture2D
 
 
+## Luz quente solta (não acende/apaga com a noite): fogo da fornalha.
+static func make_glow(radius: float, color := Color(1.0, 0.6, 0.25)) -> PointLight2D:
+	if _glow_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.35, Color(1, 1, 1, 0.55))
+		_glow_tex = GradientTexture2D.new()
+		_glow_tex.gradient = g
+		_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_glow_tex.width = 128
+		_glow_tex.height = 128
+	var l := PointLight2D.new()
+	l.texture = _glow_tex
+	l.texture_scale = radius * 2.0 / 128.0
+	l.color = color
+	l.energy = 0.9
+	return l
+
+
 ## Luz quente (janela, lampião) que acende ao entardecer: PointLight2D (brilha mesmo com a tela escurecida).
 func add_glow(parent: Node2D, pos: Vector2, radius: float, always := false) -> PointLight2D:
 	if _glow_tex == null:

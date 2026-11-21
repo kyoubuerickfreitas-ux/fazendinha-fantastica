@@ -100,6 +100,7 @@ func job_ready() -> bool:
 const FIRE_AT := {"furnace": [Vector2(17, 32), Vector2(17, 1)]}
 var _fire: FX
 var _smoke: FX
+var _glow: PointLight2D
 
 
 func _update_fire() -> void:
@@ -112,11 +113,20 @@ func _update_fire() -> void:
 		_smoke = FX.spawn_loop(self, "smoke", _sprite.offset + pts[1] + Vector2(0, -10))
 		_fire.z_index = 1          # na frente da fornalha, mas atrás do que está na frente dela
 		_smoke.z_index = 1
+		# luz do fogo, piscando de leve
+		_glow = FarmWorld.make_glow(30.0)
+		_glow.position = _sprite.offset + pts[0]
+		add_child(_glow)
+		var tw := _glow.create_tween().set_loops()
+		tw.tween_property(_glow, "energy", 1.15, 0.35).set_trans(Tween.TRANS_SINE)
+		tw.tween_property(_glow, "energy", 0.75, 0.45).set_trans(Tween.TRANS_SINE)
 	elif not working and _fire and is_instance_valid(_fire):
 		_fire.queue_free()
 		_smoke.queue_free()
+		_glow.queue_free()
 		_fire = null
 		_smoke = null
+		_glow = null
 
 
 func _refresh_texture() -> void:
