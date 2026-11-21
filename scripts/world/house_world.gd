@@ -365,6 +365,9 @@ func serialize_house() -> Array:
 # ------------------------------------------------------------------ fogão: fogo e barrinha
 var _fire: FX
 var _cook_bar: Node2D
+var _pot: Sprite2D
+var _steam_t := 0.0
+const POT_TEX := preload("res://assets/sprites/house_in/pot.png")   # tools/import_pot.py
 var _bar_state := ""
 ## Onde fica a boca do fogão em relação à base da cozinha (a cozinha tem pia à esquerda e fogão à direita)
 const STOVE_OFFSET := Vector2(30, -30)
@@ -376,11 +379,25 @@ func _process(_delta: float) -> void:
 		return
 	var cooking := Cooking.is_cooking()
 	if cooking and (_fire == null or not is_instance_valid(_fire)):
-		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(0, -14))
+		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(-2, -9))
 		_fire.z_index = 1
 	elif not cooking and _fire and is_instance_valid(_fire):
 		_fire.queue_free()
 		_fire = null
+	# panela: aparece com prato na fila; tampa balança cozinhando; vapor quando tem prato pronto
+	if _pot == null or not is_instance_valid(_pot):
+		_pot = Sprite2D.new()
+		_pot.texture = POT_TEX
+		_pot.centered = false
+		_pot.z_index = 2
+		k.add_child(_pot)
+	_pot.visible = not Cooking.queue().is_empty()
+	var bob := 1.0 if cooking and fmod(Time.get_ticks_msec() / 260.0, 2.0) < 1.0 else 0.0
+	_pot.position = STOVE_OFFSET + Vector2(-12, -22 - bob)
+	_steam_t -= _delta
+	if Cooking.ready_count() > 0 and _steam_t <= 0.0:
+		_steam_t = 1.3
+		FX.spawn(k, "steam", STOVE_OFFSET + Vector2(0, -36))
 	if _cook_bar == null or not is_instance_valid(_cook_bar):
 		_cook_bar = Node2D.new()
 		_cook_bar.z_index = 60
@@ -395,7 +412,7 @@ func _process(_delta: float) -> void:
 ## Em cima do fogão: barrinha do prato no fogo e, se tem prato pronto, o ícone dele com o número.
 func _draw_cook_bar() -> void:
 	var c := _cook_bar
-	var base := STOVE_OFFSET + Vector2(0, -34)
+	var base := STOVE_OFFSET + Vector2(0, -44)
 	var prog := Cooking.current_progress()
 	if prog >= 0.0:
 		var r := Rect2(base + Vector2(-14, 0), Vector2(28, 5))
