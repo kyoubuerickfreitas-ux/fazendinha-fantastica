@@ -179,7 +179,7 @@ func _add_furniture(id: String, piece: String, cell: Vector2i, view: int) -> voi
 	# usos que vão junto com o móvel
 	match id:
 		"kitchen":
-			kitchen = _use_point_on(holder, "Cozinhar")
+			kitchen = _use_point_on(holder, "Fogão")
 			kitchen.interacted.connect(func(_w): stove_used.emit())
 		"cupboard":
 			var ch := _use_point_on(holder, "Abrir o armário")
@@ -355,6 +355,64 @@ func serialize_house() -> Array:
 		if is_instance_valid(p):
 			out.append(p.serialize())
 	return out
+
+
+# ------------------------------------------------------------------ fogão: fogo e barrinha
+var _fire: FX
+var _cook_bar: Node2D
+var _bar_state := ""
+## Onde fica a boca do fogão em relação à base da cozinha (a cozinha tem pia à esquerda e fogão à direita)
+const STOVE_OFFSET := Vector2(30, -30)
+
+
+func _process(_delta: float) -> void:
+	var k: Node2D = furniture.get("kitchen")
+	if k == null:
+		return
+	var cooking := Cooking.is_cooking()
+	if cooking and (_fire == null or not is_instance_valid(_fire)):
+		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(0, -18))
+		_fire.z_index = 1
+	elif not cooking and _fire and is_instance_valid(_fire):
+		_fire.queue_free()
+		_fire = null
+	if _cook_bar == null or not is_instance_valid(_cook_bar):
+		_cook_bar = Node2D.new()
+		_cook_bar.z_index = 60
+		_cook_bar.draw.connect(_draw_cook_bar)
+		k.add_child(_cook_bar)
+	var st := "%d/%d/%.2f" % [Cooking.queue().size(), Cooking.ready_count(), Cooking.current_progress()]
+	if st != _bar_state:
+		_bar_state = st
+		_cook_bar.queue_redraw()
+
+
+## Em cima do fogão: barrinha do prato no fogo e, se tem prato pronto, o ícone dele com o número.
+func _draw_cook_bar() -> void:
+	var c := _cook_bar
+	var base := STOVE_OFFSET + Vector2(0, -34)
+	var prog := Cooking.current_progress()
+	if prog >= 0.0:
+		var r := Rect2(base + Vector2(-14, 0), Vector2(28, 5))
+		c.draw_rect(r.grow(1), Color("2b2118"))
+		c.draw_rect(r, Color("5b3a22"))
+		c.draw_rect(Rect2(r.position, Vector2(r.size.x * prog, r.size.y)), Color("f2b33d"))
+	var ready := Cooking.ready_count()
+	if ready > 0:
+		var rr := Cooking.get_recipe(str(Cooking.queue()[0]["id"]))
+		var bubble := Rect2(base + Vector2(-11, -26), Vector2(22, 22))
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("fdf6e3")
+		sb.set_corner_radius_all(6)
+		sb.set_border_width_all(1)
+		sb.border_color = Color("2b2118")
+		c.draw_style_box(sb, bubble)
+		if rr:
+			c.draw_texture_rect(ItemDB.icon(rr.dish_id()), bubble.grow(-3), false)
+		if ready > 1:
+			var font := ThemeDB.fallback_font
+			c.draw_string_outline(font, bubble.position + Vector2(15, 22), str(ready), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, 3, Color("2b2118"))
+			c.draw_string(font, bubble.position + Vector2(15, 22), str(ready), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color("fdf6e3"))
 
 
 # ------------------------------------------------------------------ cores

@@ -936,8 +936,19 @@ func _run() -> void:
 	await _shot("29_cozinha")
 	print("  ", Cooking.cook("grilled_fish").replace("\n", " / "))
 	assert(game.count_item("fish_silver") == 0 and game.count_item("fish_perch") == 1, "gasta o peixe mais barato")
-	assert(game.count_item("dish_grilled_fish") == 1)
+	assert(game.count_item("dish_grilled_fish") == 0 and Cooking.is_cooking(), "o prato vai para a fila do fogão")
 	print("  ", Cooking.cook("fruit_juice"))
+	assert(Cooking.queue().size() == 2 and int(Cooking.queue()[1]["start"]) == int(Cooking.queue()[0]["done"]),
+		"o segundo prato começa quando o primeiro fica pronto")
+	assert(Cooking.collect() == "", "nada pronto ainda")
+	game.minutes += 30
+	assert(Cooking.ready_count() == 1 and Cooking.current_progress() >= 0.0)
+	game.minutes += 120
+	var cooked0: int = game.dishes_cooked
+	print("  ", Cooking.collect())
+	assert(game.count_item("dish_grilled_fish") == 1 and game.count_item("dish_fruit_juice") == 1 and Cooking.queue().is_empty())
+	assert(game.dishes_cooked == cooked0 + 2)
+	game.minutes -= 150
 	main.hud.close_panel()
 	game.energy = 20.0
 	game.inventory[0] = {"id": "dish_grilled_fish", "qty": 1}
@@ -1381,6 +1392,16 @@ func _run() -> void:
 	hw.stove_used.connect(c2)
 	hw.kitchen.interact(p)
 	assert(opened[0], "tocar no fogão abre a cozinha")
+	# prato no fogo: fogo aceso e barrinha
+	game.add_item("fish_silver", 1)
+	game.known_recipes.append("grilled_fish") if not game.known_recipes.has("grilled_fish") else null
+	Cooking.cook("grilled_fish")
+	main.hud.close_panel()
+	p.position = hw.cell_center(Vector2i(24, 16))
+	await _wait(0.5)
+	assert(hw._fire != null and is_instance_valid(hw._fire), "cozinhando, o fogo fica aceso")
+	await _shot("51_fogao")
+	game.cook_queue.clear()
 	main.hud.close_panel()
 	# decorar: mover o sofá e girar a cama
 	var dbtn: Button = main.hud._root.get_node("Decorate")
@@ -1401,7 +1422,7 @@ func _run() -> void:
 	hw.next_color("wall")
 	hw.next_color("wall")
 	assert(int(game.house["colors"]["wall"]) == 2)
-	assert(hw.next_color("furniture").begins_with("Móvel: ") and int(game.house["colors"]["furniture"]["bed"]) == 1)
+	assert(hw.next_color("furniture").begins_with("Tecido: ") and int(game.house["colors"]["furniture"]["bed"]) == 1, "a cama pinta só o tecido")
 	await _wait(0.2)
 	await _shot("50_decorar")
 	main.hud._set_decor(false)

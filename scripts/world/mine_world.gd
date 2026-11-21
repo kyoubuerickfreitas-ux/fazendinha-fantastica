@@ -312,6 +312,7 @@ func _destroy_prop(prop: Prop) -> void:
 		_popup("+%d %s" % [d[1], ItemDB.item_name(d[0])], prop.position + Vector2(0, -20))
 		if ItemDB.get_item(d[0]).get("type", "") == "gem" or d[0] == "crystal":
 			Sound.play("gem", -3.0)
+			FX.spawn(self, "gem", prop.position + Vector2(0, -14))
 	props.erase(c)
 	FX.spawn(self, "break_stone", prop.position + Vector2(0, -10))
 	var tw := prop.create_tween()

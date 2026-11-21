@@ -864,6 +864,29 @@ func _refresh_cooking() -> void:
 	var known := ids.filter(func(id): return Cooking.is_known(id)).size()
 	_cook_body.add_child(UIStyle.label("Receitas: %d de %d · pratos feitos: %d" % [known, ids.size(), Game.dishes_cooked],
 		11, UIStyle.EARTH))
+	# fila do fogão
+	var q := Cooking.queue()
+	if not q.is_empty():
+		var head := HBoxContainer.new()
+		var ql := UIStyle.label("No fogo (%d/%d):" % [q.size(), Cooking.MAX_QUEUE], 12, UIStyle.WOOD)
+		ql.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		head.add_child(ql)
+		if Cooking.ready_count() > 0:
+			var gb := Button.new()
+			gb.text = "Pegar prontos"
+			gb.name = "TakeReady"
+			gb.pressed.connect(func():
+				show_toast(Cooking.collect())
+				_refresh_cooking())
+			head.add_child(gb)
+		_cook_body.add_child(head)
+		for e in q:
+			var rr := Cooking.get_recipe(str(e["id"]))
+			if rr == null:
+				continue
+			var done: bool = int(e["done"]) <= Cooking.now_abs()
+			var qrow := _shop_row(rr.dish_id(), "%s · %s" % [rr.name, "pronto!" if done else "fica pronto às " + Cooking.clock_of(int(e["done"]))])
+			_cook_body.add_child(qrow)
 	for id in ids:
 		var r := Cooking.get_recipe(id)
 		if not Cooking.is_known(id):
@@ -880,10 +903,10 @@ func _refresh_cooking() -> void:
 			eff += ", +%d vida" % r.health
 		if r.buff != "":
 			eff += ", %s %s" % [RecipeData.BUFF_NAMES[r.buff], Cooking.duration_text(r.buff_minutes)]
-		var row := _shop_row(r.dish_id(), "%s · %s\n%s" % [r.name, eff, ", ".join(parts)])
+		var row := _shop_row(r.dish_id(), "%s · %s · %d min\n%s" % [r.name, eff, Cooking.cook_minutes(r), ", ".join(parts)])
 		var b := Button.new()
 		b.text = "Cozinhar"
-		b.disabled = not Cooking.can_cook(id)
+		b.disabled = not Cooking.can_cook(id) or Cooking.queue().size() >= Cooking.MAX_QUEUE
 		var rid: String = id
 		b.pressed.connect(func():
 			show_toast(Cooking.cook(rid))

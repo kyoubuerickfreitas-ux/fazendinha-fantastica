@@ -48,6 +48,7 @@ var fish_flags := {}
 var known_recipes: Array = []
 var buffs := {}
 var dishes_cooked := 0
+var cook_queue: Array = []        # fila do fogão (scripts/systems/cooking.gd)
 ## Amizade com os moradores (ver Villagers)
 var friends := {}
 ## Contadores de ações (tutorial e metas): {"talks": 3, "harvests": 10, ...}
@@ -117,6 +118,7 @@ func reset_new_game() -> void:
 	known_recipes = Cooking.starting_recipes()
 	buffs = {}
 	dishes_cooked = 0
+	cook_queue = []
 	friends = {}
 	counters = {}
 	mine_deepest = 0
@@ -381,7 +383,7 @@ func save_game(world_data: Dictionary) -> void:
 		"temperature": temperature, "temperature_yesterday": temperature_yesterday, "forecast": forecast,
 		"bait": equipped_bait, "tools": tool_levels,
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
-		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
+		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked, "cook_queue": cook_queue,
 		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
 		"profile": profile, "tractor": tractor, "trailer": trailer, "house": house,
 		"inventory": inventory, "selected_slot": selected_slot,
@@ -427,6 +429,12 @@ func load_game() -> Dictionary:
 	var bf = data.get("buffs", {})
 	buffs = bf if bf is Dictionary else {}
 	dishes_cooked = int(data.get("dishes_cooked", 0))
+	var cq = data.get("cook_queue", [])
+	cook_queue = []
+	if cq is Array:
+		for e in cq:
+			if e is Dictionary and e.has("id"):
+				cook_queue.append({"id": str(e["id"]), "start": int(e.get("start", 0)), "done": int(e.get("done", 0))})
 	var fr = data.get("friends", {})
 	friends = fr if fr is Dictionary else {}
 	mine_deepest = int(data.get("mine_deepest", 0))

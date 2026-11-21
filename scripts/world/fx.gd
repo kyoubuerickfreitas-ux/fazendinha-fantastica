@@ -11,6 +11,14 @@ const SHEETS := {
 	"cloud": preload("res://assets/fx/fx_cloud.png"),
 	"sparkle": preload("res://assets/fx/fx_sparkle.png"),
 	"pop": preload("res://assets/fx/fx_pop.png"),
+	# pacote "Effect and FX Pixel" (só os usados): fogo, vapor, anel, impacto, estrela, explosão, bolha
+	"fire": preload("res://assets/fx/fx_fire.png"),
+	"steam": preload("res://assets/fx/fx_steam.png"),
+	"ring": preload("res://assets/fx/fx_ring.png"),
+	"impact": preload("res://assets/fx/fx_impact.png"),
+	"star": preload("res://assets/fx/fx_star.png"),
+	"burst": preload("res://assets/fx/fx_burst.png"),
+	"bubble": preload("res://assets/fx/fx_bubble.png"),
 }
 ## Som de cada efeito (o golpe "hit" toca o som certo em quem chama: madeira ou pedra).
 const SOUNDS := {"till": "till", "water": "water", "break_wood": "break_wood", "break_stone": "break_stone",
@@ -30,18 +38,30 @@ const PRESETS := {
 	"harvest": ["sparkle", Color9.GREEN, 0.8],
 	"plant": ["pop", Color9.GREEN, 0.6],
 	"weed": ["dust", Color9.GREEN, 0.6],
+	"hit_stone": ["impact", Color9.WHITE, 0.45],     # picareta na pedra
+	"ripple": ["ring", Color9.BLUE, 0.55],           # boia na água (lançar e fisgada)
+	"catch": ["star", Color9.BROWN, 0.75],           # peixe pego, nível novo
+	"gem": ["burst", Color9.LILAC, 0.7],             # gema e cristal na mina
+	"fill": ["bubble", Color9.BLUE, 0.5],            # encher o regador
+	"steam": ["steam", Color9.WHITE, 0.55],          # prato pronto
+	"fire": ["fire", Color9.WHITE, 0.5, Color(1.6, 0.95, 0.35)],   # tingido de laranja              # fogo do fogão (em loop)
 }
 
 var _frames := 1
+var loop := false
 var _row := 0
 var _t := 0.0
 
 
-static func spawn(parent: Node, preset: String, pos: Vector2) -> void:
-	if not PRESETS.has(preset):
-		return
-	if SOUNDS.has(preset):
-		Sound.play(SOUNDS[preset], -2.0)
+## Efeito que fica repetindo (o fogo do fogão). Tire com queue_free().
+static func spawn_loop(parent: Node, preset: String, pos: Vector2) -> FX:
+	var fx := _make(preset, pos)
+	fx.loop = true
+	parent.add_child(fx)
+	return fx
+
+
+static func _make(preset: String, pos: Vector2) -> FX:
 	var p: Array = PRESETS[preset]
 	var fx := FX.new()
 	fx.texture = SHEETS[p[0]]
@@ -53,13 +73,27 @@ static func spawn(parent: Node, preset: String, pos: Vector2) -> void:
 	fx.scale = Vector2.ONE * float(p[2])
 	fx.position = pos
 	fx.z_index = 40
-	parent.add_child(fx)
+	if p.size() > 3:
+		fx.modulate = p[3]
+	return fx
+
+
+static func spawn(parent: Node, preset: String, pos: Vector2) -> void:
+	if not PRESETS.has(preset):
+		return
+	if SOUNDS.has(preset):
+		Sound.play(SOUNDS[preset], -2.0)
+	parent.add_child(_make(preset, pos))
 
 
 func _process(delta: float) -> void:
 	_t += delta * FPS
 	var i := int(_t)
 	if i >= _frames:
-		queue_free()
-		return
+		if loop:
+			_t = 0.0
+			i = 0
+		else:
+			queue_free()
+			return
 	frame = _row * _frames + i

@@ -104,6 +104,7 @@ func _cast(cell: Vector2i) -> String:
 	state = State.WAITING
 	Sound.play("cast")
 	FX.spawn(world, "water", _bobber_pos)
+	FX.spawn(world, "ripple", _bobber_pos)
 	queue_redraw()
 	return "Linha lançada%s." % ("" if _bait == "" else " com " + ItemDB.item_name(_bait))
 
@@ -133,6 +134,7 @@ func _catch() -> void:
 	last_catch = {"id": _fish, "size": m["size"], "weight": m["weight"], "q": m["q"], "new": reg["new"], "record": reg["record"]}
 	FX.spawn(world, "harvest", _bobber_pos)
 	Sound.play("levelup" if reg["level_up"] > 0 or f.is_legendary() else "catch")
+	FX.spawn(world, "catch", _bobber_pos + Vector2(0, -10))
 	var text := "Pescou %s! %.1f cm · %s" % [f.name, m["size"], f.rarity_name()]
 	if reg["new"]:
 		text = "NOVA ESPÉCIE! " + text + " (registrada no Livro de Pesca)"
@@ -201,6 +203,7 @@ func _process(delta: float) -> void:
 				_fish = "" if _treasure != "" else FishDB.roll(ctx)
 				state = State.BITE
 				Sound.play("bite")
+				FX.spawn(world, "ripple", _bobber_pos)
 				var lvl := FishDB.level()
 				var win: float = 1.1 if _treasure != "" else BITE_WINDOW[FishDB.get_fish(_fish).rarity]
 				_timer = win * (1.0 + 0.04 * (lvl - 1)) * (1.0 + 0.15 * (rod_level() - 1))

@@ -90,7 +90,7 @@ func _ready() -> void:
 	hud.interact_pressed.connect(player.interact)
 	world.house_door_used.connect(enter_house)
 	world.shop_requested.connect(_on_shop)
-	world.stove_used.connect(func(): hud.open_cooking())
+	world.stove_used.connect(_use_stove)
 	world.villager_used.connect(_on_villager)
 	world.mine_entrance_used.connect(_on_mine_entrance)
 	world.untill_requested.connect(func(c: Vector2i):
@@ -333,6 +333,17 @@ func _on_mine_entrance() -> void:
 		enter_mine(1)
 
 
+## Fogão: se tem prato pronto, pega; senão abre a cozinha (receitas e fila).
+func _use_stove() -> void:
+	var m := Cooking.collect()
+	if m != "":
+		Game.toast.emit(m)
+		if house and house.kitchen:
+			FX.spawn(house, "steam", house.kitchen.global_position + Vector2(10, -26))
+		return
+	hud.open_cooking()
+
+
 # ------------------------------------------------------------------ casa
 ## Entra em casa: o interior é um mundo à parte (como a mina).
 func enter_house() -> void:
@@ -348,7 +359,7 @@ func enter_house() -> void:
 		house.exit_used.connect(exit_house)
 		house.bed_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
 		house.chest_used.connect(func(): hud.open_cargo("chest"))
-		house.stove_used.connect(func(): hud.open_cooking())
+		house.stove_used.connect(_use_stove)
 		_move_player(house, house.spawn_pos)
 		world.visible = false
 		world.process_mode = Node.PROCESS_MODE_DISABLED

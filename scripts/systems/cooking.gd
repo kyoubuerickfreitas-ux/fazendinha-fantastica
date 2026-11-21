@@ -189,25 +189,91 @@ static func can_cook(id: String) -> bool:
 	return true
 
 
-## Cozinha (gasta os ingredientes e põe o prato na mochila). Retorna a mensagem.
+# ------------------------------------------------------------------ fila do fogão
+## Os pratos entram numa fila (Game.cook_queue: [{"id", "start", "done"}], em minutos absolutos do jogo)
+## e ficam prontos um depois do outro. Pegue no fogão quando estiverem prontos.
+const MAX_QUEUE := 5
+
+
+## Quanto tempo (minutos do jogo) o prato leva: 20 + 10 por ingrediente, até 90.
+static func cook_minutes(r: RecipeData) -> int:
+	var n := 0
+	for key in r.ingredients:
+		n += int(r.ingredients[key])
+	return mini(90, 20 + 10 * n)
+
+
+static func queue() -> Array:
+	return Game.cook_queue
+
+
+static func ready_count() -> int:
+	return queue().filter(func(e): return int(e["done"]) <= now_abs()).size()
+
+
+static func is_cooking() -> bool:
+	return queue().any(func(e): return int(e["done"]) > now_abs())
+
+
+## Progresso (0..1) do prato que está no fogo agora (-1 se nenhum).
+static func current_progress() -> float:
+	for e in queue():
+		if int(e["done"]) > now_abs():
+			var st := maxi(int(e["start"]), 0)
+			if now_abs() < st:
+				return 0.0
+			return clampf(float(now_abs() - st) / maxf(1.0, float(int(e["done"]) - st)), 0.0, 1.0)
+	return -1.0
+
+
+static func clock_of(abs_min: int) -> String:
+	var m := abs_min % 1440
+	return "%02d:%02d" % [m / 60, m % 60]
+
+
+## Pega os pratos prontos (na ordem da fila). Retorna o aviso ("" se nada pronto).
+static func collect() -> String:
+	var got := []
+	var full := false
+	while not queue().is_empty() and int(queue()[0]["done"]) <= now_abs():
+		var r := get_recipe(str(queue()[0]["id"]))
+		if r == null:
+			queue().pop_front()
+			continue
+		if Game.add_item(r.dish_id(), 1) > 0:
+			full = true
+			break
+		queue().pop_front()
+		Game.dishes_cooked += 1
+		got.append(r.name)
+	if got.is_empty():
+		return "A mochila está cheia: abra espaço para pegar o prato." if full else ""
+	Sound.play("success", -4.0)
+	var t := "Pegou do fogão: %s!" % ", ".join(got)
+	var u := check_unlocks()
+	return t + ("\n" + u if u != "" else "")
+
+
+## Coloca o prato na fila (gasta os ingredientes agora). Retorna a mensagem.
 static func cook(id: String) -> String:
 	if not can_cook(id):
 		return "Faltam ingredientes."
 	var r := get_recipe(id)
-	if Game.inventory.all(func(s): return s != null) and Game.count_item(r.dish_id()) == 0:
-		return "A mochila está cheia."
+	if queue().size() >= MAX_QUEUE:
+		return "O fogão está cheio (%d pratos na fila)." % MAX_QUEUE
 	for key in r.ingredients:
 		if not GROUPS.has(key):
 			Game.remove_item(key, int(r.ingredients[key]))
 	for key in r.ingredients:
 		if GROUPS.has(key):
 			_take_group(key, int(r.ingredients[key]))
-	Game.add_item(r.dish_id(), 1)
-	Game.dishes_cooked += 1
+	var start := now_abs()
+	if not queue().is_empty():
+		start = maxi(start, int(queue().back()["done"]))
+	var done := start + cook_minutes(r)
+	queue().append({"id": id, "start": start, "done": done})
 	Sound.play("cook")
-	var t := "Cozinhou %s!" % r.name
-	var u := check_unlocks()
-	return t + ("\n" + u if u != "" else "")
+	return "%s no fogo! Fica pronto às %s." % [r.name, clock_of(done)]
 
 
 ## Gasta itens de um grupo, os mais baratos primeiro.

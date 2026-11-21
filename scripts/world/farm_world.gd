@@ -1221,6 +1221,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 			if ground_at(c) == Ground.WATER:
 				Game.water = Game.water_capacity()
 				Sound.play("fill")
+				FX.spawn(self, "fill", target_anchor(c))
 				Game.inventory_changed.emit()
 				return "Regador cheio!"
 			if Game.water <= 0:
@@ -1244,7 +1245,7 @@ func use_item(item_id: String, c: Vector2i) -> String:
 					return "Precisa de outra ferramenta." if prop.required_tool() != "" else "Isso não sai daqui."
 				if not Game.use_energy(ENERGY_COST[item_id]):
 					return ""
-				FX.spawn(self, "hit", prop.position + Vector2(0, -12))
+				FX.spawn(self, "hit_stone" if item_id == "pickaxe" else "hit", prop.position + Vector2(0, -12))
 				Sound.play("pick" if item_id == "pickaxe" else ("weed" if item_id == "scythe" else "chop"), -2.0)
 				if prop.hit(Game.tool_level(item_id)):     # picareta melhorada bate mais forte
 					_destroy_prop(prop)
