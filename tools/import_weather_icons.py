@@ -48,6 +48,31 @@ if __name__ == "__main__":
         out = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
         out.alpha_composite(small, ((SIZE - small.width) // 2, (SIZE - small.height) // 2))
         out.save(os.path.join(OUT, name + ".png"))
+    # mostrador do relógio sem os ponteiros (o jogo desenha os ponteiros na hora certa): o miolo pega a cor
+    # do mostrador na mesma distância do centro, medida na metade de baixo (onde não há ponteiro)
+    face = Image.open(os.path.join(OUT, "clock.png")).convert("RGBA")
+    fp = face.load()
+    cx, cy = 31.5, 31.5
+    rings = {}
+    for y in range(int(cy) + 3, SIZE):
+        for x in range(SIZE):
+            r, g, b, a = fp[x, y]
+            d = round(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5)
+            if a and d <= 16 and (r + g + b) / 3 > 170:
+                rings.setdefault(d, []).append((r, g, b))
+    def avg(d):
+        for k in list(range(d, 18)) + list(range(d, -1, -1)):
+            if rings.get(k):
+                c = rings[k]
+                return tuple(sum(v[i] for v in c) // len(c) for i in range(3)) + (255,)
+        return (235, 215, 180, 255)
+    for y in range(SIZE):
+        for x in range(SIZE):
+            d = round(((x - cx) ** 2 + (y - cy) ** 2) ** 0.5)
+            r, g, b, a = fp[x, y]
+            if d <= 15 or (d <= 17 and (r + g + b) / 3 < 170 and abs(x - cx) > 3):
+                fp[x, y] = avg(d)
+    face.save(os.path.join(OUT, "clock_face.png"))
     for a, src in ALIAS.items():
         Image.open(os.path.join(OUT, src + ".png")).save(os.path.join(OUT, a + ".png"))
     print("ícones de clima:", len(BOXES) + len(ALIAS))

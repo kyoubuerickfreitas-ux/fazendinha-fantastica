@@ -219,6 +219,12 @@ func _build_top_right() -> void:
 	_top_right = panel
 	_money_label = _panel_label(panel, HudLayout.rect("top", "money", size), 12)
 	_time_icon = _panel_icon(panel, HudLayout.rect("top", "time_icon", size))
+	var clock := ClockIcon.new()          # relógio de ponteiro ao lado do sol/lua
+	var cr := HudLayout.rect("top", "clock", size)
+	clock.position = cr.position
+	clock.size = cr.size
+	clock.name = "Clock"
+	panel.add_child(clock)
 	_time_label = _panel_label(panel, HudLayout.rect("top", "time", size), 12)
 	_weather_icon = _panel_icon(panel, HudLayout.rect("top", "weather", size))
 	# estação, dia e temperatura logo abaixo do painel

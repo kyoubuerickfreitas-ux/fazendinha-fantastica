@@ -182,8 +182,8 @@ if __name__ == "__main__":
     erase_h(top, (118, 26, 258, 84))
     erase_h(top, (284, 12, 492, 96))      # sol (as pontas passam da borda) e hora
     erase_h(top, (510, 10, 598, 98))      # nuvem
-    layout["top"] = {"money": frac((112, 20, 262, 90), top.size), "time_icon": frac((290, 25, 356, 85), top.size),
-                     "time": frac((356, 20, 495, 90), top.size), "weather": frac((514, 22, 596, 88), top.size)}
+    layout["top"] = {"money": frac((112, 20, 262, 90), top.size), "time_icon": frac((288, 27, 338, 83), top.size),
+                     "clock": frac((340, 27, 392, 83), top.size), "time": frac((390, 20, 497, 90), top.size), "weather": frac((514, 22, 596, 88), top.size)}
 
     # ---- barra rápida: limpa o 1º espaço e copia para os 6 (tira o destaque verde do 3º)
     hot = p["hotbar"]
