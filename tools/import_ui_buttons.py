@@ -3,7 +3,7 @@
 Ícones dos botões redondos da HUD (folhas de fundo verde em assets/source/, peças da esquerda para a direita):
   ui_buttons.png   mochila e álbum (Livro de Pesca)
   ui_buttons_2.png mão (interagir) e pé (correr)
-  ui_windows.png   engrenagem das Opções (só a peça cinza do botão quadrado)
+  ui_windows.png   botão quadrado da engrenagem (Opções) e a engrenagem sozinha
 Saída: assets/sprites/ui/<nome>.png em 64x64 (o botão desenha em 32x32 na tela de 640x360, que no celular
 fica 1:1 com os pixels). Uso: python3 tools/import_ui_buttons.py
 """
@@ -63,6 +63,15 @@ def import_gear():
     o = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
     o.alpha_composite(small, ((SIZE - small.width) // 2, (SIZE - small.height) // 2))
     o.save(os.path.join(OUT, "gear.png"))
+    # o botão quadrado inteiro (madeira + engrenagem), usado no botão de Opções
+    from import_hud import key_flood
+    sq = key_flood(Image.open(os.path.join(ROOT, "assets", "source", "ui_windows.png")).convert("RGBA").crop((670, 645, 793, 761)))
+    sq = sq.crop(sq.getbbox())
+    s2 = (SIZE - 2) / max(sq.size)
+    small = sq.resize((round(sq.width * s2), round(sq.height * s2)), Image.LANCZOS)
+    o = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
+    o.alpha_composite(small, ((SIZE - small.width) // 2, (SIZE - small.height) // 2))
+    o.save(os.path.join(OUT, "gear_button.png"))
     print("ok: gear")
 
 

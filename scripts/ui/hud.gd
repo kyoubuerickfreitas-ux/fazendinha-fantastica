@@ -1647,10 +1647,11 @@ func _refresh_hotbar() -> void:
 # ================================================================= opções
 func _build_options() -> void:
 	_options_btn = TouchButton.new()
-	_options_btn.radius = 13
-	_options_btn.icon = preload("res://assets/sprites/ui/gear.png")   # tools/import_ui_buttons.py
-	_options_btn.icon_scale = 1.05
-	_skin_button(_options_btn)
+	_options_btn.radius = 15
+	_options_btn.icon = null      # o botão quadrado da arte já tem a engrenagem (tools/import_ui_buttons.py)
+	_options_btn.base_tex = preload("res://assets/sprites/ui/gear_button.png")
+	_options_btn.base_circle = Rect2(0, 0, 1, 1)
+	_options_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_options_btn.anchor_left = 1.0
 	_options_btn.anchor_right = 1.0
 	_options_btn.offset_left = -36
