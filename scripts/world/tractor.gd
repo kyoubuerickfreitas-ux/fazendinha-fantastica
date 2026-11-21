@@ -8,9 +8,10 @@ const TRAILER_DIR := 0
 const TEX := [preload("res://assets/sprites/tractor/down.png"), preload("res://assets/sprites/tractor/left.png"),
 	preload("res://assets/sprites/tractor/right.png"), preload("res://assets/sprites/tractor/up.png")]
 const PLAYER_SHEET := preload("res://assets/sprites/player.png")
-## Onde fica o personagem sentado, em cada direção (canto de cima do recorte, em relação à base do trator)
-const RIDER_POS := [Vector2(-32, -62), Vector2(-26, -62), Vector2(-38, -62), Vector2(-32, -60)]
-const RIDER_CUT := Rect2(0, 4, 64, 34)     # cabeça e tronco do quadro parado
+## Personagem sentado (desenhado por cima do banco): canto de cima do recorte em relação à base do trator,
+## e quais linhas do quadro parado aparecem (cabeça e ombros), por direção (0 baixo, 1 esquerda, 2 direita, 3 cima)
+const RIDER_POS := [Vector2(-32, -46), Vector2(-25, -46), Vector2(-39, -46), Vector2(-32, -47)]
+const RIDER_ROWS := [Vector2i(10, 29), Vector2i(10, 30), Vector2i(10, 30), Vector2i(10, 26)]
 
 signal mount_requested
 
@@ -77,12 +78,9 @@ func set_dir(d: int) -> void:
 	_sprite.frame = _wheel_frame()
 	_sprite.position = Vector2(-t.get_width() / WHEEL_FRAMES / 2.0, -t.get_height() + 2 + _bob)
 	_rider.position = RIDER_POS[d] + Vector2(0, _bob)
-	var cut := Rect2(RIDER_CUT.position + Vector2(0, d * 64), RIDER_CUT.size)
-	# de costas o encosto do banco cobriria o personagem: só a cabeça, desenhada por cima do banco
-	_rider.z_index = 1 if d == 3 else 0
-	if d == 3:
-		cut = Rect2(Vector2(0, 3 * 64 + 6), Vector2(64, 19))
-		_rider.position = Vector2(-32, -56 + _bob)
+	var rows: Vector2i = RIDER_ROWS[d]
+	var cut := Rect2(0, d * 64 + rows.x, 64, rows.y - rows.x)
+	_rider.z_index = 1
 	_rider.region_rect = cut
 	_rider_hair.region_rect = cut
 

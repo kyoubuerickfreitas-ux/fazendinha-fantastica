@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Trator (assets/source/tractor.png, fundo verde, 4 vistas): frente (baixo), costas (cima),
-virado para a esquerda (capô à esquerda) e para a direita. Saída: assets/sprites/tractor/<direção>.png,
-todas na mesma escala, com as rodas na base da imagem.
-Também importa a caçamba (assets/source/trailer.png, mesma organização: em cima à esquerda vista com o
-engate para baixo, embaixo à esquerda para cima, à direita engate para a esquerda e para a direita)
-em assets/sprites/tractor/trailer_<direção do trator>.png.
+Trator e caçamba (assets/source/tractor.png, fundo verde). Em cima: trator de frente, de costas e de lado
+(capô para a esquerda); embaixo: caçamba vista pelo engate (trator indo para baixo), pela traseira (trator
+indo para cima) e de lado (engate para a direita = trator à direita). O outro lado é o espelho.
+Saída: assets/sprites/tractor/<direção do trator>.png e trailer_<direção do trator>.png, cada uma uma tira de
+FRAMES quadros com as rodas girando (de lado gira o aro de gomos; de frente/costas a banda "corre").
 Uso: python3 tools/import_tractor.py
 """
 import colorsys
@@ -20,14 +19,18 @@ from import_hud import key_flood  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "source", "tractor.png")
 OUT = os.path.join(ROOT, "assets", "sprites", "tractor")
-VIEWS = {"down": (0, 0, 700, 500), "left": (700, 0, 1536, 512), "up": (0, 500, 700, 1024), "right": (700, 512, 1536, 1024)}
-SCALE = 0.13
+# nome -> (recorte na folha, espelhar)
+VIEWS = {"down": ((0, 30, 480, 545), False), "up": ((480, 30, 940, 545), False),
+         "left": ((930, 30, 1536, 560), False), "right": ((930, 30, 1536, 560), True)}
+TRAILER_VIEWS = {"down": ((0, 590, 470, 1010), False), "up": ((470, 590, 940, 1010), False),
+                 "right": ((940, 590, 1536, 1010), False), "left": ((940, 590, 1536, 1010), True)}
+SCALE = 0.125
 
 FRAMES = 4          # quadros das rodas girando (saída: tira horizontal com FRAMES quadros por direção)
 # centro aproximado das rodas vistas de lado (na folha original); o centro exato é achado pelo miolo creme
 # (x, y, raio aproximado do miolo, número de gomos do aro)
-TRACTOR_WHEELS = [(900, 430, 40, 10), (1257, 401, 65, 12), (955, 880, 62, 12), (1325, 900, 42, 10)]
-TRAILER_WHEELS = [(1215, 370, 52, 14), (1038, 850, 52, 14)]
+TRACTOR_WHEELS = [(1080, 472, 38, 12), (1355, 432, 60, 16)]
+TRAILER_WHEELS = [(1190, 871, 42, 12)]
 
 
 def _is_tread(p):
@@ -145,33 +148,35 @@ def import_sheet(src, views, prefix, scale=SCALE, wheels=()):
         f = im.copy()
         for wh in found:
             _spin(im, f, wh, k / FRAMES)
-        for name, box in views.items():
+        for name, (box, flip) in views.items():
             if name in ("down", "up"):
                 _roll(im, f, box, k / FRAMES)
         frames.append(f)
-    for name, box in views.items():
+    for name, (box, flip) in views.items():
         bb = im.crop(box).getbbox()
-        strip = None
-        for k, f in enumerate(frames):
+        smalls = []
+        for f in frames:
             p = f.crop(box).crop(bb)
+            if flip:
+                p = p.transpose(Image.FLIP_LEFT_RIGHT)
             small = p.resize((round(p.width * scale), round(p.height * scale)), Image.LANCZOS)
             sp = small.load()
             for y in range(small.height):
                 for x in range(small.width):
                     r, g, b, a = sp[x, y]
                     sp[x, y] = (r, g, b, 255) if a >= 110 else (0, 0, 0, 0)
-            if strip is None:
-                strip = Image.new("RGBA", (small.width * FRAMES, small.height), (0, 0, 0, 0))
-            strip.paste(small, (k * small.width, 0))
+            smalls.append(small)
+        if flip:
+            # no espelho o giro inverte: volta a ordem para os quadros girarem no mesmo sentido do original
+            smalls = [smalls[0]] + smalls[1:][::-1]
+        strip = Image.new("RGBA", (smalls[0].width * FRAMES, smalls[0].height), (0, 0, 0, 0))
+        for k, sm in enumerate(smalls):
+            strip.paste(sm, (k * sm.width, 0))
         strip.save(os.path.join(OUT, prefix + name + ".png"))
-        print(prefix + name, strip.size, "rodas:", [(round(w[0]), round(w[1]), round(w[4], 1)) for w in found] if name == "left" else "")
+        print(prefix + name, strip.size)
 
-
-# caçamba: nome = direção do TRATOR (o engate aponta para ele)
-TRAILER_VIEWS = {"down": (0, 0, 700, 500), "left": (700, 0, 1536, 500), "up": (0, 500, 700, 1024),
-                 "right": (700, 500, 1536, 1024)}
 
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     import_sheet(SRC, VIEWS, "", SCALE, TRACTOR_WHEELS)
-    import_sheet(os.path.join(ROOT, "assets", "source", "trailer.png"), TRAILER_VIEWS, "trailer_", 0.105, TRAILER_WHEELS)
+    import_sheet(SRC, TRAILER_VIEWS, "trailer_", 0.105, TRAILER_WHEELS)

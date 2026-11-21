@@ -123,7 +123,7 @@ Ao entrar na mina ou dormir você desce sozinho. Arte: `tools/import_tractor.py`
 **Caçamba**: vem engatada e segue atrás do trator. Parada, toque nela
 com a mão para abrir a carga (24 espaços): toque num item para passar entre a mochila e a carga (ferramentas
 ficam na mochila). Perto da caixa de vendas dá para vender a carga toda de uma vez; quando a cidade existir,
-é lá que ela vai ser vendida. Arte: `assets/source/trailer.png` (mesmo importador).
+é lá que ela vai ser vendida. Arte: na mesma folha do trator (`assets/source/tractor.png`, linha de baixo).
 
 ## Zoom da câmera
 
