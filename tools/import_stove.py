@@ -14,6 +14,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from PIL import Image  # noqa: E402
 from collections import deque  # noqa: E402
+from import_hud import key_flood  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 HIN = os.path.join(ROOT, "assets", "sprites", "house_in")
@@ -22,6 +23,20 @@ CROP = (915, 191, 1047, 411)  # o fogão no mockup (contorno escuro incluso)
 FEET = ((919, 942), (1023, 1046))   # abaixo de FEET_Y só ficam os pés (tira o pé da mesa que aparece no meio)
 FEET_Y = 402
 BURNER = (980, 234)          # centro da boca no mockup
+# fogão atual: arte própria de fundo verde (assets/source/stove_green.jpg); o recorte do mockup fica de reserva
+GREEN_SRC = os.path.join(ROOT, "assets", "source", "stove_green.jpg")
+GREEN_BURNER = (688, 165)
+
+
+def cut_green():
+    im = key_flood(Image.open(GREEN_SRC).convert("RGBA"))
+    px = im.load()
+    for y in range(im.height):          # verde preso / franja do JPG
+        for x in range(im.width):
+            r, g, b, a = px[x, y]
+            if a and g > 190 and r < 90 and b < 90:
+                px[x, y] = (0, 0, 0, 0)
+    return im
 
 
 def cut_stove():
@@ -61,10 +76,14 @@ def shrink(im, w):
 
 
 if __name__ == "__main__":
-    im = cut_stove()
+    use_green = os.path.exists(GREEN_SRC)
+    im = cut_green() if use_green else cut_stove()
     bb = im.getbbox()
     im = im.crop(bb)
-    bb = (bb[0] + CROP[0], bb[1] + CROP[1])
+    if not use_green:
+        bb = (bb[0] + CROP[0], bb[1] + CROP[1])
+    else:
+        BURNER = GREEN_BURNER
     small, s = shrink(im, round(im.width * HEIGHT / im.height))
     small.save(os.path.join(HIN, "stove.png"))
     bx = (BURNER[0] - bb[0]) * s - small.width / 2.0

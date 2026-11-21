@@ -370,7 +370,7 @@ var _steam_t := 0.0
 const POT_TEX := preload("res://assets/sprites/house_in/pot.png")   # tools/import_pot.py
 var _bar_state := ""
 ## Onde fica a boca do fogão em relação à base da cozinha (a cozinha tem pia à esquerda e fogão à direita)
-const STOVE_OFFSET := Vector2(0, -37)     # boca do fogão novo (tools/import_stove.py) em relação à base
+const STOVE_OFFSET := Vector2(0, -35)     # boca do fogão novo (tools/import_stove.py) em relação à base
 
 
 func _process(_delta: float) -> void:
