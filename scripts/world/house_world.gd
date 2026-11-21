@@ -118,7 +118,7 @@ func generate(_saved: Dictionary) -> void:
 
 ## Móveis da casa: id -> [peça, x, y]. Peças em PIECES.
 const DEFAULT_LAYOUT := {
-	"bookshelf": ["bookshelf", 21, 14], "kitchen": ["kitchen", 23, 14], "cupboard": ["cupboard", 26, 14],
+	"bookshelf": ["bookshelf", 21, 14], "kitchen": ["counter", 23, 14], "stove": ["stove", 25, 14], "cupboard": ["cupboard", 26, 14],
 	"nightstand": ["nightstand", 29, 14], "bed": ["bed", 30, 14], "sofa": ["sofa", 20, 17],
 	"rug": ["rug", 20, 19], "coffee_table": ["coffee_table", 21, 19], "armchair": ["armchair", 23, 19],
 	"tv": ["tv", 18, 19], "side_table": ["side_table", 27, 18], "crate": ["crate", 31, 19],
@@ -130,7 +130,7 @@ const PIECES := {
 	"armchair": [["armchair", Vector2i(1, 1), false], ["armchair_side", Vector2i(1, 1), false],
 		["armchair_side", Vector2i(1, 1), true]],
 	"tv": [["tv_side", Vector2i(1, 1), false], ["tv_side", Vector2i(1, 1), true], ["tv", Vector2i(2, 1), false]],
-	"bookshelf": [["bookshelf", Vector2i(1, 1), false]], "kitchen": [["kitchen", Vector2i(3, 1), false]],
+	"bookshelf": [["bookshelf", Vector2i(1, 1), false]], "counter": [["counter", Vector2i(2, 1), false]], "stove": [["stove", Vector2i(1, 1), false]],
 	"cupboard": [["cupboard", Vector2i(1, 1), false]], "nightstand": [["nightstand", Vector2i(1, 1), false]],
 	"sofa": [["sofa", Vector2i(3, 1), false]], "coffee_table": [["coffee_table", Vector2i(1, 1), false]],
 	"side_table": [["side_table", Vector2i(2, 1), false]], "crate": [["crate", Vector2i(1, 1), false]],
@@ -183,7 +183,7 @@ func _add_furniture(id: String, piece: String, cell: Vector2i, view: int) -> voi
 		holder.add_child(body)
 	# usos que vão junto com o móvel
 	match id:
-		"kitchen":
+		"stove":
 			kitchen = _use_point_on(holder, "Fogão")
 			kitchen.interacted.connect(func(_w): stove_used.emit())
 		"cupboard":
@@ -370,11 +370,11 @@ var _steam_t := 0.0
 const POT_TEX := preload("res://assets/sprites/house_in/pot.png")   # tools/import_pot.py
 var _bar_state := ""
 ## Onde fica a boca do fogão em relação à base da cozinha (a cozinha tem pia à esquerda e fogão à direita)
-const STOVE_OFFSET := Vector2(30, -30)
+const STOVE_OFFSET := Vector2(4, -30)     # boca do fogão novo (tools/import_stove.py) em relação à base
 
 
 func _process(_delta: float) -> void:
-	var k: Node2D = furniture.get("kitchen")
+	var k: Node2D = furniture.get("stove")
 	if k == null:
 		return
 	var cooking := Cooking.is_cooking()
