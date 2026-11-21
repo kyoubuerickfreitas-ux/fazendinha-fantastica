@@ -49,6 +49,7 @@ const PRESETS := {
 	"fire": ["fire_wide", Color9.WHITE, 0.3, Color(1.6, 0.9, 0.35)],  # fogo do fogão (embaixo da panela), tingido de laranja
 	"fire_small": ["fire_wide", Color9.WHITE, 0.28, Color(1.6, 0.85, 0.3)],  # boca da fornalha
 	"smoke": ["smoke_up", Color9.WHITE, 0.4, Color(0.75, 0.75, 0.75, 0.85)],  # fumaça subindo da chaminé
+	"chimney": ["smoke_up", Color9.WHITE, 0.6, Color(1.35, 1.35, 1.35, 0.85)],  # chaminé da casa (maior e mais clara)
 }
 
 var _frames := 1

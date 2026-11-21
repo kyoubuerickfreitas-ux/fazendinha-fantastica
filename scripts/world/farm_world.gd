@@ -238,6 +238,9 @@ func _build_static_scenery() -> void:
 	for pt in [Vector2(64, 55), Vector2(45, 84), Vector2(84, 84), Vector2(30, 87), Vector2(100, 87)]:
 		add_glow(hs, _img_pt(hs, pt), 34.0)
 	house.add_child(hs)
+	# fumaça animada saindo da chaminé (a pintada foi tirada da arte)
+	var smoke := FX.spawn_loop(hs, "chimney", _img_pt(hs, Vector2(97, 16)))
+	smoke.z_index = 1
 	_add_rect_collision(house, Vector2(104, 30), Vector2(-30, -17))
 	entities.add_child(house)
 	for y in range(3, 8):

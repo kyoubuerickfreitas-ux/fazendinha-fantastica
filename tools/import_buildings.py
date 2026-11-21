@@ -15,6 +15,7 @@ from import_animals import components  # noqa: E402
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "source", "house_shop.png")
+CHIMNEY_TOP = 31          # na arte final da casa (128 px): acima disso só havia fumaça
 SPR = os.path.join(ROOT, "assets", "sprites")
 SIZE = 128
 
@@ -60,5 +61,11 @@ if __name__ == "__main__":
                 spx[x, y] = (r, g, b, 255) if a >= 110 else (0, 0, 0, 0)
         out = Image.new("RGBA", (SIZE, SIZE), (0, 0, 0, 0))
         out.alpha_composite(small, ((SIZE - small.width) // 2, SIZE - 4 - small.height))
+        if name == "house":
+            # tira a fumaça pintada acima da chaminé (no jogo ela é um efeito animado: FarmWorld)
+            opx = out.load()
+            for y in range(0, CHIMNEY_TOP):
+                for x in range(84, 113):
+                    opx[x, y] = (0, 0, 0, 0)
         out.save(os.path.join(SPR, name + ".png"))
         print(name, small.size, "escala %.3f" % s)
