@@ -38,3 +38,9 @@ São gerados a partir das folhas originais em `assets/source/animals/` por `tool
 modelo `assets/source/hud_mockup.png` por `tools/import_hud.py` (que também gera `scripts/ui/hud_layout.gd` com a
 posição de cada coisa dentro das peças). `ui/weather/`: ícones de clima, sol/lua e temperatura
 (`tools/import_weather_icons.py`, de `assets/source/weather_sheet.png`).
+
+## Janelas
+`ui/win/`: moldura das janelas (9 fatias), plaquinha do título, botão X, botões de madeira (normal e vermelho) e a
+bolinha do controle deslizante, recortados da janela de Opções do modelo `assets/source/ui_windows.png` por
+`tools/import_windows.py`. As margens das 9 fatias ficam em `scripts/ui/ui_style.gd`.
+Casa e barraca do Fungo: `tools/import_buildings.py` (de `assets/source/house_shop.png`).

@@ -24,18 +24,21 @@ func _ready() -> void:
 		_look = PlayerLook.random_look()
 
 	var outer := PanelContainer.new()
-	outer.add_theme_stylebox_override("panel", UIStyle.wood_panel())
+	outer.add_theme_stylebox_override("panel", UIStyle.window_frame())
 	outer.set_anchors_preset(Control.PRESET_CENTER)
 	outer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	outer.grow_vertical = Control.GROW_DIRECTION_BOTH
 	add_child(outer)
 	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	outer.add_child(panel)
 	var root := VBoxContainer.new()
 	root.add_theme_constant_override("separation", 4)
 	panel.add_child(root)
 	var title := UIStyle.label("Crie seu personagem" if first_time else "Aparência e nomes", 14, UIStyle.WOOD_DARK)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title.add_theme_stylebox_override("normal", UIStyle.title_plate())    # plaquinha em cima da viga
+	title.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	root.add_child(title)
 
 	var cols := HBoxContainer.new()

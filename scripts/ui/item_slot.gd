@@ -55,12 +55,22 @@ func _draw() -> void:
 			sb.shadow_size = 3
 			draw_style_box(sb, r.grow(1))
 	else:
-		var bg := UIStyle.SLOT_BG
-		draw_rect(r, UIStyle.WOOD_DARK)
-		draw_rect(r.grow(-2), UIStyle.WOOD_LIGHT if selected else UIStyle.WOOD)
-		draw_rect(r.grow(-4), bg)
+		# espaço da mochila: quadradinho de madeira escura (como no modelo das janelas)
+		var sb := StyleBoxFlat.new()
+		sb.bg_color = Color("5b3a22")
+		sb.set_border_width_all(2)
+		sb.border_color = Color("3b2414")
+		sb.set_corner_radius_all(4)
+		sb.border_width_top = 3
+		draw_style_box(sb, r)
+		draw_line(Vector2(4, r.size.y - 3), Vector2(r.size.x - 4, r.size.y - 3), Color("6f4a2c"), 1.0)
 		if selected:
-			draw_rect(r.grow(-1), UIStyle.GREEN_LIGHT, false, 2.0)
+			var hl := StyleBoxFlat.new()
+			hl.draw_center = false
+			hl.set_border_width_all(2)
+			hl.border_color = Color("a6dc4f")
+			hl.set_corner_radius_all(5)
+			draw_style_box(hl, r.grow(1))
 	if marked:
 		draw_rect(r.grow(-1), Color("f2d16b"), false, 2.0)
 

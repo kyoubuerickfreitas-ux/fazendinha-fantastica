@@ -383,28 +383,39 @@ func _make_window(title: String, min_size: Vector2) -> Array:
 	shade.visible = false
 	_root.add_child(shade)
 
+	# moldura da arte (tools/import_windows.py): o título e o X ficam em cima da viga de madeira
 	var outer := PanelContainer.new()
-	outer.add_theme_stylebox_override("panel", UIStyle.wood_panel())
+	outer.add_theme_stylebox_override("panel", UIStyle.window_frame())
 	outer.custom_minimum_size = min_size
 	outer.set_anchors_preset(Control.PRESET_CENTER)
 	outer.grow_horizontal = Control.GROW_DIRECTION_BOTH
 	outer.grow_vertical = Control.GROW_DIRECTION_BOTH
 	shade.add_child(outer)
 	var panel := PanelContainer.new()
+	panel.add_theme_stylebox_override("panel", StyleBoxEmpty.new())
 	outer.add_child(panel)
 	var v := VBoxContainer.new()
 	panel.add_child(v)
 
 	var header := HBoxContainer.new()
-	var t := UIStyle.label(title, 15, UIStyle.WOOD_DARK)
-	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var t := UIStyle.label(title, 13, UIStyle.WOOD_DARK)
+	t.add_theme_stylebox_override("normal", UIStyle.title_plate())
+	t.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	header.add_child(t)
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(gap)
 	var close := Button.new()
-	close.text = "X"
-	close.custom_minimum_size = Vector2(28, 24)
+	close.text = ""
+	close.custom_minimum_size = Vector2(26, 30)
+	for st in [["normal", Color.WHITE], ["hover", Color(1.1, 1.1, 1.1)], ["pressed", Color(0.82, 0.78, 0.74)]]:
+		close.add_theme_stylebox_override(st[0], UIStyle.close_box(st[1]))
 	close.pressed.connect(close_panel)
 	header.add_child(close)
 	v.add_child(header)
+	var below := Control.new()          # espaço entre a viga e o pergaminho
+	below.custom_minimum_size = Vector2(0, 2)
+	v.add_child(below)
 	return [shade, v]
 
 
@@ -1526,7 +1537,7 @@ func _build_options() -> void:
 	v.add_child(tut)
 	var reset := Button.new()
 	reset.text = "Novo jogo (apaga o progresso)"
-	reset.add_theme_color_override("font_color", Color("8e3f2b"))
+	UIStyle.make_red(reset)
 	reset.pressed.connect(func():
 		close_panel()
 		ask("Começar um jogo novo?\nTodo o progresso salvo será apagado.", func(): new_game_requested.emit()))
