@@ -984,19 +984,12 @@ func _run() -> void:
 		game.inventory[i] = null
 	game.minutes = 10 * 60
 	await _wait(0.2)
-	print("moradores: ", w.villagers.map(func(n): return "%s em %s" % [n.npc_name, Vector2i(n.position / 32)]))
-	assert(w.villagers.size() == 4 and w.villagers.all(func(n): return n.visible))
+	assert(w.villagers.is_empty(), "os moradores trabalham nas lojas da cidade")
 	assert(Villagers.reaction("estrelo", "moonstone") == "love" and Villagers.reaction("estrelo", "ruby") == "like")
-	var reach: Dictionary = w.walkable_from(Vector2i(w.player_start / 32))
-	for n in w.villagers:
-		assert(reach.has(w.nearest_passable(n.data.home)), "%s deveria ser alcançável a pé" % n.npc_name)
 	game.inventory[0] = {"id": "axe", "qty": 1}
 	game.select_slot(0)
 	main._on_villager("carpa")
 	assert(Villagers.points("carpa") == Villagers.TALK_PTS and main.hud._npc_win.visible)
-	var carpa: NPC = w.villagers.filter(func(n): return n.data.id == "carpa")[0]
-	p.position = carpa.position + Vector2(-40, 0)
-	main.camera.reset_smoothing()
 	await _wait(0.3)
 	await _shot("31_conversa")
 	main.hud.close_panel()
@@ -1034,11 +1027,6 @@ func _run() -> void:
 	await _wait(0.1)
 	await _shot("32_moradores")
 	main.hud.close_panel()
-	game.minutes = 21 * 60
-	await _wait(0.2)
-	assert(w.villagers.all(func(n): return not n.visible), "de noite os moradores ficam em casa")
-	game.minutes = 10 * 60
-	await _wait(0.1)
 
 	# vitrine: todas as plantas da folha nova em todos os estágios (2 por linha)
 	var crop_ids := ["apple", "orange", "pear", "lemon", "grape", "raspberry", "strawberry", "plum", "blueberry", "peach",
@@ -1469,7 +1457,7 @@ func _run() -> void:
 	var cw: CityWorld = main.city
 	assert(not cw.would_act("hoe", Vector2i(10, 25)) and not cw.would_act("axe", Vector2i(3, 3)), "na cidade não se ara nem se corta árvore")
 	game.add_item("fish_silver", 2)
-	main._on_city_building("fish")
+	main.hud.open_shop("fish")
 	assert(main.hud._shop.visible and main.hud._shop_title.text == "Peixaria")
 	var fish_price: int = main.hud._shop_sell_price("fish_silver", 0)
 	assert(fish_price > ItemDB.sell_price("fish_silver", 0), "a peixaria paga mais pelo peixe")
@@ -1480,6 +1468,36 @@ func _run() -> void:
 		main.hud.open_shop(k)
 		assert(main.hud._shop_buy_list().size() > 0, "a loja %s vende alguma coisa" % k)
 		main.hud.close_panel()
+	# lojas com morador: entra, fala com quem atende e abre a loja pela conversa; sai para a frente da loja
+	game.minutes = 10 * 60
+	main._on_city_building("fish")
+	await _wait(2.2)
+	assert(main.shop != null and p.world == main.shop and not cw.visible, "a porta da Peixaria leva para dentro")
+	var keeper: NPC = main.shop.keeper
+	assert(keeper != null and keeper.data.id == "carpa" and keeper.visible, "a Dona Carpa atende na Peixaria")
+	p.position = keeper.position + Vector2(0, 66)
+	p.facing = Vector2.UP
+	await _wait(0.4)
+	main.hud.visible = false
+	await _shot("56_peixaria_dentro")
+	main.hud.visible = true
+	assert(p.find_interactable() == keeper, "dá para falar com ela por cima do balcão")
+	p.interact()
+	assert(main.hud._npc_win.visible, "tocar nela abre a conversa")
+	var see: Button = main.hud._npc_body.get_node("SeeShop")
+	see.pressed.emit()
+	assert(main.hud._shop.visible and main.hud._shop_title.text == "Peixaria", "da conversa, abre a loja")
+	await _shot("57_peixaria_conversa_loja")
+	main.hud.close_panel()
+	for k in ["smith", "bakery", "market"]:
+		assert(Villagers.get_npc(ShopWorld.KEEPERS[k]) != null)
+	main.exit_shop()
+	await _wait(2.2)
+	assert(main.shop == null and p.world == cw and cw.visible, "sai da loja de volta para a cidade")
+	game.minutes = 21 * 60
+	main._on_city_building("smith")
+	assert(main.shop == null, "de noite as lojas com morador ficam fechadas")
+	game.minutes = 10 * 60
 	game.add_item("watering_can", 1) if game.count_item("watering_can") == 0 else null
 	game.water = 0
 	main._on_city_building("well")

@@ -25,7 +25,7 @@ const STEPS := [
 		"metric": "counter:pets", "goal": 1, "target": "animal"},
 	{"text": "Pegue a Vara de Pesca e use na água. Quando aparecer o \"!\", toque rápido e depois várias vezes para puxar.",
 		"metric": "fish", "goal": 1, "abs": true, "target": "water", "reward": {"bait_worm": 5}},
-	{"text": "Converse com um morador. A Pipoca costuma brincar perto da barraca do Fungo.",
+	{"text": "Converse com um morador. Siga a estrada para o oeste até a cidade: cada um cuida de uma loja.",
 		"metric": "counter:talks", "goal": 1, "target": "villager"},
 	{"text": "Entre em casa: toque na porta.",
 		"metric": "counter:house_visits", "goal": 1, "abs": true, "target": "door"},
@@ -189,6 +189,8 @@ func _target_pos(target: String) -> Vector2:
 			for v in world.villagers:
 				if v.visible:
 					pts.append(v.position + Vector2(0, -64))
+			if pts.is_empty() and world.region_id() == "farm":
+				pts.append(FarmWorld.CITY_RETURN + Vector2(-40, -30))     # a estrada para a cidade
 		"tree":
 			for c in world.props:
 				if world.props[c].kind in ["tree", "pine", "old_tree"]:

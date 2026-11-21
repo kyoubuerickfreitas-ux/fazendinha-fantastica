@@ -319,7 +319,7 @@ func _build_static_scenery() -> void:
 	blocked[npc_cell] = true
 
 	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
-	_spawn_villagers.call_deferred()
+	# os moradores agora trabalham nas lojas da cidade (ShopWorld)
 	if Game.tractor.get("owned", false):
 		var p := Vector2(float(Game.tractor["x"]), float(Game.tractor["y"]))
 		spawn_tractor(p if p != Vector2.ZERO else TRACTOR_PARK)

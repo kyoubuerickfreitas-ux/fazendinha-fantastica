@@ -53,6 +53,7 @@ const GATE := Rect2(0, 15 * 32, 2 * 32, 5 * 32)
 const ARRIVE := Vector2(3 * 32 + 16, 17 * 32 + 16)
 
 var spawn_pos := ARRIVE
+var doors := {}        # tipo do prédio -> posição da porta (para voltar da loja)
 var _patch_tex := {}
 
 
@@ -136,6 +137,7 @@ func _add_building(art: String, cx: float, base_row: int, kind: String, label: S
 	door.reach = 30.0
 	door.position = holder.position + Vector2(0, 8 if kind in ["well", "board", "sign"] else 4)
 	door.interacted.connect(func(_w): building_used.emit(kind))
+	doors[kind] = door.position
 	entities.add_child(door)
 
 

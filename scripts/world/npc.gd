@@ -10,6 +10,7 @@ const DAY_END := 20 * 60
 
 var npc_name := "Fungo"
 var data: NPCData = null
+var stationary := false     # fica parado (atrás do balcão da loja)
 var world: FarmWorld = null
 var _sprite: Sprite2D
 var _bubble: Sprite2D
@@ -74,7 +75,7 @@ func _process(delta: float) -> void:
 	# não sai andando enquanto o jogador está perto (fica fácil conversar)
 	var player_near := world != null and world.player != null and world.player.position.distance_to(position) < 48.0
 	_bubble.visible = Villagers.is_birthday(data.id) or int(Villagers.rec(data.id)["talk_day"]) != Game.day
-	if player_near:
+	if player_near or stationary:
 		return
 	var to := _target - position
 	if to.length() > 1.0:

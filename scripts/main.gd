@@ -11,6 +11,7 @@ var _resetting := false
 var mine: MineWorld = null
 var house: HouseWorld = null
 var city: CityWorld = null
+var shop: ShopWorld = null      # dentro de uma loja da cidade
 var _traveling := false
 var camera: Camera2D
 var daylight: CanvasModulate
@@ -118,6 +119,7 @@ func _ready() -> void:
 	Game.pass_out.connect(func():
 		Game.toast.emit("Você desmaiou de sono...")
 		exit_mine(true)
+		exit_shop(true)
 		exit_city(true)
 		_sleep(false))
 	Game.time_changed.connect(func(_d, _m): _update_daylight())
@@ -251,14 +253,14 @@ func _on_world_tap(screen_pos: Vector2) -> void:
 
 # ------------------------------------------------------------------ ações do mundo
 ## Conversar com um morador; com um item na mão (que não seja ferramenta), dá de presente.
-func _on_villager(id: String) -> void:
+func _on_villager(id: String, shop_kind := "") -> void:
 	var held := Game.selected_item_id()
 	var text := ""
 	if Villagers.can_gift(held):
 		text = Villagers.gift(id, held)
 	if text == "":
 		text = Villagers.talk(id)
-	hud.open_npc_dialog(id, text)
+	hud.open_npc_dialog(id, text, shop_kind)
 
 
 func _on_shop() -> void:
@@ -504,7 +506,9 @@ func exit_city(silent := false) -> void:
 ## Portas da cidade: cada loja abre a sua janela.
 func _on_city_building(kind: String) -> void:
 	match kind:
-		"restaurant", "bakery", "smith", "market", "fish":
+		"bakery", "smith", "market", "fish":
+			enter_shop(kind)
+		"restaurant":
 			Sound.play("door", -6.0)
 			hud.open_shop(kind)
 		"tailor":
@@ -551,6 +555,51 @@ func _on_city_building(kind: String) -> void:
 
 
 const INN_PRICE := 40
+
+
+## Entra numa loja da cidade (o morador atende das 6h às 20h).
+func enter_shop(kind: String) -> void:
+	if shop or city == null:
+		return
+	if Game.minutes < NPC.DAY_START or Game.minutes >= NPC.DAY_END:
+		var who := Villagers.get_npc(ShopWorld.KEEPERS[kind]).name
+		Game.toast.emit("Fechado. %s atende das 6h às 20h." % who)
+		return
+	Sound.play("door")
+	_traveling = true
+	hud.fade_through(func():
+		shop = ShopWorld.new()
+		shop.name = "Shop"
+		add_child(shop)
+		shop.generate({"kind": kind})
+		shop.exit_used.connect(func(): exit_shop())
+		shop.keeper_used.connect(func(id: String): _on_villager(id, kind))
+		_move_player(shop, shop.spawn_pos)
+		city.visible = false
+		city.process_mode = Node.PROCESS_MODE_DISABLED
+		_set_camera_free(true)
+		_update_weather(),
+		func(): _traveling = false)
+
+
+## Sai da loja para a frente dela, na cidade.
+func exit_shop(silent := false) -> void:
+	if shop == null:
+		return
+	var back := func():
+		city.visible = true
+		city.process_mode = Node.PROCESS_MODE_INHERIT
+		_move_player(city, city.doors.get(shop.kind, city.spawn_pos) + Vector2(0, 18))
+		shop.queue_free()
+		shop = null
+		_set_camera_free(false)
+		_update_weather()
+	if silent:
+		back.call()
+		return
+	Sound.play("door")
+	_traveling = true
+	hud.fade_through(back, func(): _traveling = false)
 
 
 func _move_player(to: FarmWorld, pos: Vector2) -> void:
@@ -611,9 +660,9 @@ func _update_daylight() -> void:
 	c = c * Game.weather_data().light
 	if mine:
 		c = Color(0.66, 0.6, 0.72)       # caverna: sempre na penumbra
-	if house:
+	if house or shop:
 		c = Color(1.0, 0.95, 0.88) if not Game.is_night() else Color(0.86, 0.76, 0.66)   # luz da lareira
-	Sound.update_scene(mine != null, Game.is_night(), Game.weather, house != null)
+	Sound.update_scene(mine != null, Game.is_night(), Game.weather, house != null or shop != null)
 	# luzes: acendem das 17h30 às 20h; dentro de casa e na mina ficam sempre um pouco acesas
 	var nf := clampf((m - 17.5 * 60) / 150.0, 0.0, 1.0) if m >= 12 * 60 else (1.0 if m < Game.DAY_START + 30 else 0.0)
 	if Game.weather_data().light.v < 0.85:      # chuva forte, tempestade, neblina
@@ -630,7 +679,7 @@ func _build_rain() -> void:
 
 func _update_weather() -> void:
 	weather_fx.set_weather(Game.weather)
-	weather_fx.visible = mine == null and house == null      # não chove dentro da mina nem de casa
+	weather_fx.visible = mine == null and house == null and shop == null    # não chove dentro da mina, de casa nem das lojas
 	_update_daylight()
 
 

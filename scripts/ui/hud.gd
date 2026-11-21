@@ -821,7 +821,8 @@ func _hearts_row(id: String) -> HBoxContainer:
 	return row
 
 
-func open_npc_dialog(id: String, text: String) -> void:
+## shop_kind: o morador está na loja dele; aparece o botão para ver a loja.
+func open_npc_dialog(id: String, text: String, shop_kind := "") -> void:
 	var n := Villagers.get_npc(id)
 	for c in _npc_body.get_children():
 		c.queue_free()
@@ -842,6 +843,13 @@ func open_npc_dialog(id: String, text: String) -> void:
 	var tip := UIStyle.label("Segure um item e toque no morador para dar de presente (1 por dia).", 9, UIStyle.EARTH)
 	tip.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_npc_body.add_child(tip)
+	if shop_kind != "":
+		var b := Button.new()
+		b.name = "SeeShop"
+		b.text = "Ver a loja"
+		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+		b.pressed.connect(func(): open_shop(shop_kind))
+		_npc_body.add_child(b)
 	_open(_npc_win)
 
 
