@@ -17,6 +17,25 @@ var skin := false
 var cargo := false
 
 var _touch := -1
+var _press_pos := Vector2.ZERO
+
+# ------------------------------------------------------------------ arrastar
+## Arrastar um item para outro espaço: quem trata a soltura é drop_handler(de: ItemSlot, para: ItemSlot)
+## (a HUD define). O item arrastado aparece embaixo do dedo.
+static var drop_handler: Callable
+static var dragging: ItemSlot
+static var _ghost_layer: CanvasLayer
+static var _ghost: TextureRect
+const DRAG_START := 10.0
+
+
+func source() -> Array:
+	return Trailer.items() if cargo else Game.inventory
+
+
+func item():
+	var src := source()
+	return src[index] if index < src.size() else null
 
 
 func _init(p_index: int = 0, p_size: float = 36.0) -> void:
@@ -28,19 +47,66 @@ func _init(p_index: int = 0, p_size: float = 36.0) -> void:
 
 func _ready() -> void:
 	Game.inventory_changed.connect(queue_redraw)
+	add_to_group("item_slot")
 
 
 func _input(event: InputEvent) -> void:
-	if not is_visible_in_tree() or not (event is InputEventScreenTouch):
+	if not is_visible_in_tree():
 		return
-	if not works_in_panel and Game.ui_lock > 0:
+	if event is InputEventScreenDrag and event.index == _touch:
+		if dragging == null and item() != null and event.position.distance_to(_press_pos) > DRAG_START:
+			_start_drag()
+		if dragging == self:
+			_ghost.position = event.position - _ghost.size / 2.0
+			get_viewport().set_input_as_handled()
+		return
+	if not (event is InputEventScreenTouch):
+		return
+	if not works_in_panel and Game.ui_lock > 0 and dragging != self:
 		return
 	if event.pressed and _touch == -1 and get_global_rect().has_point(event.position):
 		_touch = event.index
-		tapped.emit(index)
+		_press_pos = event.position
 		get_viewport().set_input_as_handled()
 	elif not event.pressed and event.index == _touch:
 		_touch = -1
+		if dragging == self:
+			_end_drag(event.position)
+		else:
+			tapped.emit(index)       # toque (sem arrastar): conta ao soltar o dedo
+		get_viewport().set_input_as_handled()
+
+
+func _start_drag() -> void:
+	dragging = self
+	if _ghost_layer == null or not is_instance_valid(_ghost_layer):
+		_ghost_layer = CanvasLayer.new()
+		_ghost_layer.layer = 120
+		get_tree().root.add_child(_ghost_layer)
+		_ghost = TextureRect.new()
+		_ghost.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		_ghost.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		_ghost.size = Vector2(34, 34)
+		_ghost.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_ghost.modulate = Color(1, 1, 1, 0.85)
+		_ghost_layer.add_child(_ghost)
+	_ghost.texture = ItemDB.icon(item()["id"])
+	_ghost.visible = true
+	modulate = Color(1, 1, 1, 0.45)
+
+
+func _end_drag(pos: Vector2) -> void:
+	dragging = null
+	modulate = Color.WHITE
+	if _ghost:
+		_ghost.visible = false
+	var target: ItemSlot = null
+	for n in get_tree().get_nodes_in_group("item_slot"):
+		var s := n as ItemSlot
+		if s != self and s.is_visible_in_tree() and s.get_global_rect().grow(2).has_point(pos):
+			target = s
+	if target and drop_handler.is_valid():
+		drop_handler.call(self, target)
 
 
 func _draw() -> void:
@@ -77,8 +143,7 @@ func _draw() -> void:
 		draw_rect(r.grow(-1), Color("f2d16b"), false, 2.0)
 
 	var font := get_theme_default_font()
-	var src: Array = Trailer.items() if cargo else Game.inventory
-	var s = src[index] if index < src.size() else null
+	var s = item()
 	if s != null:
 		var tex := ItemDB.icon(s["id"])
 		var icon_size := Vector2(32, 32) if size.x >= 40 else Vector2(24, 24)

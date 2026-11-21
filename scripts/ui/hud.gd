@@ -113,6 +113,7 @@ func _ready() -> void:
 	_build_backpack()
 	_build_shop()
 	_build_cargo()
+	ItemSlot.drop_handler = _on_slot_drop
 	_build_crafting()
 	_build_calendar()
 	_build_fish_book()
@@ -1410,6 +1411,43 @@ func ask(text: String, action: Callable) -> void:
 	_confirm_label.text = text
 	_confirm_action = action
 	_open(_confirm)
+
+
+## Soltou um item arrastado em outro espaço (mochila, barra rápida, armário ou caçamba).
+## Espaço vazio: move; mesmo item: junta as pilhas; senão: troca. Ferramentas não vão para a carga.
+func _on_slot_drop(from: ItemSlot, to: ItemSlot) -> void:
+	var a := from.source()
+	var b := to.source()
+	var i := from.index
+	var j := to.index
+	var s = a[i]
+	var t = b[j]
+	if s == null:
+		return
+	if to.cargo and not from.cargo and ItemDB.get_item(s["id"]).get("type", "") == "tool":
+		show_toast("As ferramentas ficam na mochila.")
+		return
+	if from.cargo and not to.cargo and t != null and ItemDB.get_item(t["id"]).get("type", "") == "tool":
+		show_toast("As ferramentas ficam na mochila.")
+		return
+	var same: bool = t != null and t["id"] == s["id"] and int(t.get("q", 0)) == int(s.get("q", 0)) and ItemDB.is_stackable(s["id"])
+	if same:
+		var add: int = mini(int(s["qty"]), ItemDB.MAX_STACK - int(t["qty"]))
+		t["qty"] = int(t["qty"]) + add
+		s["qty"] = int(s["qty"]) - add
+		if int(s["qty"]) <= 0:
+			a[i] = null
+	else:
+		a[i] = t
+		b[j] = s
+	_bp_marked = -1
+	if _bp_desc:
+		_bp_desc.text = ""
+	Sound.play("ui_click", -6.0)
+	Game.inventory_changed.emit()
+	_refresh_backpack()
+	if _cargo and _cargo.visible:
+		_refresh_cargo()
 
 
 func _on_backpack_slot(i: int) -> void:

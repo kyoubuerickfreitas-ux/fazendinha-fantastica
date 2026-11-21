@@ -103,6 +103,18 @@ colher e abrir o Livro de Pesca). O objetivo aparece num painel no alto da tela,
 (na borda da tela quando o alvo está longe) e alguns passos dão recompensa. O botão "Pular" desliga o tutorial.
 Os passos ficam em `scripts/systems/tutorial.gd` (lista STEPS). Saves antigos não mostram o tutorial.
 
+## Mochila: arrastar itens
+
+Na mochila, na barra rápida, no armário de casa e na caçamba dá para **segurar e arrastar** um item até
+outro espaço: vazio → move; mesmo item → junta as pilhas; outro item → trocam de lugar (também entre a
+mochila e o armário/caçamba). Tocar sem arrastar continua funcionando como antes.
+
+## Fogão (fila de cozimento)
+
+Cozinhar põe o prato numa fila (até 5). Cada prato leva 20 min + 10 por ingrediente (até 90 min do jogo) e
+começa quando o anterior fica pronto. Em casa o fogo fica aceso no fogão, com uma barrinha de progresso e o
+ícone do prato pronto em cima; toque no fogão para pegar os prontos.
+
 ## Correr
 
 Segure o botão do pé (ao lado da mão) ou Shift para correr (70% mais rápido). Correr usa o **fôlego**, separado

@@ -1454,6 +1454,39 @@ func _run() -> void:
 	assert(w.ground_at(w.cell_of(p.position)) != FarmWorld.Ground.WATER or p.position.y < wcell.y * 32 + 10,
 		"não dá para entrar na água")
 
+	# ---- arrastar itens: na mochila e da mochila para o armário/caçamba
+	main.hud.toggle_backpack()
+	await _wait(0.2)
+	game.inventory[14] = {"id": "stone", "qty": 5}
+	game.inventory[15] = null
+	var drag := func(from_slot: ItemSlot, to_slot: ItemSlot):
+		var a := from_slot.get_global_rect().get_center()
+		var b := to_slot.get_global_rect().get_center()
+		var ev := InputEventScreenTouch.new()
+		ev.index = 3
+		ev.position = a
+		ev.pressed = true
+		from_slot._input(ev)
+		var dr := InputEventScreenDrag.new()
+		dr.index = 3
+		dr.position = b
+		from_slot._input(dr)
+		ev.pressed = false
+		ev.position = b
+		from_slot._input(ev)
+	drag.call(main.hud._bp_slots[14], main.hud._bp_slots[15])
+	assert(game.inventory[14] == null and game.inventory[15]["id"] == "stone", "arrastar move o item para o espaço vazio")
+	game.inventory[16] = {"id": "stone", "qty": 3}
+	drag.call(main.hud._bp_slots[16], main.hud._bp_slots[15])
+	assert(game.inventory[16] == null and int(game.inventory[15]["qty"]) == 8, "arrastar no mesmo item junta as pilhas")
+	main.hud.close_panel()
+	main.hud.open_cargo("trailer")
+	await _wait(0.2)
+	drag.call(main.hud._cargo_bag[15], main.hud._cargo_slots[5])
+	assert(game.inventory[15] == null and Trailer.items()[5]["id"] == "stone", "arrastar da mochila para a caçamba")
+	main.hud.close_panel()
+	Trailer.items()[5] = null
+
 	# ---- opções
 	main.hud.open_options()
 	await _wait(0.3)
