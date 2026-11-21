@@ -69,7 +69,7 @@ var trailer := {"owned": false, "items": []}
 ## numa loja da cidade (HUD.buy_tractor / buy_trailer já existem); aí é só pôr false.
 const START_WITH_VEHICLES := true
 ## Casa: baú (24 espaços) e objetos colocados dentro (aquários...).
-var house := {"chest": [], "placeables": [], "layout": {}}
+var house := {"chest": [], "placeables": [], "layout": {}, "colors": {}}
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -124,7 +124,7 @@ func reset_new_game() -> void:
 	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
 	tractor = {"owned": false, "x": 0.0, "y": 0.0}
 	trailer = {"owned": false, "items": []}
-	house = {"chest": [], "placeables": [], "layout": {}}
+	house = {"chest": [], "placeables": [], "layout": {}, "colors": {}}
 	if START_WITH_VEHICLES:
 		tractor["owned"] = true
 		trailer["owned"] = true
@@ -461,10 +461,12 @@ func load_game() -> Dictionary:
 		tractor["owned"] = true
 		trailer["owned"] = true
 	var hs = data.get("house", {})
-	house = {"chest": [], "placeables": [], "layout": {}}
+	house = {"chest": [], "placeables": [], "layout": {}, "colors": {}}
 	if hs is Dictionary:
 		var lay = hs.get("layout", {})
 		house["layout"] = lay if lay is Dictionary else {}
+		var col = hs.get("colors", {})
+		house["colors"] = col if col is Dictionary else {}
 		for s in hs.get("chest", []):
 			if s is Dictionary and ItemDB.has(str(s.get("id", ""))):
 				var it := {"id": str(s["id"]), "qty": int(s.get("qty", 1))}

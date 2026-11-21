@@ -70,7 +70,10 @@ func _ready() -> void:
 		if house:
 			house.set_decorating(on)
 			if on:
-				Game.toast.emit("Decorar: toque num móvel e depois no chão para mudar de lugar. \"Girar\" vira os que têm vista de lado."))
+				Game.toast.emit("Decorar: toque num móvel e depois no chão para mudar de lugar. \"Girar\" vira, \"Cor\" pinta o móvel; \"Piso\" e \"Parede\" trocam as cores da casa."))
+	hud.color_pressed.connect(func(kind: String):
+		if house:
+			Game.toast.emit(house.next_color(kind)))
 	hud.rotate_pressed.connect(func():
 		if house:
 			var m := house.rotate_selected()

@@ -1396,6 +1396,12 @@ func _run() -> void:
 	var bed: Node2D = hw.furniture["bed"]
 	tap.call(bed.get_meta("cell"))
 	assert(hw.rotate_selected() == "" and int(bed.get_meta("view")) == 1, "a cama gira para a vista de lado")
+	# cores: piso, paredes e o móvel escolhido
+	assert(hw.next_color("floor").begins_with("Piso: ") and int(game.house["colors"]["floor"]) == 1)
+	hw.next_color("wall")
+	hw.next_color("wall")
+	assert(int(game.house["colors"]["wall"]) == 2)
+	assert(hw.next_color("furniture").begins_with("Móvel: ") and int(game.house["colors"]["furniture"]["bed"]) == 1)
 	await _wait(0.2)
 	await _shot("50_decorar")
 	main.hud._set_decor(false)

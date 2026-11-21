@@ -3,6 +3,7 @@ extends CanvasLayer
 ## Interface do jogo: status no topo, barra rápida e botões embaixo,
 ## joystick à esquerda e os painéis (mochila, loja, confirmação).
 
+signal color_pressed(kind: String)
 signal decorate_toggled(on: bool)
 signal rotate_pressed
 signal zoom_requested(zoom: float)
@@ -1741,16 +1742,18 @@ func set_house_mode(inside: bool) -> void:
 		_decor_bar.anchor_right = 0.5
 		_decor_bar.anchor_top = 1.0
 		_decor_bar.anchor_bottom = 1.0
-		_decor_bar.offset_left = -80
-		_decor_bar.offset_right = 80
+		_decor_bar.offset_left = -190
+		_decor_bar.offset_right = 190
 		_decor_bar.offset_top = -86
 		_decor_bar.offset_bottom = -60
 		_decor_bar.add_theme_constant_override("separation", 8)
-		for pair in [["Girar", func(): rotate_pressed.emit()], ["Pronto", func(): _set_decor(false)]]:
+		for pair in [["Girar", func(): rotate_pressed.emit()], ["Cor", func(): color_pressed.emit("furniture")],
+				["Piso", func(): color_pressed.emit("floor")], ["Parede", func(): color_pressed.emit("wall")],
+				["Pronto", func(): _set_decor(false)]]:
 			var b := Button.new()
 			b.text = pair[0]
 			b.name = pair[0]
-			b.custom_minimum_size = Vector2(72, 26)
+			b.custom_minimum_size = Vector2(66, 26)
 			b.pressed.connect(pair[1])
 			_decor_bar.add_child(b)
 		_root.add_child(_decor_bar)

@@ -97,6 +97,17 @@ func generate(_saved: Dictionary) -> void:
 			if pl:
 				pl.restore(d)
 	spawn_pos = cell_center(DOOR_CELL + Vector2i(0, 1))
+	_floor_node = Node2D.new()
+	_floor_node.z_index = -9
+	_floor_node.material = _recolor_mat()
+	_floor_node.draw.connect(_draw_floor)
+	add_child(_floor_node)
+	_wall_node = Node2D.new()
+	_wall_node.z_index = -9
+	_wall_node.material = _recolor_mat()
+	_wall_node.draw.connect(_draw_walls)
+	add_child(_wall_node)
+	apply_colors()
 	_ground_layer.queue_redraw()
 
 
@@ -125,6 +136,22 @@ const FLOOR_PIECES := ["rug"]       # ficam no chão (dá para andar e pôr móv
 
 var furniture := {}                 # id -> nó do móvel (Node2D com metadados)
 var decorating := false
+var _floor_node: Node2D
+var _wall_node: Node2D
+
+## Variações de cor da decoração: [nome, giro de matiz, saturação, brilho]. Para criar mais opções,
+## é só acrescentar linhas aqui (o 1º item é a cor original da arte).
+const COLORS := {
+	"floor": [["Madeira natural", 0.0, 1.0, 1.0], ["Madeira escura", 0.0, 1.05, 0.7], ["Madeira clara", 0.01, 0.7, 1.2],
+		["Mel", 0.03, 1.15, 1.1], ["Cinza rústico", 0.0, 0.15, 0.95], ["Avermelhada", -0.03, 1.2, 0.85]],
+	"wall": [["Natural", 0.0, 1.0, 1.0], ["Rosa", -0.1, 1.25, 1.04], ["Verde-menta", 0.22, 1.1, 1.02],
+		["Azul-céu", 0.48, 1.3, 1.04], ["Lilás", 0.68, 1.15, 1.04], ["Amarelo", 0.03, 1.5, 1.03], ["Cinza", 0.0, 0.1, 0.92],
+		["Pêssego", -0.03, 1.3, 1.02]],
+	"furniture": [["Original", 0.0, 1.0, 1.0], ["Madeira escura", 0.0, 1.05, 0.7], ["Madeira clara", 0.01, 0.7, 1.2],
+		["Cinza", 0.0, 0.12, 1.0], ["Azulado", 0.5, 0.7, 1.0], ["Avermelhado", -0.05, 1.25, 0.95],
+		["Esverdeado", 0.18, 0.9, 0.95], ["Lilás", 0.7, 0.6, 1.0]],
+}
+const RECOLOR := preload("res://assets/shaders/recolor.gdshader")
 var selected: Node2D
 var _bed_use: Interactable
 
@@ -325,6 +352,64 @@ func serialize_house() -> Array:
 	return out
 
 
+# ------------------------------------------------------------------ cores
+func _recolor_mat() -> ShaderMaterial:
+	var m := ShaderMaterial.new()
+	m.shader = RECOLOR
+	return m
+
+
+static func _set_color(m: ShaderMaterial, kind: String, i: int) -> void:
+	var c: Array = COLORS[kind][posmod(i, (COLORS[kind] as Array).size())]
+	m.set_shader_parameter("hue_shift", c[1])
+	m.set_shader_parameter("sat_mult", c[2])
+	m.set_shader_parameter("val_mult", c[3])
+
+
+func _colors() -> Dictionary:
+	if not (Game.house.get("colors") is Dictionary):
+		Game.house["colors"] = {}
+	var c: Dictionary = Game.house["colors"]
+	if not (c.get("furniture") is Dictionary):
+		c["furniture"] = {}
+	return c
+
+
+## Aplica as cores salvas (piso, paredes e cada móvel).
+func apply_colors() -> void:
+	var c := _colors()
+	if _floor_node:
+		_set_color(_floor_node.material, "floor", int(c.get("floor", 0)))
+		_set_color(_wall_node.material, "wall", int(c.get("wall", 0)))
+		_wall_node.material.set_shader_parameter("light_only", true)
+	for id in furniture:
+		var spr: Sprite2D = furniture[id].get_node("Sprite")
+		if spr.material == null:
+			spr.material = _recolor_mat()
+		_set_color(spr.material, "furniture", int(c["furniture"].get(id, 0)))
+
+
+## Troca para a próxima cor do piso ("floor"), das paredes ("wall") ou do móvel escolhido ("furniture").
+## Devolve o nome da cor (ou um aviso).
+func next_color(kind: String) -> String:
+	var c := _colors()
+	var n: int = (COLORS[kind] as Array).size()
+	var i: int
+	if kind == "furniture":
+		if selected == null:
+			return "Toque num móvel para escolher."
+		var id: String = selected.get_meta("id")
+		i = (int(c["furniture"].get(id, 0)) + 1) % n
+		c["furniture"][id] = i
+	else:
+		i = (int(c.get(kind, 0)) + 1) % n
+		c[kind] = i
+	apply_colors()
+	Sound.play("ui_click")
+	var what: String = {"floor": "Piso", "wall": "Paredes", "furniture": "Móvel"}[kind]
+	return "%s: %s" % [what, COLORS[kind][i][0]]
+
+
 func _draw() -> void:
 	# modo decorar: contorno do móvel escolhido
 	if decorating and selected and is_instance_valid(selected):
@@ -336,6 +421,12 @@ func _draw() -> void:
 func _draw_ground() -> void:
 	var g := _ground_layer
 	g.draw_rect(Rect2(0, 0, W * TILE, H * TILE), DARK)
+	var r := Rect2(Vector2(ROOM.position * TILE), Vector2(ROOM.size * TILE))
+
+
+
+func _draw_floor() -> void:
+	var g := _floor_node
 	var r := Rect2(Vector2(ROOM.position * TILE), Vector2(ROOM.size * TILE))
 	# piso: a tábua grande repetida (sem passar do cômodo)
 	var fs := _floor.get_size()
@@ -350,6 +441,12 @@ func _draw_ground() -> void:
 			x += fs.x
 		y += fs.y
 		row += 1
+
+
+
+func _draw_walls() -> void:
+	var g := _wall_node
+	var r := Rect2(Vector2(ROOM.position * TILE), Vector2(ROOM.size * TILE))
 	# parede do fundo: reboco com lambri, a janela em cima da cozinha e a porta
 	var wall_top := r.position.y - _wall.get_height() + 4
 	var x0 := r.position.x
