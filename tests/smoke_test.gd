@@ -1572,5 +1572,11 @@ func _run() -> void:
 	game.weather = "rain"
 	main._update_weather()
 	await _wait(1.3)
+	var lights := root.get_tree().get_nodes_in_group("night_light")
+	assert(lights.size() >= 7 and lights[0].energy > 0.5, "à noite as luzes da casa e da barraca acendem")
+	p.position = w.house_door.position + Vector2(40, 40)
+	main.camera.reset_smoothing()
+	await _wait(0.4)
+	await _shot("52_luzes_noite")
 	await _shot("06_noite_chuva")
 	quit()

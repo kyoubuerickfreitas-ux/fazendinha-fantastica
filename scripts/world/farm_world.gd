@@ -203,7 +203,7 @@ func _build_mine_entrance() -> void:
 	es.texture = load("res://assets/sprites/mine/entrance.png")
 	es.position = Vector2(0, -es.texture.get_height() / 2.0 + 2)
 	ent.add_child(es)
-	_add_rect_collision(ent, Vector2(30, 14), Vector2(-33, -7))
+	add_glow(es, _img_pt(es, Vector2(25, 47)), 40.0)          # lampião da entrada
 	_add_rect_collision(ent, Vector2(30, 14), Vector2(33, -7))
 	entities.add_child(ent)
 	for y in range(0, 6):
@@ -226,6 +226,9 @@ func _build_static_scenery() -> void:
 	var hs := Sprite2D.new()
 	hs.texture = HOUSE_TEX
 	hs.position = Vector2(-32, -52)      # a porta (meio da arte) fica em frente ao caminho
+	# luzes da casa à noite: janela redonda, lampiões da porta e as duas janelas
+	for pt in [Vector2(64, 55), Vector2(45, 84), Vector2(84, 84), Vector2(30, 87), Vector2(100, 87)]:
+		add_glow(hs, _img_pt(hs, pt), 34.0)
 	house.add_child(hs)
 	_add_rect_collision(house, Vector2(104, 30), Vector2(-30, -17))
 	entities.add_child(house)
@@ -265,6 +268,7 @@ func _build_static_scenery() -> void:
 	var ss := Sprite2D.new()
 	ss.texture = SHOP_TEX
 	ss.position = Vector2(0, -56)
+	add_glow(ss, _img_pt(ss, Vector2(111, 49)), 44.0)        # lampião da barraca
 	shop.add_child(ss)
 	_add_rect_collision(shop, Vector2(104, 34), Vector2(0, -17))
 	entities.add_child(shop)
@@ -362,6 +366,48 @@ func _build_water_collision() -> void:
 				var top := 8.0 if y == 0 or ground[(y - 1) * W + run_start] != Ground.WATER else 0.0
 				_add_rect_collision(body, Vector2(w, TILE - top), Vector2(run_start * TILE + 3 + w / 2.0, y * TILE + top + (TILE - top) / 2.0))
 				run_start = -1
+
+
+# ------------------------------------------------------------------ luzes da noite
+## Ponto (em pixels da imagem) de um Sprite2D centralizado, em coordenadas do sprite.
+static func _img_pt(s: Sprite2D, px: Vector2) -> Vector2:
+	return px - s.texture.get_size() / 2.0
+
+
+static var _glow_tex: GradientTexture2D
+
+
+## Luz quente (janela, lampião) que acende ao entardecer: PointLight2D (brilha mesmo com a tela escurecida).
+func add_glow(parent: Node2D, pos: Vector2, radius: float, always := false) -> PointLight2D:
+	if _glow_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.35, Color(1, 1, 1, 0.55))
+		_glow_tex = GradientTexture2D.new()
+		_glow_tex.gradient = g
+		_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+		_glow_tex.fill_from = Vector2(0.5, 0.5)
+		_glow_tex.fill_to = Vector2(1.0, 0.5)
+		_glow_tex.width = 128
+		_glow_tex.height = 128
+	var l := PointLight2D.new()
+	l.texture = _glow_tex
+	l.texture_scale = radius * 2.0 / 128.0
+	l.color = Color(1.0, 0.78, 0.42)
+	l.energy = 0.0
+	l.position = pos
+	l.set_meta("always", always)
+	l.add_to_group("night_light")
+	parent.add_child(l)
+	return l
+
+
+## 0 = dia, 1 = noite: as luzes acendem aos poucos (chamado por main.gd junto com o escurecer).
+static func set_night(tree: SceneTree, f: float) -> void:
+	for l in tree.get_nodes_in_group("night_light"):
+		var on: float = maxf(f, 0.45) if l.get_meta("always", false) else f
+		l.energy = on * 1.1
 
 
 func _add_rect_collision(body: Node, size: Vector2, pos: Vector2) -> void:

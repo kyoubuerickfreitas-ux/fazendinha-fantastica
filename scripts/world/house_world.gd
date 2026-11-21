@@ -107,6 +107,11 @@ func generate(_saved: Dictionary) -> void:
 	_wall_node.material = _recolor_mat()
 	_wall_node.draw.connect(_draw_walls)
 	add_child(_wall_node)
+	# lampiões da parede (na arte da janela de cima da cozinha): sempre um pouco acesos
+	var wall_top := ROOM.position.y * TILE - _wall.get_height() + 4
+	var wx := 24.5 * TILE - _win.get_width() / 2.0
+	for lx in [16.0, 83.0]:
+		add_glow(self, Vector2(wx + lx, wall_top + 22), 52.0, true)
 	apply_colors()
 	_ground_layer.queue_redraw()
 

@@ -60,7 +60,7 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - A bancada mostra cada material com ícone e quanto você tem (ex.: Madeira 4/10, em verde quando dá)
   - **Fornalha** (bancada): 5 minérios viram 1 barra (até 5 barras por vez, prontas no dia seguinte). As barras melhoram regador, enxada, vara e picareta, e fazem os aspersores melhores
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
-- Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
+- Ciclo de dia e noite (as janelas e lampiões da casa, da barraca e da mina acendem ao entardecer), chuva (rega tudo sozinha) e energia
 - Dormir na porta de casa passa o dia e **salva o jogo**; o jogo também salva ao minimizar o app
 
 ## Criação de personagem

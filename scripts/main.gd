@@ -500,6 +500,11 @@ func _update_daylight() -> void:
 	if house:
 		c = Color(1.0, 0.95, 0.88) if not Game.is_night() else Color(0.86, 0.76, 0.66)   # luz da lareira
 	Sound.update_scene(mine != null, Game.is_night(), Game.weather, house != null)
+	# luzes: acendem das 17h30 às 20h; dentro de casa e na mina ficam sempre um pouco acesas
+	var nf := clampf((m - 17.5 * 60) / 150.0, 0.0, 1.0) if m >= 12 * 60 else (1.0 if m < Game.DAY_START + 30 else 0.0)
+	if Game.weather_data().light.v < 0.85:      # chuva forte, tempestade, neblina
+		nf = maxf(nf, 0.4)
+	FarmWorld.set_night(get_tree(), nf)
 	var tw := create_tween()
 	tw.tween_property(daylight, "color", c, 1.0)
 
