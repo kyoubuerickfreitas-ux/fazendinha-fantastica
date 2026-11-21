@@ -93,6 +93,40 @@ def icon(img):
     return out
 
 
+def dark_mouth(img):
+    """Troca o fogo pintado na boca da fornalha por um interior escuro (mais claro embaixo, brasas apagadas)."""
+    out = img.copy()
+    px = out.load()
+    pts = []
+    for y in range(out.height):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            if s > 0.45 and v > 0.45 and (h < 0.17 or h > 0.95) and y > out.height * 0.45:
+                pts.append((x, y))
+    if not pts:
+        return out
+    # dentro da área da boca, também os vermelhos escuros (brasa da borda)
+    bx0, bx1 = min(p[0] for p in pts) - 1, max(p[0] for p in pts) + 1
+    by0, by1 = min(p[1] for p in pts) - 2, max(p[1] for p in pts) + 1
+    for y in range(max(0, by0), min(out.height, by1 + 1)):
+        for x in range(max(0, bx0), min(out.width, bx1 + 1)):
+            r, g, b, a = px[x, y]
+            h, s, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            ember = s > 0.35 and v > 0.18 and (h < 0.12 or h > 0.93)
+            spark = s > 0.2 and v > 0.6 and h < 0.2          # faísca amarela
+            if a and (ember or spark) and (x, y) not in pts:
+                pts.append((x, y))
+    y0 = min(p[1] for p in pts)
+    y1 = max(p[1] for p in pts)
+    for x, y in pts:
+        t = (y - y0) / max(1, y1 - y0)
+        px[x, y] = (int(26 + 22 * t), int(18 + 12 * t), int(14 + 8 * t), 255)
+    return out
+
+
 def hue_shift(img, target, sat=1.0):
     out = img.copy()
     px = out.load()
@@ -159,7 +193,7 @@ if __name__ == "__main__":
         # pedra comum do tema: o mesmo bloco, menor
         fit(wall, 30).save(os.path.join(OUT, "rock_%s.png" % t))
     # fornalha
-    f = fit(p["furnace"], 34)
+    f = dark_mouth(fit(p["furnace"], 34))     # sem o fogo pintado: o jogo anima o fogo quando ela trabalha
     f.save(os.path.join(CRAFT, "furnace.png"))
     icon(p["furnace"]).save(os.path.join(CRAFT, "icon_furnace.png"))
     # ícones de itens
