@@ -379,7 +379,7 @@ func _process(_delta: float) -> void:
 		return
 	var cooking := Cooking.is_cooking()
 	if cooking and (_fire == null or not is_instance_valid(_fire)):
-		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(-2, -9))
+		_fire = FX.spawn_loop(k, "fire", STOVE_OFFSET + Vector2(-3, -3))     # embaixo da panela
 		_fire.z_index = 1
 	elif not cooking and _fire and is_instance_valid(_fire):
 		_fire.queue_free()
@@ -412,7 +412,7 @@ func _process(_delta: float) -> void:
 ## Em cima do fogão: barrinha do prato no fogo e, se tem prato pronto, o ícone dele com o número.
 func _draw_cook_bar() -> void:
 	var c := _cook_bar
-	var base := STOVE_OFFSET + Vector2(0, -44)
+	var base := STOVE_OFFSET + Vector2(-2, -29)     # logo acima da panela
 	var prog := Cooking.current_progress()
 	if prog >= 0.0:
 		var r := Rect2(base + Vector2(-14, 0), Vector2(28, 5))
