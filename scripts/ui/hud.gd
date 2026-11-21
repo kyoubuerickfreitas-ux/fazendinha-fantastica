@@ -1648,8 +1648,8 @@ func _refresh_hotbar() -> void:
 func _build_options() -> void:
 	_options_btn = TouchButton.new()
 	_options_btn.radius = 13
-	_options_btn.icon = ItemDB.ui_icon("gear")
-	_options_btn.icon_scale = 1.2
+	_options_btn.icon = preload("res://assets/sprites/ui/gear.png")   # tools/import_ui_buttons.py
+	_options_btn.icon_scale = 1.05
 	_skin_button(_options_btn)
 	_options_btn.anchor_left = 1.0
 	_options_btn.anchor_right = 1.0

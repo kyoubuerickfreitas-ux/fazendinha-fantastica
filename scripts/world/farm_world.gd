@@ -126,6 +126,7 @@ func generate(saved: Dictionary) -> void:
 
 	_build_static_scenery()
 	_build_world_bounds()
+	_build_water_collision()
 
 	if saved.has("placeables"):
 		for d in saved["placeables"]:
@@ -337,6 +338,25 @@ func _build_world_bounds() -> void:
 	_add_rect_collision(walls, Vector2(ww, 64), Vector2(ww / 2.0, wh - TILE + 32))
 	_add_rect_collision(walls, Vector2(64, wh), Vector2(TILE * 1.5 - 32, wh / 2.0))
 	_add_rect_collision(walls, Vector2(64, wh), Vector2(ww - TILE * 1.5 + 32, wh / 2.0))
+
+
+## Água não dá para atravessar (nem a pé nem de trator): uma faixa de colisão por linha de água.
+## A margem de cima fica um pouco livre para você chegar bem na beira e pescar.
+func _build_water_collision() -> void:
+	var body := StaticBody2D.new()
+	body.name = "Water"
+	add_child(body)
+	for y in H:
+		var run_start := -1
+		for x in W + 1:
+			var wet := x < W and ground[y * W + x] == Ground.WATER
+			if wet and run_start < 0:
+				run_start = x
+			elif not wet and run_start >= 0:
+				var w := (x - run_start) * TILE - 6
+				var top := 8.0 if y == 0 or ground[(y - 1) * W + run_start] != Ground.WATER else 0.0
+				_add_rect_collision(body, Vector2(w, TILE - top), Vector2(run_start * TILE + 3 + w / 2.0, y * TILE + top + (TILE - top) / 2.0))
+				run_start = -1
 
 
 func _add_rect_collision(body: Node, size: Vector2, pos: Vector2) -> void:

@@ -1331,6 +1331,25 @@ func _run() -> void:
 	assert(game.tractor["owned"], "o trator fica salvo")
 	assert(game.trailer["owned"], "a caçamba fica salva")
 
+	# ---- não dá para andar sobre a água (a pé)
+	var wcell := Vector2i(-1, -1)
+	for yy in range(2, w.H - 2):
+		for xx in range(2, w.W - 2):
+			if w.ground_at(Vector2i(xx, yy)) == FarmWorld.Ground.WATER and w.ground_at(Vector2i(xx, yy - 1)) != FarmWorld.Ground.WATER \
+					and w.ground_at(Vector2i(xx, yy + 2)) == FarmWorld.Ground.WATER and not w.props.has(Vector2i(xx, yy - 1)) \
+					and not w.blocked.has(Vector2i(xx, yy - 1)):
+				wcell = Vector2i(xx, yy)
+				break
+		if wcell.x >= 0:
+			break
+	assert(wcell.x >= 0)
+	p.position = w.cell_center(wcell + Vector2i(0, -1))
+	game.joystick_vector = Vector2(0, 1)
+	await _wait(0.8)
+	game.joystick_vector = Vector2.ZERO
+	assert(w.ground_at(w.cell_of(p.position)) != FarmWorld.Ground.WATER or p.position.y < wcell.y * 32 + 10,
+		"não dá para entrar na água")
+
 	# ---- opções
 	main.hud.open_options()
 	await _wait(0.3)

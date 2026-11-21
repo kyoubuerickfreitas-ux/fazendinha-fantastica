@@ -79,6 +79,7 @@ func generate(saved: Dictionary) -> void:
 	for c in walls:
 		blocked[c] = true
 	_build_wall_collision()
+	_build_water_collision()
 
 	# escada de saída (sobe para a fazenda) no começo
 	var up := _interactable("ladder_up", start, "Subir para a fazenda")
