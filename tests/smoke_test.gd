@@ -1329,6 +1329,15 @@ func _run() -> void:
 	assert(game.tractor["owned"], "o trator fica salvo")
 	assert(game.trailer["owned"], "a caçamba fica salva")
 
+	# ---- flores e plantas novas: existem, estão à venda na estação e têm ícone
+	for fid in ["daisy", "tulip", "pink_tulip", "rose", "sunflower", "lavender", "hydrangea", "pumpkin", "onion"]:
+		var fc: CropData = CropDB.get_crop(fid)
+		assert(fc != null, "planta %s" % fid)
+		assert(ItemDB.has(fc.seed_id()) and ItemDB.has(fc.produce_id()))
+		assert(ItemDB.get_item(fc.produce_id()).has("tex") or ItemDB.get_item(fc.produce_id()).has("hd"), "ícone de %s" % fid)
+	assert(CropDB.seeds_for("spring").has("seed_tulip") and CropDB.seeds_for("summer").has("seed_sunflower"))
+	assert(CropDB.get_crop("daisy").category == "flower")
+
 	# ---- bancada perto de casa, sem arar em volta; desfazer canteiro
 	var wb = w.placeables.filter(func(x): return x.kind == "workbench")[0]
 	assert(wb.origin == FarmWorld.WORKBENCH_AT, "a bancada começa ao lado da porta de casa")

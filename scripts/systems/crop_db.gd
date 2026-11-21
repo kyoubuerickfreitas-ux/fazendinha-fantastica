@@ -97,6 +97,8 @@ static func _register_items(c: CropData, hd_index: Dictionary) -> void:
 			"sell": c.sell_price, "desc": c.description}
 		if c.produce_icon_hd >= 0:
 			prod["hd"] = c.produce_icon_hd
+		elif ResourceLoader.exists("res://assets/sprites/crops/icons/%s.png" % c.id):
+			prod["tex"] = "res://assets/sprites/crops/icons/%s.png" % c.id     # tools/import_crops2.py
 		ItemDB.register(c.produce_id(), prod)
 
 

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "hydrangea"
+name = "Hortênsia"
+description = "Muda de cor conforme cresce: rosa, azul e roxo. Gosta de muita água."
+category = "flower"
+seed_name = "Muda de Hortênsia"
+seed_price = 50
+sell_price = 130
+stage_days = PackedInt32Array(2, 2, 3)
+seasons = PackedStringArray("summer", "autumn")
+water_min = 0.5
+temp_min = 8
+temp_max = 30
+biomes = PackedStringArray("riverbank", "forest_edge")

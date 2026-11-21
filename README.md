@@ -110,6 +110,14 @@ da energia: o anel azul em volta do botão mostra quanto sobra (~5 s de corrida)
 novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de recuperar um pouco. O prato com bônus
 "Fôlego" também faz a corrida durar mais.
 
+## Flores
+
+Sete flores para cultivar como qualquer planta (sementes/bulbos/mudas na barraca do Fungo, na estação certa):
+Margarida (primavera e verão), Tulipa-Rubra e Tulipa-Rosa (primavera), Rosa-Rubi (perene: uma rosa a cada 3 dias),
+Girassol e Lavanda (verão), Hortênsia (verão e outono, muda de cor ao crescer). Também entraram a Abóbora-Lua
+(outono) e a Cebola-Dourada (primavera e outono). Arte nova (também para maçã, laranja, uva, morango, mirtilo,
+cereja, pêssego, pera, melancia e cenoura): `tools/import_crops2.py` (`assets/source/crop_stages_2.png`).
+
 ## Casa
 
 A porta da casa agora leva para dentro (com uma transição). Lá dentro: **cama** (dormir passa o dia e salva),

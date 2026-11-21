@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "tulip"
+name = "Tulipa-Rubra"
+description = "A flor da primavera. Gosta de frio leve."
+category = "flower"
+seed_name = "Bulbos de Tulipa-Rubra"
+seed_price = 30
+sell_price = 70
+stage_days = PackedInt32Array(1, 2, 1, 1)
+seasons = PackedStringArray("spring")
+temp_min = 2
+temp_max = 24
+biomes = PackedStringArray("plains")

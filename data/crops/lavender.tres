@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "lavender"
+name = "Lavanda"
+description = "Perfumada e resistente à seca."
+category = "flower"
+seed_price = 35
+sell_price = 80
+stage_days = PackedInt32Array(1, 2, 1, 2)
+seasons = PackedStringArray("summer")
+water_min = 0.25
+drought_tolerance = 5
+temp_min = 10
+temp_max = 38
+biomes = PackedStringArray("plains", "forest_edge")

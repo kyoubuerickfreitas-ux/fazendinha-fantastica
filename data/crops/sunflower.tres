@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "sunflower"
+name = "Girassol"
+description = "Segue o sol o dia todo. Adora calor."
+category = "flower"
+seed_price = 40
+sell_price = 110
+stage_days = PackedInt32Array(2, 2, 2)
+seasons = PackedStringArray("summer")
+water_min = 0.35
+temp_min = 14
+temp_max = 40
+biomes = PackedStringArray("plains")

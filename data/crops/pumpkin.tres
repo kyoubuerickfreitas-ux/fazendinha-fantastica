@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "pumpkin"
+name = "Abóbora-Lua"
+description = "Grande e laranjinha. O orgulho de qualquer horta de outono."
+category = "vegetable"
+seed_price = 60
+sell_price = 240
+stage_days = PackedInt32Array(2, 2, 2, 3)
+seasons = PackedStringArray("autumn")
+water_min = 0.4
+temp_min = 4
+temp_max = 30
+biomes = PackedStringArray("plains")

@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="CropData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/crop_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "onion"
+name = "Cebola-Dourada"
+description = "Aguenta seca e frio. Dá sabor a tudo."
+category = "vegetable"
+seed_price = 20
+sell_price = 50
+stage_days = PackedInt32Array(1, 2, 1, 2)
+seasons = PackedStringArray("spring", "autumn")
+water_min = 0.3
+drought_tolerance = 4
+temp_min = 0
+temp_max = 28
+biomes = PackedStringArray("riverbank", "plains")
