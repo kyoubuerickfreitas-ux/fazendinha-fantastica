@@ -46,13 +46,52 @@ def classify(px):
                 continue                      # contorno e olhos
             if r > 150 and g < 110:
                 continue                      # bochechas
-            if v > 0.72 and s < 0.35:
-                out[y, x] = SHIRT
+            if v > 0.72 and 0.07 < s < 0.35 and 0.04 < hh < 0.18:
+                out[y, x] = SHIRT          # regata creme (o metal cinza das ferramentas fica de fora)
             elif s > 0.3 and 0.1 < hh < 0.2:
                 out[y, x] = PANTS
             elif 0.08 < s < 0.36 and (hh < 0.13 or hh > 0.95) and 0.3 < v < 0.75:
                 out[y, x] = SKIN
     return out
+
+
+def components(mask):
+    """Componentes 8-conectados: lista de listas de (y, x)."""
+    seen = np.zeros_like(mask, bool)
+    out = []
+    h, w = mask.shape
+    for y0, x0 in zip(*np.nonzero(mask)):
+        if seen[y0, x0]:
+            continue
+        stack, comp = [(y0, x0)], []
+        seen[y0, x0] = True
+        while stack:
+            y, x = stack.pop()
+            comp.append((y, x))
+            for dy in (-1, 0, 1):
+                for dx in (-1, 0, 1):
+                    ny, nx = y + dy, x + dx
+                    if 0 <= ny < h and 0 <= nx < w and mask[ny, nx] and not seen[ny, nx]:
+                        seen[ny, nx] = True
+                        stack.append((ny, nx))
+        out.append(comp)
+    return out
+
+
+def keep_main(cls, k, body_x):
+    """Só a peça de roupa no corpo: o maior pedaço e os que estão alinhados com ele
+    (o regador cinza ou um cabo claro na mão não viram camisa)."""
+    comps = components(cls == k)
+    if len(comps) < 2:
+        return cls
+    # a peça principal é a que fica embaixo da cabeça (não a maior: o regador é grande)
+    comps.sort(key=lambda c: abs(np.mean([x for _, x in c]) - body_x) - 0.25 * len(c))
+    cx = np.mean([x for _, x in comps[0]])
+    for c in comps[1:]:
+        if abs(np.mean([x for _, x in c]) - cx) > 7 or len(c) < 3:
+            for y, x in c:
+                cls[y, x] = 0
+    return cls
 
 
 def smooth(cls, alpha, below):
@@ -258,18 +297,25 @@ def build():
         hairs = {s: np.zeros((H, W, 4), np.uint8) for s in STYLES}
         for r in range(H // CELL):
             d = r % 4
-            t = tmpl[d] if d != 1 else tmpl[1]
+            # animações de ferramenta de lado são em 3/4 (rosto visível): cabelo e cabeça de frente
+            hd = 0 if (name == "_actions" and d in (1, 2)) else d
+            t = tmpl[hd]
             for c in range(W // CELL):
                 f = sheet[r * CELL:(r + 1) * CELL, c * CELL:(c + 1) * CELL]
                 if f[:, :, 3].max() < 128:
                     continue
                 dx, dy = find_head(f, t, None)
-                ys, _ = np.nonzero(t)
+                ys = np.nonzero(t)[0]
                 neck = ys.max() + dy + 1
                 cls = smooth(classify(f), f[:, :, 3] > 128, neck)
+                _, txs = np.nonzero(t)
+                body_x = txs.mean() + dx
+                cls = keep_main(keep_main(cls, SHIRT, body_x), PANTS, body_x)
                 mask[r * CELL:(r + 1) * CELL, c * CELL:(c + 1) * CELL, 0] = cls * 60
                 for s in STYLES:
-                    hb = hair_base[(s, d)]
+                    hb = hair_base[(s, hd)]
+                    if hd != d and d == 1:
+                        hb = hb[:, ::-1]
                     sh = np.zeros_like(hb)
                     sy0, sy1 = max(0, dy), min(CELL, CELL + dy)
                     sx0, sx1 = max(0, dx), min(CELL, CELL + dx)

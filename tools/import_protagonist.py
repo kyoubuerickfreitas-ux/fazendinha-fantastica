@@ -91,6 +91,12 @@ def shrink(f, scale):
     return small
 
 
+def _shift(f, dy):
+    out = Image.new("RGBA", f.size, (0, 0, 0, 0))
+    out.alpha_composite(f, (0, dy))
+    return out
+
+
 def build_actions():
     base = os.path.join(ROOT, "assets", "source", "base_body")
     canvas = round(256 * SCALE)
@@ -104,6 +110,13 @@ def build_actions():
             folder = os.path.join(base, tool, d)
             if os.path.isdir(folder):
                 frames[d] = [Image.open(os.path.join(folder, f"{i}.png")).convert("RGBA") for i in range(ACTION_FRAMES)]
+        # os pés de cada direção na mesma linha que os da frente (a primeira pose como referência)
+        if "south" in frames:
+            ref = frames["south"][0].getbbox()[3]
+            for d in frames:
+                dy = ref - frames[d][0].getbbox()[3]
+                if dy:
+                    frames[d] = [_shift(f, dy) for f in frames[d]]
         if "east" in frames:
             frames["west"] = [f.transpose(Image.FLIP_LEFT_RIGHT) for f in frames["east"]]
         for r, d in enumerate(("south", "west", "east", "north")):

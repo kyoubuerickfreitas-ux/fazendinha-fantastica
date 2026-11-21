@@ -69,6 +69,7 @@ Um jogo novo começa com a tela de criação: **nome**, **nome da fazenda** e ap
 - 7 penteados (careca, curto, comprido, rabo de cavalo, coque, cacheado, espetado) e 8 cores de cabelo
 - 8 cores de camisa e 6 de calção; botões para sortear nome, fazenda ou tudo
 - Dá para mudar depois em **Opções > Aparência e nomes**. Saves antigos ganham o visual padrão
+- Animações de ferramenta de frente e de lado (picareta, machado, regador, enxada e foice, em 3/4)
 - Os moradores chamam você pelo nome quando já são amigos (falas podem usar `{nome}` e `{fazenda}`)
 
 Como funciona: o corpo base é pintado por um shader (`assets/shaders/player_look.gdshader`) com uma máscara que diz
