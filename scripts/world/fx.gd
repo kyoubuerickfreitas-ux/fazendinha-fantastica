@@ -19,6 +19,7 @@ const SHEETS := {
 	"star": preload("res://assets/fx/fx_star.png"),
 	"burst": preload("res://assets/fx/fx_burst.png"),
 	"bubble": preload("res://assets/fx/fx_bubble.png"),
+	"fire_wide": preload("res://assets/fx/fx_fire_wide.png"),
 }
 ## Som de cada efeito (o golpe "hit" toca o som certo em quem chama: madeira ou pedra).
 const SOUNDS := {"till": "till", "water": "water", "break_wood": "break_wood", "break_stone": "break_stone",
@@ -45,7 +46,7 @@ const PRESETS := {
 	"fill": ["bubble", Color9.BLUE, 0.5],            # encher o regador
 	"steam": ["steam", Color9.WHITE, 0.55],          # prato pronto
 	"fire": ["fire", Color9.WHITE, 0.32, Color(1.6, 0.95, 0.35)],  # fogo do fogão (embaixo da panela), tingido de laranja
-	"fire_small": ["fire", Color9.WHITE, 0.24, Color(1.6, 0.85, 0.3)],  # boca da fornalha
+	"fire_small": ["fire_wide", Color9.WHITE, 0.28, Color(1.6, 0.85, 0.3)],  # boca da fornalha
 	"smoke": ["steam", Color9.WHITE, 0.45, Color(0.85, 0.85, 0.85, 0.95)],  # fumaça da chaminé              # fogo do fogão (em loop)
 }
 

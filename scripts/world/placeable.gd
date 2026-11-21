@@ -97,7 +97,7 @@ func job_ready() -> bool:
 
 # ------------------------------------------------------------------ fogo da fornalha
 ## Máquinas com fogo: ponto da boca e da chaminé em pixels da arte (fogo e fumaça só enquanto trabalham).
-const FIRE_AT := {"furnace": [Vector2(17, 35), Vector2(17, 1)]}
+const FIRE_AT := {"furnace": [Vector2(17, 32), Vector2(17, 1)]}
 var _fire: FX
 var _smoke: FX
 
