@@ -20,7 +20,8 @@ from import_hud import key_flood  # noqa: E402
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "source", "tractor_iso.png")
 OUT = os.path.join(ROOT, "assets", "app_icon")
-ICON = (1262, 12, 1520, 286)      # moldura inteira (com as folhinhas)
+FRAME = (1274, 43, 1510, 282)     # só a moldura (a folha que sai para fora fica de fora)
+CORNER = 110                      # tamanho do canto refeito
 INNER = (1299, 66, 1489, 258)     # a cena dentro da moldura (sem a borda)
 FACE = (1442, 166)                # centro do rosto do porquinho
 BG_COLOR = (104, 150, 66, 255)    # verde do fundo do ícone adaptável
@@ -28,8 +29,19 @@ BG_SIZE = 220                     # lado do recorte do fundo (o miolo visível f
 
 if __name__ == "__main__":
     full = key_flood(Image.open(SRC).convert("RGBA"))
-    icon = full.crop(ICON)
-    icon = icon.crop(icon.getbbox())
+    icon = full.crop(FRAME)
+    # sem a folha do canto de cima à direita: o canto é o espelho do canto de cima à esquerda
+    # (a moldura é simétrica), e a imagem fica quadradinha
+    w = icon.width
+    corner = icon.crop((0, 0, CORNER, CORNER)).transpose(Image.FLIP_LEFT_RIGHT)
+    cp, ip = corner.load(), icon.load()
+    for y in range(CORNER):
+        for x in range(CORNER):
+            X = w - CORNER + x
+            # só a moldura (lado direito e topo) e a faixa de cima da cena, onde a folha entrava;
+            # a orelha do porquinho fica como está
+            if y < 40 or X >= w - 27:
+                ip[X, y] = cp[x, y]
     side = max(icon.size)
     sq = Image.new("RGBA", (side, side), (0, 0, 0, 0))
     sq.alpha_composite(icon, ((side - icon.width) // 2, (side - icon.height) // 2))
@@ -38,7 +50,7 @@ if __name__ == "__main__":
     # ícone adaptável: a imagem INTEIRA (moldura e folhas) no primeiro plano, dentro da área que o Android
     # nunca corta (66 de 108); o fundo tem a cor da grama de trás, para não aparecer borda.
     fg = Image.new("RGBA", (432, 432), (0, 0, 0, 0))
-    inner = round(432 * 64 / 108)
+    inner = round(432 * 72 / 108)     # ocupa a área visível toda (no ícone redondo os cantos são cortados)
     fg.alpha_composite(sq.resize((inner, inner), Image.LANCZOS), ((432 - inner) // 2, (432 - inner) // 2))
     fg.save(os.path.join(OUT, "foreground.png"))
     Image.new("RGBA", (432, 432), BG_COLOR).save(os.path.join(OUT, "background.png"))
