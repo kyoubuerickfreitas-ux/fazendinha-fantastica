@@ -23,6 +23,8 @@ var _weather_icon: TextureRect
 var _hotbar: Array[ItemSlot] = []
 var _use_btn: TouchButton
 var _hand_btn: TouchButton
+var _run_btn: RunButton
+var _last_stamina := -1.0
 var _context_label: Label
 var _toast: Label
 var _toast_tween: Tween
@@ -293,18 +295,27 @@ func _build_buttons() -> void:
 	_hand_btn.pressed.connect(func(): interact_pressed.emit())
 	area.add_child(_hand_btn)
 
+	_run_btn = RunButton.new()        # segure para correr
+	_run_btn.name = "Run"
+	_run_btn.radius = 16
+	_run_btn.position = Vector2(170 - 166, 150 - 44)
+	area.add_child(_run_btn)
+
 	var bag := TouchButton.new()
-	bag.radius = 19
-	bag.icon = ItemDB.ui_icon("backpack")
+	bag.radius = 20
+	bag.icon = preload("res://assets/sprites/ui/backpack.png")   # arte de tools/import_ui_buttons.py
+	bag.icon_scale = 2.0
+	bag.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	bag.position = Vector2(170 - 62, 150 - 120)
 	bag.pressed.connect(toggle_backpack)
 	area.add_child(bag)
 	_bag_btn = bag
 
 	_book_btn = TouchButton.new()
-	_book_btn.radius = 16
-	_book_btn.icon = ItemDB.ui_icon("book")
-	_book_btn.icon_scale = 1.6
+	_book_btn.radius = 17
+	_book_btn.icon = preload("res://assets/sprites/ui/book.png")
+	_book_btn.icon_scale = 1.75
+	_book_btn.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 	_book_btn.position = Vector2(170 - 108, 150 - 112)
 	_book_btn.pressed.connect(open_fish_book)
 	area.add_child(_book_btn)
@@ -544,8 +555,8 @@ func open_animal_list(records: Array, title: String, building: Placeable = null)
 				close_panel())
 			bar.add_child(ub)
 			var perk := "comedouro automático do silo" if building.level == 1 else "aquecedor + coletor automático"
-			_card_body.add_child(UIStyle.label("Próximo nível: %d vagas, %s.\nCusto: %s" % [nxt["capacity"], perk,
-				ItemDB.cost_text(nxt["cost"])], 10, UIStyle.EARTH))
+			_card_body.add_child(UIStyle.label("Próximo nível: %d vagas, %s." % [nxt["capacity"], perk], 10, UIStyle.EARTH))
+			_card_body.add_child(_cost_chips(nxt["cost"]))
 		_card_body.add_child(bar)
 	if records.is_empty():
 		_card_body.add_child(UIStyle.label("Ninguém mora aqui ainda. Compre animais na barraca do Fungo.", 11, UIStyle.EARTH))
@@ -1079,7 +1090,7 @@ func _refresh_crafting() -> void:
 		var id: String = r["result"]
 		var cost: Dictionary = r["cost"]
 		var name := ItemDB.item_name(id) + (" x%d" % int(r["qty"]) if int(r["qty"]) > 1 else "")
-		var row := _shop_row(id, "%s\n%s" % [name, ItemDB.cost_text(cost)])
+		var row := _craft_row(id, name, cost)
 		var b := Button.new()
 		b.text = "Fazer"
 		b.disabled = not ItemDB.can_afford(cost)
@@ -1109,7 +1120,7 @@ func _refresh_crafting() -> void:
 			effect = "quebra pedras e minérios com %d golpes a menos" % lvl
 		if tool == "watering_can":
 			effect += ", %d de água" % (Game.WATER_CAPACITY * (lvl + 1))
-		var row := _shop_row(tool, "%s → nível %d (%s)\n%s" % [ItemDB.item_name(tool), lvl + 1, effect, ItemDB.cost_text(cost)])
+		var row := _craft_row(tool, "%s → nível %d (%s)" % [ItemDB.item_name(tool), lvl + 1, effect], cost)
 		var ub := Button.new()
 		ub.text = "Melhorar"
 		ub.disabled = not ItemDB.can_afford(cost)
@@ -1159,7 +1170,7 @@ func blocks_point(p: Vector2) -> bool:
 	for c in _blockers:
 		if c.get_global_rect().grow(4).has_point(p):
 			return true
-	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn, _options_btn]:
+	for b in [_use_btn, _hand_btn, _bag_btn, _book_btn, _options_btn, _run_btn]:
 		if (p - b.global_position - b.size / 2.0).length() <= b.radius + 8:
 			return true
 	if _tut_panel and _tut_panel.visible and _tut_panel.get_global_rect().grow(4).has_point(p):
@@ -1334,6 +1345,54 @@ func _refresh_shop() -> void:
 		_shop_sell.add_child(UIStyle.label("Nada para vender ainda.", 11, UIStyle.EARTH))
 
 
+## Materiais de uma receita com o que você tem: [ícone] Madeira 12/10 (verde = dá, vermelho = falta).
+func _cost_chips(cost: Dictionary) -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", 8)
+	flow.add_theme_constant_override("v_separation", 1)
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	for k in cost:
+		var need := int(cost[k])
+		var have := ItemDB.have_of(k)
+		var chip := HBoxContainer.new()
+		chip.add_theme_constant_override("separation", 2)
+		var ic := TextureRect.new()
+		ic.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		ic.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		ic.custom_minimum_size = Vector2(14, 14)
+		ic.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		ic.texture = ItemDB.ui_icon("coin") if k == "money" else (_any_fish_icon() if k == "any_fish" else ItemDB.icon(k))
+		chip.add_child(ic)
+		var ok := have >= need
+		var l := UIStyle.label("%s %d/%d" % [ItemDB.cost_name(k), have, need], 9, Color("3f6b2a") if ok else Color("a8432f"))
+		chip.add_child(l)
+		chip.name = "Chip_" + k
+		flow.add_child(chip)
+	return flow
+
+
+func _any_fish_icon() -> Texture2D:
+	for s in Game.inventory:
+		if s != null and Cooking.matches("any_fish", s["id"]):
+			return ItemDB.icon(s["id"])
+	return ItemDB.icon("fishing_rod")
+
+
+## Linha da bancada: ícone, nome e os materiais (com quanto você tem).
+func _craft_row(id: String, title: String, cost: Dictionary) -> HBoxContainer:
+	var row := _shop_row(id, "")
+	var l: Label = row.get_child(1)
+	row.remove_child(l)
+	l.queue_free()
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 0)
+	v.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	v.add_child(UIStyle.label(title, 10, UIStyle.WOOD_DARK))
+	v.add_child(_cost_chips(cost))
+	row.add_child(v)
+	return row
+
+
 func _shop_row(id: String, text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	var ic := TextureRect.new()
@@ -1352,6 +1411,10 @@ func _shop_row(id: String, text: String) -> HBoxContainer:
 
 # ================================================================= atualização
 func _process(_d: float) -> void:
+	Game.run_held = (_run_btn.is_held() or Input.is_action_pressed("run")) and Game.ui_lock == 0
+	if not is_equal_approx(_last_stamina, Game.stamina) or _run_btn.is_held():
+		_last_stamina = Game.stamina
+		_run_btn.queue_redraw()
 	var text := ""
 	if player and Game.ui_lock == 0:
 		var it := player.find_interactable()

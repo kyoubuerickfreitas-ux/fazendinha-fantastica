@@ -21,6 +21,11 @@ const ACTION_FRAMES := 9
 ## Direções que já têm animação desenhada, por ferramenta (as outras usam o golpe simples)
 static var _has_dir := {}
 const SPEED := 85.0
+const RUN_MULT := 1.7        # correndo
+const RUN_DRAIN := 20.0      # fôlego gasto por segundo correndo (~5 s de corrida)
+const RUN_REGEN := 16.0      # fôlego recuperado por segundo parado ou andando
+const RUN_REST := 0.6        # espera antes de começar a recuperar
+const RUN_RECOVER := 35.0    # depois de cansar, precisa disto para correr de novo
 const REACH := 20.0
 const AUTO_REACH := 52.0    # alcance da mira automática (~1,6 célula)
 const TAP_REACH := 72.0     # alcance ao tocar direto na tela
@@ -37,6 +42,8 @@ var facing := Vector2.DOWN
 var _dir := Dir.DOWN
 var _anim_t := 0.0
 var _busy := 0.0
+var running := false
+var _rest := 0.0
 var _sprite: Sprite2D
 var _hair: Sprite2D          # cabelo (mesmos quadros do corpo, tingido)
 var _look_mat: ShaderMaterial
@@ -89,7 +96,8 @@ func _physics_process(delta: float) -> void:
 			fishing.cancel("Você recolheu a linha.")
 	_busy = max(0.0, _busy - delta)
 
-	velocity = v * SPEED * Cooking.speed_mult()
+	_update_run(v, delta)
+	velocity = v * SPEED * Cooking.speed_mult() * (RUN_MULT if running else 1.0)
 	move_and_slide()
 
 	if not _action.is_empty() or _holding_rod:
@@ -101,7 +109,7 @@ func _physics_process(delta: float) -> void:
 		else:
 			_dir = Dir.DOWN if v.y > 0 else Dir.UP
 		var before := int(_anim_t)
-		_anim_t += delta * (8.0 + 6.0 * v.length())
+		_anim_t += delta * (8.0 + 6.0 * v.length()) * (1.5 if running else 1.0)
 		if int(_anim_t) != before and int(_anim_t) % 4 == 0:
 			_footstep()
 		_sprite.frame = _dir * COLS + 1 + int(_anim_t) % WALK_FRAMES
@@ -114,6 +122,23 @@ func _physics_process(delta: float) -> void:
 		var id := Game.selected_item_id()
 		var c := target_cell()
 		world.set_cursor(c, Game.ui_lock == 0, world.would_act(id, c) or world.can_interact_cell(c))
+
+
+## Correr gasta o fôlego; parar de correr recupera. O bônus "Fôlego" da comida faz durar mais.
+func _update_run(v: Vector2, delta: float) -> void:
+	running = Game.run_held and v.length() > 0.2 and not Game.exhausted and Game.stamina > 0.0
+	if running:
+		_rest = 0.0
+		Game.stamina = maxf(0.0, Game.stamina - RUN_DRAIN * Cooking.energy_mult() * delta)
+		if Game.stamina <= 0.0:
+			Game.exhausted = true
+			Sound.play("deny", -8.0)
+		return
+	_rest += delta
+	if _rest >= RUN_REST:
+		Game.stamina = minf(Game.MAX_STAMINA, Game.stamina + RUN_REGEN * delta)
+	if Game.exhausted and Game.stamina >= RUN_RECOVER:
+		Game.exhausted = false
 
 
 ## Aplica a aparência escolhida (cores do corpo e cabelo).

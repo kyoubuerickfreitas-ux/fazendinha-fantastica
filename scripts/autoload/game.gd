@@ -56,6 +56,11 @@ var counters := {}
 var mine_deepest := 0
 ## Tutorial: {"step": índice, "base": valor no começo do passo, "done": bool}
 var tutorial := {"step": 0, "base": 0, "done": false}
+## Correr: fôlego próprio (não gasta energia). Enche sozinho quando você para de correr.
+const MAX_STAMINA := 100.0
+var stamina := MAX_STAMINA
+var exhausted := false      # zerou: só volta a correr depois de recuperar um pouco
+var run_held := false       # botão de correr (ou Shift) apertado
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -460,7 +465,7 @@ func _setup_input_map() -> void:
 		"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT],
 		"move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN],
 		"use_tool": [KEY_SPACE, KEY_J], "interact": [KEY_E, KEY_K],
-		"backpack": [KEY_I, KEY_TAB],
+		"backpack": [KEY_I, KEY_TAB], "run": [KEY_SHIFT],
 		"slot_1": [KEY_1], "slot_2": [KEY_2], "slot_3": [KEY_3],
 		"slot_4": [KEY_4], "slot_5": [KEY_5], "slot_6": [KEY_6],
 	}

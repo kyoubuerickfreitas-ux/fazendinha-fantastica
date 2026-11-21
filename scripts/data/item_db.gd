@@ -347,6 +347,33 @@ static func _cheap_fish_slots() -> Array:
 	return out
 
 
+## Quanto o jogador tem de um material de receita (moedas, "qualquer peixe" ou item).
+static func have_of(key: String) -> int:
+	if key == "money":
+		return Game.money
+	if key == "any_fish":
+		return Cooking.have("any_fish")
+	return Game.count_item(key)
+
+
+static func cost_name(key: String) -> String:
+	if key == "money":
+		return "moedas"
+	if key == "any_fish":
+		return "peixe(s) qualquer"
+	return item_name(key)
+
+
+## Só o que falta, com quanto você tem: "Madeira (tem 4 de 10), Pedra (tem 0 de 5)".
+static func missing_text(cost: Dictionary) -> String:
+	var parts := []
+	for k in cost:
+		var have := have_of(k)
+		if have < int(cost[k]):
+			parts.append("%s (tem %d de %d)" % [cost_name(k), have, int(cost[k])])
+	return ", ".join(parts)
+
+
 static func cost_text(cost: Dictionary) -> String:
 	var parts := []
 	for k in cost:

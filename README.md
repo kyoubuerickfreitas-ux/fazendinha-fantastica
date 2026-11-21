@@ -57,6 +57,7 @@ Jogo mobile (Android) de fazenda num mundo de fantasia rural, feito em **Godot 4
   - Andares 1–4: cobre · 5–9: cobre e ferro · 10+: ferro e cristal. Rochas de gemas dão Ametista, Rubi, Esmeralda e Pedra-Lua (fundo)
   - A cada 3 andares tem um laguinho subterrâneo com 3 peixes de caverna; o elevador para a cada 5 andares
   - Cada faixa de profundidade tem seu visual (terra, rocha escura, cristal azul, cristal roxo, turquesa, lava). Arte: `tools/import_mine_art.py` recorta `assets/source/mine_art.webp`
+  - A bancada mostra cada material com ícone e quanto você tem (ex.: Madeira 4/10, em verde quando dá)
   - **Fornalha** (bancada): 5 minérios viram 1 barra (até 5 barras por vez, prontas no dia seguinte). As barras melhoram regador, enxada, vara e picareta, e fazem os aspersores melhores
 - Fungo, o vendedor de sementes (compra e venda), e a caixa de vendas ao lado da casa
 - Ciclo de dia e noite, chuva (rega tudo sozinha) e energia
@@ -101,6 +102,13 @@ fazer carinho num animal, pescar, conversar com um morador, fabricar o Fogão, c
 colher e abrir o Livro de Pesca). O objetivo aparece num painel no alto da tela, uma setinha mostra onde ir
 (na borda da tela quando o alvo está longe) e alguns passos dão recompensa. O botão "Pular" desliga o tutorial.
 Os passos ficam em `scripts/systems/tutorial.gd` (lista STEPS). Saves antigos não mostram o tutorial.
+
+## Correr
+
+Segure o botão do tênis (ao lado da mão) ou Shift para correr (70% mais rápido). Correr usa o **fôlego**, separado
+da energia: o anel azul em volta do botão mostra quanto sobra (~5 s de corrida). Ao parar de correr ele enche de
+novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de recuperar um pouco. O prato com bônus
+"Fôlego" também faz a corrida durar mais.
 
 ## Mira
 

@@ -1216,6 +1216,44 @@ func _run() -> void:
 	assert(Villagers.reaction("pipoca", "ruby") == "like" and Villagers.reaction("raiz", "emerald") == "love")
 	game.inventory[0] = null
 
+	# ---- correr (fôlego próprio) e bancada mostrando quanto você tem
+	game.weather = "sunny"
+	game.stamina = game.MAX_STAMINA
+	game.exhausted = false
+	var start_pos: Vector2 = p.position
+	game.joystick_vector = Vector2(1, 0)
+	await _wait(0.5)
+	var walk_d: float = p.position.distance_to(start_pos)
+	game.joystick_vector = Vector2(-1, 0)
+	main.hud._run_btn._down = true
+	start_pos = p.position
+	await _wait(0.5)
+	var run_d: float = p.position.distance_to(start_pos)
+	assert(p.running, "segurando o botão, o personagem corre")
+	await _shot("42_correndo")
+	assert(run_d > walk_d * 1.4, "correr é mais rápido (andou %.0f, correu %.0f)" % [walk_d, run_d])
+	assert(game.stamina < game.MAX_STAMINA, "correr gasta fôlego")
+	var energy_before: float = game.energy
+	game.stamina = 1.0
+	await _wait(0.2)
+	assert(game.exhausted and not p.running, "sem fôlego, para de correr")
+	assert(is_equal_approx(game.energy, energy_before), "correr não gasta energia")
+	main.hud._run_btn._down = false
+	game.joystick_vector = Vector2.ZERO
+	await _wait(1.0)
+	assert(game.stamina > 1.0, "parado, o fôlego volta")
+	game.stamina = game.MAX_STAMINA
+	game.exhausted = false
+	game.inventory[0] = {"id": "wood", "qty": 4}
+	main.hud.open_crafting()
+	await _wait(0.2)
+	var chip = main.hud._craft_list.find_child("Chip_wood", true, false)
+	assert(chip != null, "a bancada mostra os materiais com o que você tem")
+	await _shot("43_bancada_materiais")
+	main.hud.close_panel()
+	game.inventory[0] = null
+	assert(ItemDB.missing_text({"wood": 10}).contains("tem 0 de 10"))
+
 	# ---- opções
 	main.hud.open_options()
 	await _wait(0.3)

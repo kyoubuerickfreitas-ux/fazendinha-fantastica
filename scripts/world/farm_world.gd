@@ -613,7 +613,7 @@ func upgrade_building(b: Placeable) -> String:
 		return "Já está no nível máximo."
 	var cost: Dictionary = levels[b.level]["cost"]
 	if not ItemDB.can_afford(cost):
-		return "Faltam materiais: %s." % ItemDB.cost_text(cost)
+		return "Faltam materiais: %s." % ItemDB.missing_text(cost)
 	for k in cost:
 		if k == "money":
 			Game.add_money(-int(cost[k]))
