@@ -277,6 +277,25 @@ func _build_static_scenery() -> void:
 
 	player_start = Vector2(5 * TILE + TILE / 2, 9 * TILE + 8)
 	_spawn_villagers.call_deferred()
+	if Game.tractor.get("owned", false):
+		var p := Vector2(float(Game.tractor["x"]), float(Game.tractor["y"]))
+		spawn_tractor(p if p != Vector2.ZERO else TRACTOR_PARK)
+
+
+## Coloca o trator estacionado no mapa (comprado agora ou vindo do save).
+func spawn_tractor(pos: Vector2) -> Tractor:
+	var t := Tractor.new()
+	t.name = "Tractor"
+	t.position = pos
+	t.mount_requested.connect(func():
+		if player:
+			player.mount(t)
+			tractor = null)
+	entities.add_child(t)
+	tractor = t
+	Game.tractor["x"] = pos.x
+	Game.tractor["y"] = pos.y
+	return t
 
 	# água bloqueia passagem
 	var water_body := StaticBody2D.new()
@@ -460,6 +479,8 @@ func _enclosure_for(b: Placeable) -> Dictionary:
 var villagers: Array[NPC] = []
 ## referências para o tutorial apontar
 var house_door: Interactable
+var tractor: Tractor            # estacionado (null se não comprou ou se está dirigindo)
+const TRACTOR_PARK := Vector2(112, 300)    # onde o trator novo aparece (ao lado da casa)
 var sell_bin: Interactable
 var fungo: NPC
 ## onde o jogador aparece ao sair da mina

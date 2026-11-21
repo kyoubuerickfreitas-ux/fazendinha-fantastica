@@ -159,6 +159,14 @@ def build():
     s["talk"] = fin(cat(*syl, gap=0.03), 0.5)
     s["gift"] = fin(mix(0.8, (bell(freq("G6"), 0.4, 6), 0, 0.6), (bell(freq("D7"), 0.5, 5), 0.12, 0.5),
                         (highpass(noise(int(0.5 * SR), 17), 6000, SR) * dec(0.5, 8) * 0.25, 0.1, 1.0)), 0.6)
+    # ---------------------------------------------------------------- trator
+    t = T(0.7)
+    fr = 40 + 30 * np.clip(t / 0.5, 0, 1)
+    rum = np.sin(2 * np.pi * np.cumsum(fr) / SR) + 0.5 * np.sin(4 * np.pi * np.cumsum(fr) / SR)
+    rum *= 0.6 + 0.4 * np.abs(np.sin(np.pi * 9 * t))
+    s["engine_start"] = fin(lowpass(rum, 900, SR) * np.clip(t / 0.05, 0, 1) * np.clip((0.7 - t) / 0.2, 0, 1)
+                            + 0.4 * nz(0.7, 200, 2000, 3, 31), 0.7)
+    s["honk"] = fin(cat(square(392, 0.12, 4, 0.5), square(330, 0.2, 4, 0.5), gap=0.03), 0.55)
     # ---------------------------------------------------------------- passos
     s["step_grass"] = fin(highpass(noise(int(0.07 * SR), 18), 1800, SR) * dec(0.07, 45) * att(0.07, 0.006), 0.35)
     s["step_path"] = fin(bandpass(noise(int(0.07 * SR), 19), 500, 4000, SR) * dec(0.07, 55) * att(0.07), 0.35)

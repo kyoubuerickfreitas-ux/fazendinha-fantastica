@@ -325,19 +325,32 @@ def amb_cave():
     return stereo(l, r) * 0.6
 
 
+def tractor_engine():
+    """Motor do trator em loop (2 s): ronco grave com batidas, um pouco de chiado."""
+    n = int(2.0 * SR)
+    t = np.arange(n) / SR
+    f = 52.0
+    ph = 2 * np.pi * f * t
+    saw = sum(np.sin(k * ph) / k for k in range(1, 14))
+    chug = 0.55 + 0.45 * np.abs(np.sin(np.pi * 10.0 * t)) ** 3      # 10 batidas por segundo (loop exato)
+    hiss = lowpass(highpass(loop_noise(2.0, 21), 300), 2500) * 0.25
+    x = lowpass(saw * chug, 900) + hiss * chug
+    return stereo(x, x) * 0.7
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     tracks = {"farm_day": farm_day, "farm_night": farm_night, "farm_rain": farm_rain, "mine": mine,
-              "amb_rain": amb_rain, "amb_night": amb_night, "amb_birds": amb_birds, "amb_cave": amb_cave}
+              "amb_rain": amb_rain, "tractor": tractor_engine, "amb_night": amb_night, "amb_birds": amb_birds, "amb_cave": amb_cave}
     only = sys.argv[1:]
     for name, fn in tracks.items():
         if only and name not in only:
             continue
         data = fn()
-        if not name.startswith("amb"):
+        if not name.startswith("amb") and name != "tractor":
             # mesmo volume percebido em todas as músicas (~ -17 dBFS RMS), com limitador suave
             rms = np.sqrt(np.mean(data ** 2))
             data = data * (10 ** (-17 / 20) / max(rms, 1e-9))
             data = np.tanh(data * 1.2) / 1.2
-        write_ogg(os.path.join(OUT, name + ".ogg"), data, SR, quality=3 if name.startswith("amb") else 4)
+        write_ogg(os.path.join(OUT, name + ".ogg"), data, SR, quality=3 if name.startswith("amb") or name == "tractor" else 4)
         print("%-11s %5.1f s" % (name, len(data) / SR))

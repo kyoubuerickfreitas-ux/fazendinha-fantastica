@@ -220,6 +220,7 @@ func _sell_all() -> void:
 
 func _sleep(rested: bool) -> void:
 	player.fishing.cancel()
+	player.dismount()
 	Sound.play("sleep" if rested else "escape")
 	var tour_result := FishQuests.finish_tournament()   # dormiu antes das 16h no dia do torneio
 	hud.fade_through(func():
@@ -251,6 +252,7 @@ func _on_mine_entrance() -> void:
 
 ## Vai para um andar da mina (da fazenda ou de outro andar).
 func enter_mine(level: int) -> void:
+	player.dismount()            # o trator fica estacionado na entrada
 	Sound.play("ladder")
 	var old := mine
 	mine = MineWorld.new()
@@ -321,6 +323,9 @@ func save_now() -> void:
 	var data := world.serialize()
 	var pos := world.mine_entrance_pos if mine else player.position   # salvo na mina: volta pela entrada
 	data["player"] = [pos.x, pos.y]
+	if player.riding:            # dirigindo: o trator fica onde você está
+		Game.tractor["x"] = player.position.x
+		Game.tractor["y"] = player.position.y
 	Game.save_game(data)
 
 

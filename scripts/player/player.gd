@@ -26,6 +26,8 @@ const RUN_DRAIN := 20.0      # fôlego gasto por segundo correndo (~5 s de corri
 const RUN_REGEN := 16.0      # fôlego recuperado por segundo parado ou andando
 const RUN_REST := 0.6        # espera antes de começar a recuperar
 const RUN_RECOVER := 35.0    # depois de cansar, precisa disto para correr de novo
+const RIDE_MULT := 2.3       # de trator
+const ENGINE := preload("res://assets/music/tractor.ogg")
 const REACH := 20.0
 const AUTO_REACH := 52.0    # alcance da mira automática (~1,6 célula)
 const TAP_REACH := 72.0     # alcance ao tocar direto na tela
@@ -43,6 +45,9 @@ var _dir := Dir.DOWN
 var _anim_t := 0.0
 var _busy := 0.0
 var running := false
+var riding := false
+var tractor: Tractor          # o trator em que está (filho do jogador enquanto dirige)
+var _engine: AudioStreamPlayer
 var _rest := 0.0
 var _sprite: Sprite2D
 var _hair: Sprite2D          # cabelo (mesmos quadros do corpo, tingido)
@@ -96,11 +101,25 @@ func _physics_process(delta: float) -> void:
 			fishing.cancel("Você recolheu a linha.")
 	_busy = max(0.0, _busy - delta)
 
-	_update_run(v, delta)
-	velocity = v * SPEED * Cooking.speed_mult() * (RUN_MULT if running else 1.0)
+	if riding:
+		_update_run(Vector2.ZERO, delta)      # dirigindo não gasta fôlego (e ele recupera)
+		velocity = v * SPEED * RIDE_MULT
+	else:
+		_update_run(v, delta)
+		velocity = v * SPEED * Cooking.speed_mult() * (RUN_MULT if running else 1.0)
 	move_and_slide()
 
-	if not _action.is_empty() or _holding_rod:
+	if riding:
+		if v.length() > 0.15:
+			facing = v.normalized()
+			if abs(v.x) > abs(v.y) * 1.1:
+				_dir = Dir.RIGHT if v.x > 0 else Dir.LEFT
+			else:
+				_dir = Dir.DOWN if v.y > 0 else Dir.UP
+		tractor.set_dir(_dir)
+		tractor.shake(v.length() > 0.15, delta)
+		_engine.pitch_scale = lerpf(_engine.pitch_scale, 1.3 if v.length() > 0.15 else 0.9, delta * 4.0)
+	elif not _action.is_empty() or _holding_rod:
 		pass
 	elif v.length() > 0.15:
 		facing = v.normalized()
@@ -139,6 +158,54 @@ func _update_run(v: Vector2, delta: float) -> void:
 		Game.stamina = minf(Game.MAX_STAMINA, Game.stamina + RUN_REGEN * delta)
 	if Game.exhausted and Game.stamina >= RUN_RECOVER:
 		Game.exhausted = false
+
+
+# ------------------------------------------------------------------ trator
+## Sobe no trator: ele passa a andar junto (filho do jogador) e o personagem aparece sentado.
+func mount(t: Tractor) -> void:
+	if riding or (fishing and fishing.is_active()):
+		return
+	riding = true
+	tractor = t
+	position = t.global_position - (get_parent() as Node2D).global_position
+	t.get_parent().remove_child(t)
+	add_child(t)
+	t.position = Vector2.ZERO
+	t.set_dir(_dir)
+	t.set_mounted(true, _look_mat, PlayerLook.hair_texture(Game.look(), false), PlayerLook.hair_color(Game.look()))
+	_sprite.visible = false
+	if _engine == null:
+		_engine = AudioStreamPlayer.new()
+		_engine.bus = "SFX"
+		_engine.volume_db = -12.0
+		var st: AudioStreamOggVorbis = ENGINE
+		st.loop = true
+		_engine.stream = st
+		add_child(_engine)
+	_engine.pitch_scale = 0.9
+	_engine.play()
+	Sound.play("engine_start")
+
+
+## Desce: o trator fica estacionado aqui e o personagem desce ao lado.
+func dismount() -> void:
+	if not riding:
+		return
+	riding = false
+	var t := tractor
+	tractor = null
+	remove_child(t)
+	world.entities.add_child(t)
+	t.position = position
+	t.set_mounted(false)
+	Game.tractor["x"] = t.position.x
+	Game.tractor["y"] = t.position.y
+	world.tractor = t
+	_sprite.visible = true
+	_restore_sheet()
+	position += Vector2(30, 6) if _dir in [Dir.DOWN, Dir.UP] else Vector2(0, 22)
+	if _engine:
+		_engine.stop()
 
 
 ## Aplica a aparência escolhida (cores do corpo e cabelo).
@@ -232,6 +299,9 @@ func use_tool() -> void:
 ## Usa o item selecionado numa célula específica (mira automática ou toque na tela).
 func use_at(c: Vector2i) -> void:
 	if Game.ui_lock > 0 or world == null:
+		return
+	if riding:
+		Game.toast.emit("Desça do trator (botão da mão) para usar as ferramentas.")
 		return
 	var id := Game.selected_item_id()
 	# pesca em andamento: o botão serve para fisgar/puxar (toques rápidos, sem espera)
@@ -358,6 +428,9 @@ func interact() -> void:
 		return
 	if fishing and fishing.is_active():
 		fishing.cancel("Você recolheu a linha.")
+		return
+	if riding:
+		dismount()
 		return
 	var it := find_interactable()
 	if it:

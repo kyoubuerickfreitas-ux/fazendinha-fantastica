@@ -61,6 +61,8 @@ const MAX_STAMINA := 100.0
 var stamina := MAX_STAMINA
 var exhausted := false      # zerou: só volta a correr depois de recuperar um pouco
 var run_held := false       # botão de correr (ou Shift) apertado
+## Trator: comprado no Fungo; fica estacionado onde você desceu (x, y na fazenda).
+var tractor := {"owned": false, "x": 0.0, "y": 0.0}
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
 var profile := {"name": "", "farm": "", "look": {}, "created": false}
 ## Isca colocada na vara de pesca ("" = sem isca)
@@ -113,6 +115,7 @@ func reset_new_game() -> void:
 	mine_deepest = 0
 	tutorial = {"step": 0, "base": -1, "done": false}
 	profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": false}
+	tractor = {"owned": false, "x": 0.0, "y": 0.0}
 	for pair in [["watering_can", 1], ["hoe", 1], ["axe", 1], ["pickaxe", 1], ["scythe", 1],
 			["seed_kale", 10], ["fishing_rod", 1], ["bait_worm", 10], ["seed_carrot", 6], ["shears", 1], ["brush", 1]]:
 		add_item(pair[0], pair[1])
@@ -368,7 +371,7 @@ func save_game(world_data: Dictionary) -> void:
 		"fish_log": fish_log, "fishing_xp": fishing_xp, "treasure_log": treasure_log, "fish_flags": fish_flags,
 		"recipes": known_recipes, "buffs": buffs, "dishes_cooked": dishes_cooked,
 		"friends": friends, "counters": counters, "tutorial": tutorial, "mine_deepest": mine_deepest,
-		"profile": profile,
+		"profile": profile, "tractor": tractor,
 		"inventory": inventory, "selected_slot": selected_slot,
 		"world": world_data,
 	}
@@ -427,6 +430,9 @@ func load_game() -> Dictionary:
 			"look": PlayerLook.sanitize(pr.get("look", {})), "created": bool(pr.get("created", true))}
 	else:
 		profile = {"name": "", "farm": "", "look": PlayerLook.default_look(), "created": true}
+	var tr = data.get("tractor", {})
+	tractor = {"owned": bool(tr.get("owned", false)), "x": float(tr.get("x", 0.0)), "y": float(tr.get("y", 0.0))} \
+		if tr is Dictionary else {"owned": false, "x": 0.0, "y": 0.0}
 	var tl = data.get("tools", {})
 	tool_levels = {"watering_can": 1, "hoe": 1, "fishing_rod": 1, "pickaxe": 1}
 	if tl is Dictionary:

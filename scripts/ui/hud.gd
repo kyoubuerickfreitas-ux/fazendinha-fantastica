@@ -11,6 +11,7 @@ signal quit_confirmed
 
 
 const HAND_ICON := preload("res://assets/sprites/ui/hud/hand.png")   # tools/import_hud.py
+const TRACTOR_PRICE := 2500
 const SKIN := "res://assets/sprites/ui/hud/"
 var player: Player
 var world: FarmWorld
@@ -1335,6 +1336,20 @@ func _refresh_shop() -> void:
 	for c in _shop_sell.get_children():
 		c.queue_free()
 
+	if not Game.tractor.get("owned", false):
+		var trow := _shop_row("", "Trator\nAnda bem mais rápido · %d moedas" % TRACTOR_PRICE)
+		var tic: TextureRect = trow.get_child(0)
+		tic.texture = preload("res://assets/sprites/tractor/right.png")
+		tic.custom_minimum_size = Vector2(36, 26)
+		tic.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		var tb := Button.new()
+		tb.text = "Comprar"
+		tb.name = "BuyTractor"
+		tb.disabled = Game.money < TRACTOR_PRICE
+		tb.pressed.connect(buy_tractor)
+		trow.add_child(tb)
+		_shop_buy.add_child(trow)
+		_shop_buy.move_child(trow, 0)
 	var buy_list: Array = CropDB.seeds_for(Calendar.season_id(Game.day))
 	for id in ItemDB.SHOP_ITEMS:
 		if ItemDB.get_item(id).get("type", "") != "seed":
@@ -1460,7 +1475,9 @@ func _process(_d: float) -> void:
 		_last_stamina = Game.stamina
 		_run_btn.queue_redraw()
 	var text := ""
-	if player and Game.ui_lock == 0:
+	if player and Game.ui_lock == 0 and player.riding:
+		text = "Descer do trator"
+	elif player and Game.ui_lock == 0:
 		var it := player.find_interactable()
 		if it:
 			text = it.label
@@ -1551,6 +1568,18 @@ func _build_options() -> void:
 	var ver := UIStyle.label("Fazendinha Fantástica · versão de teste", 9, UIStyle.EARTH)
 	ver.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(ver)
+
+
+## Compra o trator: ele aparece estacionado ao lado da casa.
+func buy_tractor() -> void:
+	if Game.tractor.get("owned", false) or Game.money < TRACTOR_PRICE or world == null:
+		return
+	Game.add_money(-TRACTOR_PRICE)
+	Game.tractor["owned"] = true
+	world.spawn_tractor(FarmWorld.TRACTOR_PARK)
+	Sound.play("honk")
+	close_panel()
+	show_toast("O trator está estacionado ao lado da casa! Toque nele com a mão para subir.")
 
 
 ## Linha "Música  [-----o--]  80%" da janela de Opções.

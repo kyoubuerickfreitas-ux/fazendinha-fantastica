@@ -1254,6 +1254,43 @@ func _run() -> void:
 	game.inventory[0] = null
 	assert(ItemDB.missing_text({"wood": 10}).contains("tem 0 de 10"))
 
+	# ---- trator: comprar, subir, andar rápido, descer, salvar
+	game.money += 3000
+	main.hud.open_shop()
+	await _wait(0.2)
+	assert(main.hud._shop_buy.find_child("BuyTractor", true, false) != null, "o Fungo vende o trator")
+	await _shot("44_loja_trator")
+	main.hud.buy_tractor()
+	await _wait(0.2)
+	assert(game.tractor["owned"] and w.tractor != null, "comprou: o trator aparece estacionado")
+	p.position = w.tractor.position + Vector2(0, 12)
+	await _wait(0.2)
+	assert(p.find_interactable() != null and p.find_interactable().label == "Subir no trator")
+	p.interact()
+	await _wait(0.2)
+	assert(p.riding and w.tractor == null, "subiu no trator")
+	for dvec in [Vector2(0, 1), Vector2(1, 0), Vector2(0, -1), Vector2(-1, 0)]:
+		game.joystick_vector = dvec
+		await _wait(0.25)
+		game.joystick_vector = Vector2.ZERO
+		await _wait(0.1)
+		await _shot("45_trator_%d_%d" % [int(dvec.x), int(dvec.y)])
+	var tp: Vector2 = p.position
+	game.joystick_vector = Vector2(1, 0)
+	await _wait(0.4)
+	game.joystick_vector = Vector2.ZERO
+	var ride_d: float = p.position.distance_to(tp)
+	assert(ride_d > 60.0, "de trator anda bem mais rápido (andou %.0f)" % ride_d)
+	p.use_tool()
+	assert(p.riding, "ferramentas não funcionam em cima do trator")
+	p.interact()
+	await _wait(0.2)
+	assert(not p.riding and w.tractor != null, "desceu: o trator fica estacionado")
+	assert(is_equal_approx(float(game.tractor["x"]), w.tractor.position.x))
+	main.save_now()
+	game.load_game()
+	assert(game.tractor["owned"], "o trator fica salvo")
+
 	# ---- opções
 	main.hud.open_options()
 	await _wait(0.3)

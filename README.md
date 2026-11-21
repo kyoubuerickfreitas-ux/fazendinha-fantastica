@@ -110,6 +110,14 @@ da energia: o anel azul em volta do botão mostra quanto sobra (~5 s de corrida)
 novo; se zerar, o anel fica vermelho e só dá para correr de novo depois de recuperar um pouco. O prato com bônus
 "Fôlego" também faz a corrida durar mais.
 
+## Trator
+
+O Fungo vende o trator (2.500 moedas). Ele aparece estacionado ao lado da casa; toque nele com a mão para
+subir. Dirigindo você anda 2,3x mais rápido, sem gastar fôlego nem energia, com barulho de motor; o seu
+personagem aparece sentado na cabine (de costas, só a cabeça por cima do banco). Toque na mão de novo para
+descer: o trator fica estacionado onde você parou (e fica salvo). As ferramentas não funcionam em cima dele.
+Ao entrar na mina ou dormir você desce sozinho. Arte: `tools/import_tractor.py` (`assets/source/tractor.png`).
+
 ## Mira
 
 - **Mira automática:** o botão de usar escolhe sozinho o alvo mais próximo em que a ferramenta da mão faz algo (machado → árvore, regador → terra seca, sementes → canteiro vazio...). A direção em que você anda desempata. O quadrado **verde** mostra o alvo; quadrado apagado = nada para fazer ali.
