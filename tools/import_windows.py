@@ -55,13 +55,19 @@ if __name__ == "__main__":
     win = full.crop(OPT)
 
     # peças antes de limpar a janela
-    title = win.crop((100, 25, 266, 96))
+    title = win.crop((100, 25, 270, 98))
     erase_h(title, (14, 10, 152, 62))                         # tira "Opções"
     # o lado esquerdo da placa fica atrás da engrenagem: usa o direito espelhado
     half = title.crop((title.width // 2, 0, title.width, title.height))
     title = Image.new("RGBA", (half.width * 2, half.height), (0, 0, 0, 0))
     title.paste(half.transpose(Image.FLIP_LEFT_RIGHT), (0, 0))
     title.paste(half, (half.width, 0))
+    # em cima a placa se apoia na viga (sem borda própria): espelha a metade de baixo, que tem a borda
+    cy = 37
+    bottom = title.crop((0, cy, title.width, title.height))
+    title = Image.new("RGBA", (title.width, bottom.height * 2), (0, 0, 0, 0))
+    title.paste(bottom.transpose(Image.FLIP_TOP_BOTTOM), (0, 0))
+    title.paste(bottom, (0, bottom.height))
     close = win.crop((343, 24, 408, 98))
     plank = win.crop((52, 538, 382, 600))                     # "Sair para o menu"
     erase_h(plank, (14, 10, 316, 52))
@@ -90,7 +96,7 @@ if __name__ == "__main__":
     # a placa do título: contorno claro demais para o "cut_outside"; recorta com cantos arredondados
     from PIL import ImageDraw
     m = Image.new("L", title.size, 0)
-    ImageDraw.Draw(m).rounded_rectangle((1, 3, title.width - 2, title.height - 4), radius=14, fill=255)
+    ImageDraw.Draw(m).rounded_rectangle((0, 0, title.width - 1, title.height - 1), radius=16, fill=255)
     clear = Image.new("RGBA", title.size, (0, 0, 0, 0))
     clear.paste(title, (0, 0), m)
     title = clear

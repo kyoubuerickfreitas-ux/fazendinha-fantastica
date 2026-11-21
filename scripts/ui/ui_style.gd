@@ -51,7 +51,7 @@ static func window_frame() -> StyleBoxTexture:
 
 ## Plaquinha creme do título da janela.
 static func title_plate() -> StyleBoxTexture:
-	return tex_box(WIN + "title.png", [14, 6, 14, 6], [12, 3, 12, 4])
+	return tex_box(WIN + "title.png", [14, 9, 14, 9], [12, 5, 12, 5])
 
 
 static func close_box(modulate := Color.WHITE) -> StyleBoxTexture:
