@@ -6,6 +6,7 @@ uniform float hue_shift = 0.0;     // 0..1 (volta inteira do círculo de cores)
 uniform float sat_mult = 1.0;
 uniform float val_mult = 1.0;
 uniform bool light_only = false;   // só pinta as partes claras (o reboco da parede), não a madeira
+uniform bool green_only = false;   // só pinta o verde (o tecido do sofá e da poltrona), não a madeira
 
 vec3 rgb2hsv(vec3 c) {
 	vec4 K = vec4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
@@ -22,13 +23,23 @@ vec3 hsv2rgb(vec3 c) {
 	return c.z * mix(K.xxx, clamp(p - K.xxx, 0.0, 1.0), c.y);
 }
 
+// no Godot 4 o COLOR do fragment já vem multiplicado pela textura: guarda a cor do vértice (modulate) aqui
+varying vec4 v_modulate;
+
+void vertex() {
+	v_modulate = COLOR;
+}
+
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
 	vec3 h = rgb2hsv(c.rgb);
 	float keep = (light_only && (h.z < 0.62 || h.y > 0.5)) ? 1.0 : 0.0;
+	if (green_only && !(h.x > 0.15 && h.x < 0.45 && h.y > 0.18)) {
+		keep = 1.0;
+	}
 	vec3 n = h;
 	n.x = fract(h.x + hue_shift);
 	n.y = clamp(h.y * sat_mult, 0.0, 1.0);
 	n.z = clamp(h.z * val_mult, 0.0, 1.0);
-	COLOR = vec4(mix(hsv2rgb(n), c.rgb, keep), c.a) * COLOR;
+	COLOR = vec4(mix(hsv2rgb(n), c.rgb, keep), c.a) * v_modulate;
 }

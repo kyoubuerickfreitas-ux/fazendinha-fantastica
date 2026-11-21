@@ -19,6 +19,13 @@ vec3 tint(vec3 target, float lum, float ref, float contrast, float top) {
 	return clamp(target * min(f, top), 0.0, 1.0);
 }
 
+// no Godot 4 o COLOR do fragment já vem multiplicado pela textura: guarda a cor do vértice (modulate) aqui
+varying vec4 v_modulate;
+
+void vertex() {
+	v_modulate = COLOR;
+}
+
 void fragment() {
 	vec4 c = texture(TEXTURE, UV);
 	float cls = texture(look_mask, UV).r * 255.0;
@@ -30,5 +37,5 @@ void fragment() {
 	} else if (cls >= 150.0 && cls < 210.0) {
 		c.rgb = tint(pants_color.rgb, lum, REF_PANTS, 0.9, 1.35);
 	}
-	COLOR = c * COLOR;
+	COLOR = c * v_modulate;
 }

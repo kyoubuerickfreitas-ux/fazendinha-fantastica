@@ -143,14 +143,19 @@ var _wall_node: Node2D
 ## é só acrescentar linhas aqui (o 1º item é a cor original da arte).
 const COLORS := {
 	"floor": [["Madeira natural", 0.0, 1.0, 1.0], ["Madeira escura", 0.0, 1.05, 0.7], ["Madeira clara", 0.01, 0.7, 1.2],
-		["Mel", 0.03, 1.15, 1.1], ["Cinza rústico", 0.0, 0.15, 0.95], ["Avermelhada", -0.03, 1.2, 0.85]],
-	"wall": [["Natural", 0.0, 1.0, 1.0], ["Rosa", -0.1, 1.25, 1.04], ["Verde-menta", 0.22, 1.1, 1.02],
-		["Azul-céu", 0.48, 1.3, 1.04], ["Lilás", 0.68, 1.15, 1.04], ["Amarelo", 0.03, 1.5, 1.03], ["Cinza", 0.0, 0.1, 0.92],
-		["Pêssego", -0.03, 1.3, 1.02]],
+		["Mel", 0.02, 0.95, 1.05], ["Cinza rústico", 0.0, 0.15, 0.95], ["Avermelhada", -0.03, 1.2, 0.85]],
+	"wall": [["Natural", 0.0, 1.0, 1.0], ["Rosa", -0.1, 1.15, 1.02], ["Verde-menta", 0.22, 1.0, 1.0],
+		["Azul-céu", 0.48, 1.15, 1.02], ["Lilás", 0.68, 1.0, 1.02], ["Amarelo", 0.03, 1.35, 1.02], ["Cinza", 0.0, 0.1, 0.92],
+		["Pêssego", -0.03, 1.15, 1.0]],
 	"furniture": [["Original", 0.0, 1.0, 1.0], ["Madeira escura", 0.0, 1.05, 0.7], ["Madeira clara", 0.01, 0.7, 1.2],
 		["Cinza", 0.0, 0.12, 1.0], ["Azulado", 0.5, 0.7, 1.0], ["Avermelhado", -0.05, 1.25, 0.95],
 		["Esverdeado", 0.18, 0.9, 0.95], ["Lilás", 0.7, 0.6, 1.0]],
 }
+## Móveis estofados: "Cor" pinta só o tecido (verde na arte), com estas cores (giro a partir do verde)
+const FABRIC := ["sofa", "armchair"]
+const FABRIC_COLORS := [["Verde", 0.0, 1.0, 1.0], ["Vermelho", -0.19, 1.05, 0.95], ["Laranja", -0.12, 1.1, 1.05],
+	["Amarelo", -0.06, 1.0, 1.15], ["Azul", 0.42, 0.9, 1.0], ["Roxo", 0.55, 0.75, 0.95], ["Rosa", -0.28, 0.6, 1.25],
+	["Cinza", 0.0, 0.08, 1.1], ["Creme", -0.1, 0.22, 1.45]]
 const RECOLOR := preload("res://assets/shaders/recolor.gdshader")
 var selected: Node2D
 var _bed_use: Interactable
@@ -359,8 +364,14 @@ func _recolor_mat() -> ShaderMaterial:
 	return m
 
 
+static func _palette(kind: String) -> Array:
+	return FABRIC_COLORS if kind == "fabric" else COLORS[kind]
+
+
 static func _set_color(m: ShaderMaterial, kind: String, i: int) -> void:
-	var c: Array = COLORS[kind][posmod(i, (COLORS[kind] as Array).size())]
+	var pal := _palette(kind)
+	var c: Array = pal[posmod(i, pal.size())]
+	m.set_shader_parameter("green_only", kind == "fabric")
 	m.set_shader_parameter("hue_shift", c[1])
 	m.set_shader_parameter("sat_mult", c[2])
 	m.set_shader_parameter("val_mult", c[3])
@@ -386,15 +397,19 @@ func apply_colors() -> void:
 		var spr: Sprite2D = furniture[id].get_node("Sprite")
 		if spr.material == null:
 			spr.material = _recolor_mat()
-		_set_color(spr.material, "furniture", int(c["furniture"].get(id, 0)))
+		var kind := "fabric" if furniture[id].get_meta("piece") in FABRIC else "furniture"
+		_set_color(spr.material, kind, int(c["furniture"].get(id, 0)))
 
 
 ## Troca para a próxima cor do piso ("floor"), das paredes ("wall") ou do móvel escolhido ("furniture").
 ## Devolve o nome da cor (ou um aviso).
 func next_color(kind: String) -> String:
 	var c := _colors()
-	var n: int = (COLORS[kind] as Array).size()
 	var i: int
+	var pal_kind := kind
+	if kind == "furniture" and selected and selected.get_meta("piece") in FABRIC:
+		pal_kind = "fabric"
+	var n: int = _palette(pal_kind).size()
 	if kind == "furniture":
 		if selected == null:
 			return "Toque num móvel para escolher."
@@ -407,7 +422,9 @@ func next_color(kind: String) -> String:
 	apply_colors()
 	Sound.play("ui_click")
 	var what: String = {"floor": "Piso", "wall": "Paredes", "furniture": "Móvel"}[kind]
-	return "%s: %s" % [what, COLORS[kind][i][0]]
+	if pal_kind == "fabric":
+		what = "Tecido"
+	return "%s: %s" % [what, _palette(pal_kind)[i][0]]
 
 
 func _draw() -> void:
