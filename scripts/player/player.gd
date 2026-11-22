@@ -34,6 +34,8 @@ const TAP_REACH := 72.0     # alcance ao tocar direto na tela
 const FACING_BIAS := 18.0   # quanto a direção do personagem pesa na escolha
 const ACTION_TIME := 0.28
 const COLS := 9
+const SHEET_ROWS := 5         # 4 direções + correndo de frente
+const RUN_ROW := 4
 const CELL := 128            # tamanho do quadro nas folhas
 const SPRITE_SCALE := 0.5
 const WALK_FRAMES := 8
@@ -64,7 +66,7 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.texture = SHEET
 	_sprite.hframes = COLS
-	_sprite.vframes = 4
+	_sprite.vframes = SHEET_ROWS
 	_sprite.position = Vector2(0, -26)
 	_sprite.scale = Vector2.ONE * SPRITE_SCALE
 	add_child(_sprite)
@@ -136,7 +138,8 @@ func _physics_process(delta: float) -> void:
 		_anim_t += delta * (8.0 + 6.0 * v.length()) * (1.5 if running else 1.0)
 		if int(_anim_t) != before and int(_anim_t) % 4 == 0:
 			_footstep()
-		_sprite.frame = _dir * COLS + 1 + int(_anim_t) % WALK_FRAMES
+		var row := RUN_ROW if running and _dir == Dir.DOWN else _dir     # corrida: por enquanto só de frente
+		_sprite.frame = row * COLS + 1 + int(_anim_t) % WALK_FRAMES
 	else:
 		_anim_t = 0.0
 		_sprite.frame = _dir * COLS
@@ -427,7 +430,7 @@ func _step_action(delta: float) -> void:
 func _restore_sheet() -> void:
 	_sprite.texture = SHEET
 	_sprite.hframes = COLS
-	_sprite.vframes = 4
+	_sprite.vframes = SHEET_ROWS
 	_sprite.frame = _dir * COLS
 
 

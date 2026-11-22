@@ -32,6 +32,8 @@ ANIMS = {
     "water_down": "water_down.gif", "water_right": "water_right.gif",
     "axe_down": "axe_down.gif", "axe_right": "axe_right.gif",
     "pickaxe_down": "pickaxe_down.gif",
+    "fishing_down": "fishing_down.gif", "fishing_right": "fishing_right.gif",
+    "hoe_right": "hoe_right.gif", "hoe_down": "hoe_down.gif", "run_down": "run_down.gif",
 }
 BACK = os.path.join(ROOT, "pixellab", "protagonista_4_costas.png")
 
@@ -110,16 +112,18 @@ def fill_blade(img, r=5):
     return Image.fromarray(a, "RGBA")
 
 
-def cell(img, dy=0):
-    """Quadro de 256 -> célula de 128 (pés no lugar certo, alfa limpo)."""
-    small = img.resize((round(256 * SCALE), round(256 * SCALE)), Image.LANCZOS)
+def cell(img, dy=0, k=1.0, feet=GIF_FEET):
+    """Quadro de 256 -> célula de 128 (pés no lugar certo, alfa limpo). k aumenta animações desenhadas
+    menores no quadro (a corrida), com os pés (feet, na arte) no lugar."""
+    sc = SCALE * k
+    small = img.resize((round(256 * sc), round(256 * sc)), Image.LANCZOS)
     px = small.load()
     for y in range(small.height):
         for x in range(small.width):
             r, g, b, a = px[x, y]
             px[x, y] = (r, g, b, 255) if a >= 120 else (0, 0, 0, 0)
     out = Image.new("RGBA", (CELL, CELL), (0, 0, 0, 0))
-    out.alpha_composite(small, ((CELL - small.width) // 2, FEET - round(GIF_FEET * SCALE) + dy))
+    out.alpha_composite(small, ((CELL - small.width) // 2, FEET - round(feet * sc) + dy))
     return out
 
 
@@ -222,7 +226,7 @@ def mask_of(sheet):
 
 
 if __name__ == "__main__":
-    walk = Image.new("RGBA", (CELL * 9, CELL * 4), (0, 0, 0, 0))
+    walk = Image.new("RGBA", (CELL * 9, CELL * 5), (0, 0, 0, 0))     # linha 4: correndo de frente
     idle_down = cell(frames("axe_down")[0])
     idle_right = cell(frames("axe_right")[0])
     put_row(walk, DOWN, [idle_down] + [cell(f) for f in frames("walk_down")])
@@ -232,10 +236,12 @@ if __name__ == "__main__":
     back = Image.open(BACK).convert("RGBA")
     back_cells = [cell(back)] + [cell(back, dy=-(1 if i % 4 in (1, 2) else 0)) for i in range(8)]
     put_row(walk, UP, back_cells)
+    put_row(walk, 4, [idle_down] + [cell(f, k=1.35, feet=222) for f in frames("run_down")])
     walk.save(os.path.join(SPR, "player.png"))
 
     acts = Image.new("RGBA", (CELL * 9, CELL * 4 * len(TOOLS)), (0, 0, 0, 0))
-    for tool, prefix in (("axe", "axe"), ("watering_can", "water"), ("pickaxe", "pickaxe")):
+    for tool, prefix in (("axe", "axe"), ("watering_can", "water"), ("pickaxe", "pickaxe"),
+                         ("fishing_rod", "fishing"), ("hoe", "hoe")):
         t = TOOLS.index(tool)
         if prefix + "_down" in ANIMS:
             put_row(acts, t * 4 + DOWN, fit9(cell(f) for f in frames(prefix + "_down")))
