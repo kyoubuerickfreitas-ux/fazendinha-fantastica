@@ -4,7 +4,8 @@ extends Control
 ## Usado no retrato da HUD (só o rosto) e na tela de criação (corpo inteiro, andando).
 
 const SHEET := preload("res://assets/sprites/player.png")
-const CELL := 64
+const CELL := 128          # quadro da folha (as regiões abaixo são dadas em 64 e multiplicadas)
+const K := CELL / 64.0
 
 var region := Rect2(0, 0, 64, 64)   # parte do quadro mostrada (o rosto, no retrato da HUD)
 var look := {}                       # vazio = usa Game.look()
@@ -50,7 +51,7 @@ func refresh() -> void:
 
 
 func _set_frame(col: int) -> void:
-	var r := Rect2(region.position + Vector2(col * CELL, direction * CELL), region.size)
+	var r := Rect2(region.position * K + Vector2(col * CELL, direction * CELL), region.size * K)
 	var a := AtlasTexture.new()
 	a.atlas = SHEET
 	a.region = r

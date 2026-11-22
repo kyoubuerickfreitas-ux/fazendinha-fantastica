@@ -175,7 +175,7 @@ func _build_top_left() -> void:
 	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	box.add_child(bg)
 	var face := PlayerPortrait.new()       # rosto com a aparência escolhida
-	face.region = Rect2(16, 6, 32, 32)
+	face.region = Rect2(18, 4, 29, 29)
 	face.position = inner.position
 	face.size = inner.size
 	face.clip_contents = true

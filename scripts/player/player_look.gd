@@ -64,8 +64,15 @@ static func hair_color(look: Dictionary) -> Color:
 	return color(HAIR_COLORS, int(look.get("hair_color", 0)))
 
 
+## Os cabelos antigos foram desenhados para o corpo antigo; o corpo novo (tools/import_player_v2.py)
+## fica careca até os cabelos novos serem encaixados nele.
+const HAIR_READY := false
+
+
 ## Folha do cabelo (null = careca).
 static func hair_texture(look: Dictionary, actions: bool) -> Texture2D:
+	if not HAIR_READY:
+		return null
 	var style: String = HAIR_STYLES[clampi(int(look.get("hair", 0)), 0, HAIR_STYLES.size() - 1)][0]
 	if style == "careca":
 		return null

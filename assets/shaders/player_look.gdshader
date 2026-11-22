@@ -10,9 +10,9 @@ uniform vec4 shirt_color : source_color = vec4(0.91, 0.86, 0.75, 1.0);
 uniform vec4 pants_color : source_color = vec4(0.48, 0.42, 0.23, 1.0);
 
 // brilho médio de cada classe no desenho original
-const float REF_SKIN = 0.44;
-const float REF_SHIRT = 0.696;
-const float REF_PANTS = 0.375;
+const float REF_SKIN = 0.65;
+const float REF_SHIRT = 0.746;
+const float REF_PANTS = 0.402;
 
 vec3 tint(vec3 target, float lum, float ref, float contrast, float top) {
 	float f = mix(1.0, lum / ref, contrast);

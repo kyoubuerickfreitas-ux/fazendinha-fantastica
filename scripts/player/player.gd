@@ -1,8 +1,8 @@
 class_name Player
 extends CharacterBody2D
 ## Personagem do jogador: movimento livre em 8 direções, animação em 4 direções.
-## Spritesheet 9x4 de 64x64. Linhas: baixo, esquerda, direita, cima.
-## Coluna 0 = parado, colunas 1..8 = caminhada (gerada por tools/import_protagonist.py).
+## Spritesheet 9x4 de 128x128 desenhada com escala 0,5. Linhas: baixo, esquerda, direita, cima.
+## Coluna 0 = parado, colunas 1..8 = caminhada (gerada por tools/import_player_v2.py).
 
 const SHEET := preload("res://assets/sprites/player.png")
 const ACTIONS := preload("res://assets/sprites/player_actions.png")
@@ -34,6 +34,8 @@ const TAP_REACH := 72.0     # alcance ao tocar direto na tela
 const FACING_BIAS := 18.0   # quanto a direção do personagem pesa na escolha
 const ACTION_TIME := 0.28
 const COLS := 9
+const CELL := 128            # tamanho do quadro nas folhas
+const SPRITE_SCALE := 0.5
 const WALK_FRAMES := 8
 
 enum Dir { DOWN, LEFT, RIGHT, UP }
@@ -64,6 +66,7 @@ func _ready() -> void:
 	_sprite.hframes = COLS
 	_sprite.vframes = 4
 	_sprite.position = Vector2(0, -26)
+	_sprite.scale = Vector2.ONE * SPRITE_SCALE
 	add_child(_sprite)
 	_look_mat = PlayerLook.make_material()
 	_sprite.material = _look_mat
@@ -388,7 +391,7 @@ func _anim_available(id: String) -> bool:
 	if not _has_dir.has(key):
 		var row: int = ACTION_ANIMS[id]["tool"] * 4 + _dir
 		var img := ACTIONS.get_image()
-		_has_dir[key] = not img.get_region(Rect2i(0, row * 64, 64 * ACTION_FRAMES, 64)).is_invisible()
+		_has_dir[key] = not img.get_region(Rect2i(0, row * CELL, CELL * ACTION_FRAMES, CELL)).is_invisible()
 	return _has_dir[key]
 
 
@@ -398,7 +401,7 @@ func _start_action(id: String, c: Vector2i) -> bool:
 	_action = {"id": id, "cell": c, "t": 0.0, "done": false}
 	_sprite.texture = ACTIONS
 	_sprite.hframes = ACTION_FRAMES
-	_sprite.vframes = ACTIONS.get_height() / 64
+	_sprite.vframes = ACTIONS.get_height() / CELL
 	_sprite.frame = (ACTION_ANIMS[id]["tool"] * 4 + _dir) * ACTION_FRAMES
 	return true
 
@@ -491,5 +494,5 @@ func _face(point: Vector2) -> void:
 
 func _play_action_anim() -> void:
 	var tw := create_tween()
-	tw.tween_property(_sprite, "scale", Vector2(1.12, 0.9), 0.07)
-	tw.tween_property(_sprite, "scale", Vector2.ONE, 0.12)
+	tw.tween_property(_sprite, "scale", Vector2(1.12, 0.9) * SPRITE_SCALE, 0.07)
+	tw.tween_property(_sprite, "scale", Vector2.ONE * SPRITE_SCALE, 0.12)

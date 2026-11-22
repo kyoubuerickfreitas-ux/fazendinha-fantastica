@@ -86,7 +86,12 @@ func set_dir(d: int) -> void:
 	_sprite.position = Vector2(-t.get_width() / WHEEL_FRAMES / 2.0, -t.get_height() + 2 + _bob)
 	_rider.position = RIDER_POS[d] + Vector2(0, _bob)
 	var rows: Vector2i = RIDER_ROWS[d]
-	var cut := Rect2(0, RIDER_FACE[d] * 64 + rows.x, 64, rows.y - rows.x)
+	# folha nova: quadros de 128 com escala 0,5 (cabeça maior: mostra mais linhas, com a base no mesmo lugar)
+	var top := 14
+	var bottom := 62
+	var cut := Rect2(0, RIDER_FACE[d] * 128 + top, 128, bottom - top)
+	_rider.scale = Vector2.ONE * 0.5
+	_rider.position = RIDER_POS[d] + Vector2(0, _bob + (rows.y - rows.x) - (bottom - top) * 0.5)
 	_rider.z_index = 1
 	_rider.region_rect = cut
 	_rider_hair.region_rect = cut

@@ -50,7 +50,7 @@ func _run() -> void:
 	await _wait(0.3)
 	assert(game.profile["created"] and game.player_name() == "Lia" and game.farm_name() == "Sítio Girassol")
 	assert(int(game.look()["hair"]) == 5 and game.ui_lock == 0)
-	assert(main.player._hair.texture != null, "o cabelo escolhido aparece no personagem")
+	assert(main.player._hair.texture != null or not PlayerLook.HAIR_READY, "o cabelo escolhido aparece no personagem")
 	await _shot("01_inicio")
 	assert(main.tutorial.active() and main.hud._tut_panel.visible, "jogo novo começa com o tutorial")
 	game.tutorial["done"] = true    # as recompensas mexeriam nas contas dos testes abaixo; testado no fim
