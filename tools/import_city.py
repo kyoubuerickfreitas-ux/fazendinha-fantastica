@@ -113,6 +113,65 @@ def cobble(im, size=132, seed=7):
     return tile.convert("RGBA")
 
 
+# Variações de cor (telhado/toldo) para as casas não ficarem todas iguais:
+# nome -> (peça, faixa de matiz a trocar (graus), nova matiz, fração de cima da imagem que pode mudar)
+VARIANTS = {
+    "house_red_blue": ("house_red", (345, 28), 212, 0.52),
+    "house_red_green": ("house_red", (345, 28), 100, 0.52, 0.55),
+    "house_red_purple": ("house_red", (345, 28), 280, 0.52, 0.6),
+    "barn_house_red": ("barn_house", (70, 170), 8, 0.5),
+    "barn_house_blue": ("barn_house", (70, 170), 205, 0.5),
+    "inn_red": ("inn", (160, 215), 10, 0.45),
+    "market_red": ("market", (185, 250), 0, 0.42),
+    "market_green": ("market", (185, 250), 110, 0.42),
+}
+
+
+def recolor(img, hue_range, new_hue, top_frac, sat_mult=0.92):
+    """Troca a matiz das cores fortes (telhado/toldo) só na parte de cima da imagem."""
+    import colorsys
+    out = img.copy()
+    px = out.load()
+    lim = int(out.height * top_frac)
+    lo, hi = hue_range
+    for y in range(lim):
+        for x in range(out.width):
+            r, g, b, a = px[x, y]
+            if not a:
+                continue
+            h, sat, v = colorsys.rgb_to_hsv(r / 255, g / 255, b / 255)
+            hd = h * 360
+            inside = (lo <= hd <= hi) if lo <= hi else (hd >= lo or hd <= hi)
+            if inside and sat > 0.38 and v > 0.25:
+                nr, ng, nb = colorsys.hsv_to_rgb(new_hue / 360, min(1.0, sat * sat_mult), v)
+                px[x, y] = (int(nr * 255), int(ng * 255), int(nb * 255), a)
+    return out
+
+
+def plaza(size=128, seed=3):
+    """Piso da praça: lajotas quadradas grandes, mais claras que o calçamento das ruas."""
+    import random
+    rng = random.Random(seed)
+    tile = Image.new("RGBA", (size, size), (150, 132, 112, 255))
+    px = tile.load()
+    step = 16
+    for gy in range(0, size, step):
+        for gx in range(0, size, step):
+            v = rng.randrange(-10, 11)
+            base = (200 + v, 184 + v, 156 + v)
+            for dy in range(1, step):
+                for dx in range(1, step):
+                    c = base
+                    if dy == 1 or dx == 1:
+                        c = tuple(min(255, k + 16) for k in base)
+                    elif dy == step - 1 or dx == step - 1:
+                        c = tuple(k - 22 for k in base)
+                    px[gx + dx, gy + dy] = c + (255,)
+            for _ in range(2):
+                px[gx + rng.randrange(3, step - 3), gy + rng.randrange(3, step - 3)] = tuple(k - 14 for k in base) + (255,)
+    return tile
+
+
 if __name__ == "__main__":
     os.makedirs(OUT, exist_ok=True)
     raw = Image.open(SRC).convert("RGBA")
@@ -142,3 +201,9 @@ if __name__ == "__main__":
         print(line)
     cobble(raw).save(os.path.join(OUT, "cobble.png"))
     print("cobble (132, 132)")
+    plaza().save(os.path.join(OUT, "plaza.png"))
+    print("plaza (128, 128)")
+    for name, spec in VARIANTS.items():
+        src = spec[0]
+        recolor(Image.open(os.path.join(OUT, src + ".png")).convert("RGBA"), *spec[1:]).save(os.path.join(OUT, name + ".png"))
+        print(name)
