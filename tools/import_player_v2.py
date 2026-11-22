@@ -38,7 +38,76 @@ BACK = os.path.join(ROOT, "pixellab", "protagonista_4_costas.png")
 
 def frames(name):
     im = Image.open(os.path.join(SRC, ANIMS[name]))
-    return [f.convert("RGBA") for f in ImageSequence.Iterator(im)]
+    out = [f.convert("RGBA") for f in ImageSequence.Iterator(im)]
+    if name.startswith("axe"):
+        out = [fill_blade(f) for f in out]
+    return out
+
+
+def fill_blade(img, r=5):
+    """A lâmina do machado veio só com o contorno (o miolo transparente, às vezes aberto de um lado).
+    Fecha o contorno engrossando o desenho (r px), acha os buracos fechados e pinta de metal os que têm
+    borda de contorno escuro ou metal cinza (os vãos entre braço e corpo têm borda de pele e ficam)."""
+    import numpy as np
+    from collections import deque
+    a = np.array(img)
+    solid = a[..., 3] >= 120
+    h, w = solid.shape
+    thick = solid.copy()
+    for dy in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            if dx * dx + dy * dy <= r * r:
+                thick |= np.roll(np.roll(solid, dy, 0), dx, 1)
+    outside = np.zeros_like(solid)
+    q = deque([(0, x) for x in range(w)] + [(h - 1, x) for x in range(w)] + [(y, 0) for y in range(h)] + [(y, w - 1) for y in range(h)])
+    while q:
+        y, x = q.popleft()
+        if not (0 <= y < h and 0 <= x < w) or outside[y, x] or thick[y, x]:
+            continue
+        outside[y, x] = True
+        q.extend(((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)))
+    # o que não é "fora": buracos + desenho engrossado; o desenho engrossado volta encolhendo r px
+    near_out = outside.copy()
+    for dy in range(-r, r + 1):
+        for dx in range(-r, r + 1):
+            if dx * dx + dy * dy <= r * r:
+                near_out |= np.roll(np.roll(outside, dy, 0), dx, 1)
+    cand = (~solid) & (~near_out)
+    seen = np.zeros_like(cand)
+    for y0, x0 in zip(*np.nonzero(cand)):
+        if seen[y0, x0]:
+            continue
+        comp, border = [], []
+        q = deque([(y0, x0)])
+        seen[y0, x0] = True
+        while q:
+            y, x = q.popleft()
+            comp.append((y, x))
+            for ny, nx in ((y + 1, x), (y - 1, x), (y, x + 1), (y, x - 1)):
+                if not (0 <= ny < h and 0 <= nx < w):
+                    continue
+                if solid[ny, nx]:
+                    border.append(a[ny, nx, :3])
+                elif cand[ny, nx] and not seen[ny, nx]:
+                    seen[ny, nx] = True
+                    q.append((ny, nx))
+        if len(comp) > 1500 or len(border) < 8:
+            continue
+        grey = sum(1 for c in border if int(c.max()) < 80
+                   or colorsys.rgb_to_hsv(*(int(v) / 255 for v in c))[1] < 0.22)
+        if grey < len(border) * 0.75:
+            continue
+        for y, x in comp:
+            a[y, x] = (196, 199, 206, 255)
+    # o miolo fica um pouco aberto na borda (o r encolhido): fecha com metal mais escuro
+    filled = (a[..., 3] >= 120) & ~solid
+    ring = np.zeros_like(solid)
+    for dy in (-2, -1, 0, 1, 2):
+        for dx in (-2, -1, 0, 1, 2):
+            ring |= np.roll(np.roll(filled, dy, 0), dx, 1)
+    ring &= (~solid) & (~filled) & (~outside)
+    a[ring] = (150, 152, 160, 255)
+    return Image.fromarray(a, "RGBA")
 
 
 def cell(img, dy=0):
