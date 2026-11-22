@@ -319,7 +319,26 @@ func _draw_ground() -> void:
 				_ground_layer.draw_rect(Rect2(p + Vector2(TILE - 2, 0), Vector2(2, TILE)), CURB)
 
 
+var passersby: Array[Passerby] = []
+
+
 func _spawn_strollers() -> void:
+	# gente andando pelas ruas (tools/import_townsfolk.py): começa espalhada pelo calçamento
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 424242
+	var street_cells := []
+	for y in H:
+		for x in W:
+			var c := Vector2i(x, y)
+			if ground_at(c) == Ground.PATH and not blocked.has(c) and x > 3:
+				street_cells.append(c)
+	for i in Passerby.PEOPLE.size():
+		var pb := Passerby.new()
+		pb.setup(i, self)
+		pb.position = cell_center(street_cells[rng.randi() % street_cells.size()])
+		entities.add_child(pb)
+		passersby.append(pb)
+
 	for id in Villagers.all_ids():
 		var d := Villagers.get_npc(id)
 		if d.shop != "":

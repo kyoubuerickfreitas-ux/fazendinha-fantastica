@@ -1504,6 +1504,7 @@ func _run() -> void:
 		for lv in kd.rewards:
 			assert(ItemDB.has(str(kd.rewards[lv]["item"])), "recompensa de %s existe" % kd.name)
 	assert(cw.villagers.size() == 4 and cw.villagers.all(func(n): return n.data.shop == ""), "os moradores antigos passeiam pela cidade")
+	assert(cw.passersby.size() == 12, "gente andando pelas ruas")
 	main.exit_shop()
 	await _wait(2.2)
 	assert(main.shop == null and p.world == cw and cw.visible, "sai da loja de volta para a cidade")
