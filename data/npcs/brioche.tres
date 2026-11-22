@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "brioche"
+name = "Chef Brioche"
+role = "Padeiro"
+description = "Acorda antes do sol para assar pão. Sabe todas as receitas do vale de cor."
+sheet = "res://assets/sprites/npc_brioche.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "bakery"
+birthday_season = "autumn"
+birthday_day = 12
+loves = PackedStringArray("dish_apple_pie", "dish_strawberry_cake", "butter", "egg")
+likes = PackedStringArray("milk", "any_fruit", "jam", "cheese", "any_dish")
+dislikes = PackedStringArray("any_fish", "stone")
+lines = {"0": ["Bom dia! Sente esse cheiro? Pão saindo do forno agora mesmo.", "Receitas, receitas! Tenho para todas as estações."], "3": ["O segredo do bom pão é paciência. E manteiga. Muita manteiga.", "Seus ovos são os melhores do vale. Minha massa fica dourada!"], "6": ["Guardei um pãozinho para você. Não, não precisa pagar.", "Quando era pequeno, sonhava em ter uma padaria. Hoje tenho, e você é freguês fiel."], "9": ["Você é da família agora. Família come de graça! Bem... quase.", "Vou batizar minha próxima torta com o nome da sua fazenda."], "rain": ["Dia de chuva é dia de sopa e pão quentinho. O melhor dia!"], "birthday": ["Meu aniversário! Vou assar um bolo... para mim mesmo. E um pedaço para você."]}
+rewards = {"2": {"item": "egg", "qty": 4, "line": "Sobraram uns ovos da fornada. Leve!"}, "4": {"item": "recipe_apple_pie", "qty": 1, "line": "A receita da minha torta de maçã. Cuidado, vicia."}, "6": {"item": "butter", "qty": 3, "line": "Manteiga da boa. O segredo de tudo."}, "8": {"item": "recipe_strawberry_cake", "qty": 1, "line": "O bolo de morango do meu avô. Agora é seu."}}

@@ -861,9 +861,14 @@ func open_npc_dialog(id: String, text: String, shop_kind := "") -> void:
 	if shop_kind != "":
 		var b := Button.new()
 		b.name = "SeeShop"
-		b.text = "Ver a loja"
+		b.text = "Mudar o visual" if shop_kind == "tailor" else "Ver a loja"
 		b.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
-		b.pressed.connect(func(): open_shop(shop_kind))
+		if shop_kind == "tailor":
+			b.pressed.connect(func():
+				close_panel()
+				open_character_creator(false))
+		else:
+			b.pressed.connect(func(): open_shop(shop_kind))
 		_npc_body.add_child(b)
 	_open(_npc_win)
 

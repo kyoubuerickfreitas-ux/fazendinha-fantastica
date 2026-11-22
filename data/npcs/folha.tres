@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "folha"
+name = "Mana Folha"
+role = "Costureira de folhas"
+description = "Costura roupas com tecido, lã e folhas do bosque. Diz que cada folha conta uma história."
+sheet = "res://assets/sprites/npc_folha.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "tailor"
+birthday_season = "spring"
+birthday_day = 9
+loves = PackedStringArray("cloth", "yarn", "wool", "dish_starflower_tea")
+likes = PackedStringArray("fiber", "any_fruit", "starflower", "herbal_tea")
+dislikes = PackedStringArray("any_fish", "iron_ore")
+lines = {"0": ["Olá, olá! Quer mudar o visual? Tenho tecido de toda cor... e umas folhas também.", "Essa capa? Costurei com folhas de outono. Ainda estala quando ando."], "3": ["Sua lã de Fofrança é macia como nuvem. Traga mais!", "Cada folha conta uma história. Esta aqui fala de uma chuva de verão."], "6": ["Fiz um laço novo pensando em você. Está ali na prateleira.", "Às vezes durmo no bosque só para ouvir as folhas cochichando."], "9": ["Você tem um estilo único. Eu é que aprendo com você.", "Vou costurar uma capa com uma folha de cada árvore do vale. Para você."], "rain": ["Chuva deixa as folhas brilhando. Bom dia para costurar na janela."], "birthday": ["Meu aniversário! Um novelo seria o melhor presente do mundo."]}
+rewards = {"2": {"item": "fiber", "qty": 10, "line": "Fibra boa para artesanato. Sobrou da minha última capa."}, "4": {"item": "cloth", "qty": 2, "line": "Tecido de Fofrança, tingido à mão."}, "6": {"item": "herbal_tea", "qty": 2, "line": "Chá de ervas. Cura animal, gente e coração."}, "8": {"item": "spinning_wheel", "qty": 1, "line": "Uma roca! Agora você mesmo faz seus novelos."}}

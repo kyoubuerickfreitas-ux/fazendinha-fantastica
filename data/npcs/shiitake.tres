@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "shiitake"
+name = "Chico Shiitake"
+role = "Cozinheiro"
+description = "Primo distante do Fungo. Viajou o mundo provando comida e voltou para abrir o Restaurante."
+sheet = "res://assets/sprites/npc_shiitake.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "restaurant"
+birthday_season = "spring"
+birthday_day = 26
+loves = PackedStringArray("truffle", "dish_mushroom_risotto", "dish_truffle_pasta", "truffle_oil")
+likes = PackedStringArray("any_dish", "cheese", "tomato", "milk")
+dislikes = PackedStringArray("hay", "fiber")
+lines = {"0": ["Bem-vindo ao Restaurante! Prato pronto para quem não tem tempo de cozinhar.", "Sou primo do Fungo. Do lado mais elegante da família."], "3": ["Já comi em sete vales. Nenhum tem trufa igual à daqui.", "Se tiver ingredientes bons, traga. Pago bem por pratos caprichados."], "6": ["Minha mochila tem temperos do mundo todo. Quer cheirar?", "Seu risoto estava quase tão bom quanto o meu. Quase."], "9": ["Você é o melhor cozinheiro do vale. Depois de mim, claro.", "Um dia vamos abrir um restaurante juntos. Já até sonhei com o cardápio."], "rain": ["Chuva pede risoto. Não discuto com o tempo."], "birthday": ["Meu aniversário! Hoje quem cozinha é você, combinado?"]}
+rewards = {"2": {"item": "truffle", "qty": 1, "line": "Uma trufa do meu estoque secreto. Usa bem!"}, "4": {"item": "recipe_mushroom_risotto", "qty": 1, "line": "Meu risoto de cogumelos. Receita de família."}, "6": {"item": "truffle_oil", "qty": 2, "line": "Óleo de trufa. Duas gotas e qualquer prato vira festa."}, "8": {"item": "truffle", "qty": 3, "line": "Três trufas do meu estoque secreto. Faça a minha massa famosa!"}}

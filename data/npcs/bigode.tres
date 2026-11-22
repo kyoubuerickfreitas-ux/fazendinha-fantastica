@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "bigode"
+name = "Bigode"
+role = "Peixeiro"
+description = "Um gato que abriu a Peixaria para ficar perto do que mais ama. Jura que nunca come o estoque."
+sheet = "res://assets/sprites/npc_bigode.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "fish"
+birthday_season = "summer"
+birthday_day = 22
+loves = PackedStringArray("fish_goldfish", "dish_lake_sushi", "dish_grilled_fish", "pearl")
+likes = PackedStringArray("any_fish", "milk", "dish_lake_stew", "bait_fly")
+dislikes = PackedStringArray("kale", "any_vegetable")
+lines = {"0": ["Miau. Quer dizer... bom dia! Peixe fresquinho, vindo do lago hoje cedo.", "Não repare nos bigodes. Eles tremem quando sinto cheiro de cavala."], "3": ["Você pesca bem! Traga os grandes, que eu pago o melhor preço do vale.", "Dormi em cima do balcão de novo. É o lugar mais quentinho da loja."], "6": ["Guardei a melhor isca para você. Não conte para os outros fregueses.", "Às vezes subo no telhado para ver o lago. Daqui de cima ele brilha."], "9": ["Você é o meu freguês favorito. Ganha até um ronronar de graça.", "Se um dia pescar o Peixe-Sonho, me deixa só olhar? Prometo não morder."], "rain": ["Chuva... detesto molhar o pelo. Mas os peixes adoram, então tudo bem."], "birthday": ["Meu aniversário! Um peixinho de presente? Você me conhece!"]}
+rewards = {"2": {"item": "bait_fly", "qty": 5, "line": "Moscas de fibra, das boas. Os peixes não resistem."}, "4": {"item": "bait_treasure", "qty": 3, "line": "Iscas reluzentes! Puxam coisas brilhantes do fundo."}, "6": {"item": "fert_fish", "qty": 5, "line": "Adubo de peixe, feito com as sobras da loja. As plantas adoram."}, "8": {"item": "aquarium_small", "qty": 1, "line": "Um aquário! Para você ter sempre peixe por perto, como eu."}}

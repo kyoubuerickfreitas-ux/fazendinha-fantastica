@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "cometa"
+name = "Mestre Cometa"
+role = "Ferreiro das estrelas"
+description = "Forja ferramentas no calor das estrelas cadentes. Avalia toda pedra e gema que sai da mina."
+sheet = "res://assets/sprites/npc_cometa.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "smith"
+birthday_season = "winter"
+birthday_day = 7
+loves = PackedStringArray("moonstone", "crystal", "iron_bar", "emerald")
+likes = PackedStringArray("any_gem", "copper_bar", "copper_ore", "iron_ore", "dish_starflower_tea")
+dislikes = PackedStringArray("fiber", "hay")
+lines = {"0": ["Ah, alguém novo. Toda boa ferramenta começa com uma boa pedra. Traga as suas.", "As estrelas disseram que você viria. Ou foi o Fungo? Esqueci."], "3": ["Esta bigorna veio de um meteoro. Bate diferente, escute só.", "Quanto mais fundo na mina, mais as pedras cantam."], "6": ["Você tem mãos de ferreiro. Calejadas e curiosas.", "Já viu o céu de inverno daqui? As constelações parecem martelos."], "9": ["Se um dia eu me aposentar, a forja é sua. Já combinei com as estrelas.", "Fiz uma promessa a um cometa: ensinar tudo a alguém que merecesse. Achei."], "rain": ["Chuva esfria o metal rápido demais. Hoje só faço trabalho fino."], "birthday": ["Meu aniversário? As estrelas não me avisaram! Obrigado, de coração."]}
+rewards = {"2": {"item": "copper_bar", "qty": 3, "line": "Barras de cobre, forjadas hoje. Para começar suas melhorias."}, "4": {"item": "iron_bar", "qty": 2, "line": "Ferro bom, do fundo da mina. Use com sabedoria."}, "6": {"item": "sprinkler_q", "qty": 1, "line": "Um aspersor de cobre. Rega sozinho, como mágica. Quase."}, "8": {"item": "moonstone", "qty": 1, "line": "Uma Pedra-Lua. Caiu do céu, juro pelas estrelas."}}

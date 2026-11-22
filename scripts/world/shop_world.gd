@@ -11,8 +11,9 @@ const IN := "res://assets/sprites/"
 const ROOM := Rect2i(18, 14, 9, 6)
 const DOOR_CELL := Vector2i(19, 14)
 const KEEPER_X := 22.5                 # o morador e o balcão ficam no meio do fundo
-## Quem atende cada loja
-const KEEPERS := {"fish": "carpa", "smith": "estrelo", "bakery": "pipoca", "market": "raiz"}
+## Quem atende cada loja (data/npcs: o campo "shop" de cada um)
+const KEEPERS := {"fish": "bigode", "smith": "cometa", "bakery": "brioche", "market": "girassol",
+	"restaurant": "shiitake", "tailor": "folha"}
 ## Enfeites de cada loja: [arte, centro x (quadrados), linha da base, com colisão]
 const DECOR := {
 	"fish": [["house_in/bookshelf", 25.0, 14, true], ["craft/aquarium_large", 25.5, 18, true],
@@ -25,6 +26,12 @@ const DECOR := {
 	"market": [["house_in/flower_box", 25.0, 14, true], ["house_in/crate", 21.0, 14, true],
 		["house_in/plant_pot", 26.5, 14, true], ["craft/preserves_jar", 18.6, 19, true],
 		["city/barrel", 26.5, 19, true], ["city/crate", 25.6, 19, true]],
+	"restaurant": [["house_in/kitchen", 25.4, 14, true], ["house_in/coffee_table", 20.0, 18, true],
+		["house_in/coffee_table", 25.0, 18, true], ["house_in/plant_pot", 18.5, 19, true],
+		["house_in/plant_pot", 26.5, 19, true], ["city/barrel", 21.0, 14, true]],
+	"tailor": [["house_in/bookshelf", 21.0, 14, true], ["house_in/cupboard", 25.3, 14, true],
+		["house_in/armchair", 25.5, 18, true], ["house_in/plant_pot", 18.5, 19, true],
+		["house_in/flower_box", 26.2, 14, true], ["city/crate", 19.3, 19, true]],
 }
 
 var kind := ""

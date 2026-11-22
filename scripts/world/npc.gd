@@ -11,6 +11,7 @@ const DAY_END := 20 * 60
 var npc_name := "Fungo"
 var data: NPCData = null
 var stationary := false     # fica parado (atrás do balcão da loja)
+var home_cell := Vector2i(-999, -999)    # onde passeia (na cidade); senão a casa da ficha
 var world: FarmWorld = null
 var _sprite: Sprite2D
 var _bubble: Sprite2D
@@ -92,7 +93,7 @@ func _process(delta: float) -> void:
 
 ## Um lugar livre perto de casa, com caminho reto sem obstáculos.
 func _pick_target() -> Vector2:
-	var home := data.home
+	var home := home_cell if home_cell.x > -999 else data.home
 	for _i in 8:
 		var c := home + Vector2i(_rng.randi_range(-data.wander, data.wander), _rng.randi_range(-data.wander, data.wander))
 		var p := world.cell_center(c)

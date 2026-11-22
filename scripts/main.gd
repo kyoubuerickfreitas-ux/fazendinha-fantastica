@@ -472,6 +472,7 @@ func enter_city() -> void:
 			city.generate({})
 			city.building_used.connect(_on_city_building)
 			city.trailer_open_requested.connect(func(): hud.open_cargo())
+			city.villager_used.connect(_on_villager)
 		city.visible = true
 		city.process_mode = Node.PROCESS_MODE_INHERIT
 		in_city = true
@@ -514,13 +515,8 @@ func exit_city(silent := false) -> void:
 ## Portas da cidade: cada loja abre a sua janela.
 func _on_city_building(kind: String) -> void:
 	match kind:
-		"bakery", "smith", "market", "fish":
+		"bakery", "smith", "market", "fish", "restaurant", "tailor":
 			enter_shop(kind)
-		"restaurant":
-			Sound.play("door", -6.0)
-			hud.open_shop(kind)
-		"tailor":
-			hud.open_character_creator(false)
 		"inn":
 			if Game.energy >= Game.max_energy - 0.5:
 				Game.toast.emit("Pousada: Volte quando estiver cansado(a)! Um cochilo custa %d moedas." % INN_PRICE)

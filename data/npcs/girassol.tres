@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="NPCData" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/data/npc_data.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+id = "girassol"
+name = "Tico Girassol"
+role = "Feirante"
+description = "Planta de tudo um pouco e vende na Feira da praça. Sempre com um girassol no chapéu."
+sheet = "res://assets/sprites/npc_girassol.png"
+home = Vector2i(0, 0)
+wander = 0
+scale = 1.0
+shop = "market"
+birthday_season = "summer"
+birthday_day = 3
+loves = PackedStringArray("starflower", "sunflower", "dish_fruit_salad", "truffle")
+likes = PackedStringArray("any_vegetable", "any_fruit", "seed_starflower", "hay")
+dislikes = PackedStringArray("any_gem", "copper_ore")
+lines = {"0": ["Ôpa! Fazendeiro novo? Aqui tem semente de toda estação. Bora plantar!", "Esse girassol no chapéu? Plantei eu mesmo. É o meu xodó."], "3": ["Sua colheita tá bonita! Traz aqui que a Feira paga melhor.", "Dica de feirante: adubo de qualidade faz milagre."], "6": ["A gente devia trocar sementes um dia. Tenho umas raras guardadas.", "Sabia que girassol segue o sol? Eu tento, mas fico tonto."], "9": ["Você planta com o coração. Dá para ver nos tomates.", "Quando eu ficar velhinho, quero uma fazenda do lado da sua."], "rain": ["Chuva boa! A terra agradece e eu não preciso regar."], "birthday": ["É meu aniversário! Vou plantar uma flor em sua homenagem."]}
+rewards = {"2": {"item": "fert_basic", "qty": 5, "line": "Adubo do bom. Coloca nos canteiros que eles agradecem."}, "4": {"item": "seed_starflower", "qty": 5, "line": "Sementes de Flor-Estrela. Raras, viu?"}, "6": {"item": "fert_quality", "qty": 3, "line": "Adubo de qualidade. Suas colheitas vão brilhar."}, "8": {"item": "sprinkler", "qty": 2, "line": "Dois aspersores. Agora você tem tempo para visitar a Feira!"}}

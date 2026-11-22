@@ -10,6 +10,8 @@ extends Resource
 @export var home := Vector2i.ZERO           # célula onde fica durante o dia
 @export var wander := 3                     # quantos quadrados anda em volta de casa
 @export var scale := 1.0
+## loja da cidade que cuida (fish, smith, bakery, market, restaurant, tailor); "" = passeia pela cidade
+@export var shop := ""
 @export var birthday_season := "spring"
 @export var birthday_day := 1
 ## presentes: item, prato (dish_<receita>) ou grupo (any_fish, any_fruit, any_vegetable, any_dish)

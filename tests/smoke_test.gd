@@ -1483,7 +1483,7 @@ func _run() -> void:
 	await _wait(2.2)
 	assert(main.shop != null and p.world == main.shop and not cw.visible, "a porta da Peixaria leva para dentro")
 	var keeper: NPC = main.shop.keeper
-	assert(keeper != null and keeper.data.id == "carpa" and keeper.visible, "a Dona Carpa atende na Peixaria")
+	assert(keeper != null and keeper.data.id == "bigode" and keeper.visible, "o Bigode atende na Peixaria")
 	p.position = keeper.position + Vector2(0, 66)
 	p.facing = Vector2.UP
 	await _wait(0.4)
@@ -1498,8 +1498,12 @@ func _run() -> void:
 	assert(main.hud._shop.visible and main.hud._shop_title.text == "Peixaria", "da conversa, abre a loja")
 	await _shot("57_peixaria_conversa_loja")
 	main.hud.close_panel()
-	for k in ["smith", "bakery", "market"]:
-		assert(Villagers.get_npc(ShopWorld.KEEPERS[k]) != null)
+	for k in ShopWorld.KEEPERS:
+		var kd := Villagers.get_npc(ShopWorld.KEEPERS[k])
+		assert(kd != null and kd.shop == k, "%s cuida da loja %s" % [ShopWorld.KEEPERS[k], k])
+		for lv in kd.rewards:
+			assert(ItemDB.has(str(kd.rewards[lv]["item"])), "recompensa de %s existe" % kd.name)
+	assert(cw.villagers.size() == 4 and cw.villagers.all(func(n): return n.data.shop == ""), "os moradores antigos passeiam pela cidade")
 	main.exit_shop()
 	await _wait(2.2)
 	assert(main.shop == null and p.world == cw and cw.visible, "sai da loja de volta para a cidade")

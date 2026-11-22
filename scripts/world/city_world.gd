@@ -101,6 +101,10 @@ const ROW_DECOR := ["bench", "barrel", "crate"]
 const GATE := Rect2(0, 16 * 32, 2 * 32, 4 * 32)
 const ARRIVE := Vector2(3 * 32 + 16, 17 * 32 + 26)
 
+## Moradores que passeiam pela cidade (os que não cuidam de loja) e onde cada um gosta de ficar
+const STROLL := {"carpa": Vector2i(43, 17), "pipoca": Vector2i(21, 17), "estrelo": Vector2i(29, 13),
+	"raiz": Vector2i(6, 20)}
+
 var spawn_pos := ARRIVE
 var doors := {}        # tipo do prédio -> posição da porta (para voltar da loja)
 var _plaza_cells := {}
@@ -162,6 +166,7 @@ func generate(_saved: Dictionary) -> void:
 	for f in FLOWERS:
 		_add_flower(f[0], f[1], f[2])
 	_add_trees(rng)
+	_spawn_strollers.call_deferred()
 	if Game.tractor.get("owned", false) and Game.tractor.get("where", "farm") == "city":
 		spawn_tractor(Vector2(float(Game.tractor["x"]), float(Game.tractor["y"])))     # ficou estacionado aqui
 	_ground_layer.texture_repeat = CanvasItem.TEXTURE_REPEAT_ENABLED
@@ -312,6 +317,20 @@ func _draw_ground() -> void:
 				_ground_layer.draw_rect(Rect2(p, Vector2(2, TILE)), CURB)
 			if x < W - 1 and ground[y * W + x + 1] != Ground.PATH:
 				_ground_layer.draw_rect(Rect2(p + Vector2(TILE - 2, 0), Vector2(2, TILE)), CURB)
+
+
+func _spawn_strollers() -> void:
+	for id in Villagers.all_ids():
+		var d := Villagers.get_npc(id)
+		if d.shop != "":
+			continue
+		var npc := NPC.new()
+		npc.setup(d, self)
+		npc.home_cell = STROLL.get(id, Vector2i(25, 24))
+		npc.position = cell_center(nearest_passable(npc.home_cell))
+		npc.interacted.connect(func(_w): villager_used.emit(id))
+		entities.add_child(npc)
+		villagers.append(npc)
 
 
 ## Ferramentas não fazem nada na cidade (as árvores e o chão daqui não são seus).
