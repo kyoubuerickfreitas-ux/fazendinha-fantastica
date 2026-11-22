@@ -346,7 +346,7 @@ def build():
     back = Image.open(BACK).convert("RGBA")
     back_cells = [cell(back)] + [cell(back, dy=-(1 if i % 4 in (1, 2) else 0)) for i in range(8)]
     put_row(walk, UP, back_cells)
-    put_row(walk, 4, [idle_down] + [cell(f, k=1.35, feet=222) for f in frames("run_down")])
+    put_row(walk, 4, [idle_down] + [cell(f, k=1.05, feet=222) for f in frames("run_down")])
     acts = Image.new("RGBA", (CELL * 9, CELL * 4 * len(TOOLS)), (0, 0, 0, 0))
     for tool, prefix in (("axe", "axe"), ("watering_can", "water"), ("pickaxe", "pickaxe"),
                          ("fishing_rod", "fishing"), ("hoe", "hoe")):
