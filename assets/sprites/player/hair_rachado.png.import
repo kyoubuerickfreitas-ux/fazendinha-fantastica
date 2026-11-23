@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lg1ph0d24tkd"
-path="res://.godot/imported/hair_comprido_actions.png-4dee66f9a3d2496d557faa5a02372a7d.ctex"
+uid="uid://bov3g6u0qabhw"
+path="res://.godot/imported/hair_rachado.png-c93603dfc2d62e2f011dab300090b03f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_comprido_actions.png"
-dest_files=["res://.godot/imported/hair_comprido_actions.png-4dee66f9a3d2496d557faa5a02372a7d.ctex"]
+source_file="res://assets/sprites/player/hair_rachado.png"
+dest_files=["res://.godot/imported/hair_rachado.png-c93603dfc2d62e2f011dab300090b03f.ctex"]
 
 [params]
 

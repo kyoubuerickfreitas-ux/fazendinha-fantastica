@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ya17y4cj1yo2"
-path="res://.godot/imported/hair_coque_actions.png-cabeed1ffd8e6af457cc1c38ce83c6da.ctex"
+uid="uid://b8u4es5lfr08i"
+path="res://.godot/imported/hair_florido.png-3f330df70918c91994b4c5bf3da18db5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_coque_actions.png"
-dest_files=["res://.godot/imported/hair_coque_actions.png-cabeed1ffd8e6af457cc1c38ce83c6da.ctex"]
+source_file="res://assets/sprites/player/hair_florido.png"
+dest_files=["res://.godot/imported/hair_florido.png-3f330df70918c91994b4c5bf3da18db5.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://r51chluasxxx"
-path="res://.godot/imported/hair_cacheado_actions.png-5ead4ac550d32327edead3939a496e23.ctex"
+uid="uid://dilobtdnyg25p"
+path="res://.godot/imported/hair_enrolado.png-f60d7a1861a5d71fc869f0773dff3ccb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_cacheado_actions.png"
-dest_files=["res://.godot/imported/hair_cacheado_actions.png-5ead4ac550d32327edead3939a496e23.ctex"]
+source_file="res://assets/sprites/player/hair_enrolado.png"
+dest_files=["res://.godot/imported/hair_enrolado.png-f60d7a1861a5d71fc869f0773dff3ccb.ctex"]
 
 [params]
 

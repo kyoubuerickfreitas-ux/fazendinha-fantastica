@@ -2,7 +2,7 @@ class_name PlayerLook
 ## Aparência do jogador (criação de personagem): tom de pele, penteado, cor do cabelo, camisa e calção.
 ## O corpo base é pintado pelo shader player_look.gdshader (máscara de classes) e o cabelo é uma
 ## folha em cinza, do mesmo tamanho da do corpo, tingida com a cor escolhida.
-## Camadas geradas por tools/make_player_layers.py.
+## Corpo: tools/import_player_v2.py; cabelos: tools/import_hair.py.
 
 const SHADER := preload("res://assets/shaders/player_look.gdshader")
 const MASK_WALK := preload("res://assets/sprites/player/look_mask.png")
@@ -11,8 +11,10 @@ const DIR := "res://assets/sprites/player/"
 
 const SKINS := [["Pêssego", "f2d2b6"], ["Areia", "e3b38c"], ["Caramelo", "c98c60"], ["Canela", "a46a45"],
 	["Cacau", "7a4a31"], ["Ébano", "4f3124"], ["Lilás (fada)", "b9a2d8"], ["Musgo (duende)", "93b37a"]]
-const HAIR_STYLES := [["careca", "Careca"], ["curto", "Curto"], ["comprido", "Comprido"], ["rabo", "Rabo de cavalo"],
-	["coque", "Coque"], ["cacheado", "Cacheado"], ["espetado", "Espetado"]]
+## "Cabelos" de cogumelo (tools/import_hair.py): já vêm com as cores da arte (não são tingidos).
+const HAIR_STYLES := [["careca", "Careca"], ["classico", "Cogumelo clássico"], ["folhoso", "Cogumelo folhoso"],
+	["enrolado", "Cogumelo enrolado"], ["pontudo", "Cogumelo pontudo"], ["florido", "Cogumelo florido"],
+	["rachado", "Cogumelo rachado"], ["fumado", "Cogumelo fumado"]]
 const HAIR_COLORS := [["Preto", "2e2422"], ["Castanho", "6e4428"], ["Ruivo", "b8532c"], ["Loiro", "e3bd55"],
 	["Grisalho", "d9d4cc"], ["Rosa", "e891b2"], ["Azul", "5f8fd6"], ["Verde", "6fb36a"]]
 const SHIRTS := [["Creme", "e8dcc0"], ["Vermelha", "c8483a"], ["Azul", "4f7fc4"], ["Verde", "5f9e4a"],
@@ -60,13 +62,12 @@ static func color(list: Array, i: int) -> Color:
 	return Color(list[clampi(i, 0, list.size() - 1)][1])
 
 
-static func hair_color(look: Dictionary) -> Color:
-	return color(HAIR_COLORS, int(look.get("hair_color", 0)))
+static func hair_color(_look: Dictionary) -> Color:
+	return Color.WHITE          # os chapéus de cogumelo têm cor própria
 
 
-## Os cabelos antigos foram desenhados para o corpo antigo; o corpo novo (tools/import_player_v2.py)
-## fica careca até os cabelos novos serem encaixados nele.
-const HAIR_READY := false
+## Chapéus encaixados quadro a quadro no corpo novo por tools/import_hair.py.
+const HAIR_READY := true
 
 
 ## Folha do cabelo (null = careca).

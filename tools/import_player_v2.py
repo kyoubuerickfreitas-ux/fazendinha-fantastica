@@ -21,7 +21,7 @@ SRC = os.path.join(ROOT, "assets", "source", "player_v2")
 SPR = os.path.join(ROOT, "assets", "sprites")
 CELL = 128
 SCALE = 112 / 256          # o quadro de 256 vira 112 px dentro da célula de 128
-FEET = 118                 # onde ficam os pés na célula (era 59 na de 64)
+FEET = 126                 # onde ficam os pés na célula (sobra espaço em cima para o cabelo)
 GIF_FEET = 247
 
 DOWN, LEFT, RIGHT, UP = 0, 1, 2, 3

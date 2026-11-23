@@ -57,7 +57,7 @@ func _ready() -> void:
 	_preview = PlayerPortrait.new()
 	_preview.look = _look
 	_preview.walking = true
-	_preview.region = Rect2(8, 4, 48, 58)
+	_preview.region = Rect2(8, 2, 48, 62)
 	_preview.custom_minimum_size = Vector2(120, 145)
 	stage.add_child(_preview)
 	var turn := HBoxContainer.new()
@@ -91,7 +91,6 @@ func _ready() -> void:
 	hs.add_child(_hair_label)
 	hs.add_child(_small_button(">", func(): _step_hair(1)))
 	grid.add_child(hs)
-	_swatch_row(grid, "Cor do cabelo", "hair_color", PlayerLook.HAIR_COLORS)
 	_swatch_row(grid, "Camisa", "shirt", PlayerLook.SHIRTS)
 	_swatch_row(grid, "Calção", "pants", PlayerLook.PANTS)
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bq0c54kg3wmu4"
-path="res://.godot/imported/hair_curto_actions.png-4179984fecb8f414c22b510ca478a6eb.ctex"
+uid="uid://cekvxt5kbek84"
+path="res://.godot/imported/hair_pontudo_actions.png-7ae46eb8799eb69a61b7ac6ff14d41c0.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_curto_actions.png"
-dest_files=["res://.godot/imported/hair_curto_actions.png-4179984fecb8f414c22b510ca478a6eb.ctex"]
+source_file="res://assets/sprites/player/hair_pontudo_actions.png"
+dest_files=["res://.godot/imported/hair_pontudo_actions.png-7ae46eb8799eb69a61b7ac6ff14d41c0.ctex"]
 
 [params]
 

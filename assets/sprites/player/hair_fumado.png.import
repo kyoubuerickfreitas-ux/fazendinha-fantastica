@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bftkny8lc701q"
-path="res://.godot/imported/hair_rabo.png-4751051c00cacc42cea69a62ee7604b9.ctex"
+uid="uid://dxg0tbcmh25m6"
+path="res://.godot/imported/hair_fumado.png-2c62e92d83a8a5bbd18f6407b7d06a24.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_rabo.png"
-dest_files=["res://.godot/imported/hair_rabo.png-4751051c00cacc42cea69a62ee7604b9.ctex"]
+source_file="res://assets/sprites/player/hair_fumado.png"
+dest_files=["res://.godot/imported/hair_fumado.png-2c62e92d83a8a5bbd18f6407b7d06a24.ctex"]
 
 [params]
 

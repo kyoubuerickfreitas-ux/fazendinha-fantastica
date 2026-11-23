@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dspgesrtdob46"
-path="res://.godot/imported/hair_espetado_actions.png-0152ce77e06e7b8ec5095f74e389cf43.ctex"
+uid="uid://dhhdqetb7lri4"
+path="res://.godot/imported/hair_classico.png-f7b6e25bc2639bdfc55f3c8af3745639.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_espetado_actions.png"
-dest_files=["res://.godot/imported/hair_espetado_actions.png-0152ce77e06e7b8ec5095f74e389cf43.ctex"]
+source_file="res://assets/sprites/player/hair_classico.png"
+dest_files=["res://.godot/imported/hair_classico.png-f7b6e25bc2639bdfc55f3c8af3745639.ctex"]
 
 [params]
 

@@ -67,7 +67,7 @@ func _ready() -> void:
 	_sprite.texture = SHEET
 	_sprite.hframes = COLS
 	_sprite.vframes = SHEET_ROWS
-	_sprite.position = Vector2(0, -26)
+	_sprite.position = Vector2(0, -30)
 	_sprite.scale = Vector2.ONE * SPRITE_SCALE
 	add_child(_sprite)
 	_look_mat = PlayerLook.make_material()

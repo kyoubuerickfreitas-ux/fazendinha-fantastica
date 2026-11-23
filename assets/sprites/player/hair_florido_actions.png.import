@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://da7ediqpmkas2"
-path="res://.godot/imported/hair_espetado.png-4e7d15bb19c99072b3e040cc64c0d681.ctex"
+uid="uid://cog4hfv08s43y"
+path="res://.godot/imported/hair_florido_actions.png-10ccd83c45a249e7bb751f278a161ad4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_espetado.png"
-dest_files=["res://.godot/imported/hair_espetado.png-4e7d15bb19c99072b3e040cc64c0d681.ctex"]
+source_file="res://assets/sprites/player/hair_florido_actions.png"
+dest_files=["res://.godot/imported/hair_florido_actions.png-10ccd83c45a249e7bb751f278a161ad4.ctex"]
 
 [params]
 

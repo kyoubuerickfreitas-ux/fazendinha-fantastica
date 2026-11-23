@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://jul5hhpcabqe"
-path="res://.godot/imported/hair_rabo_actions.png-a2f0ee2d9ec4a585a5acf75845088e48.ctex"
+uid="uid://bd7qbg3hc1sov"
+path="res://.godot/imported/hair_enrolado_actions.png-1532f9493f7374a37d33a14711b15598.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/player/hair_rabo_actions.png"
-dest_files=["res://.godot/imported/hair_rabo_actions.png-a2f0ee2d9ec4a585a5acf75845088e48.ctex"]
+source_file="res://assets/sprites/player/hair_enrolado_actions.png"
+dest_files=["res://.godot/imported/hair_enrolado_actions.png-1532f9493f7374a37d33a14711b15598.ctex"]
 
 [params]
 
