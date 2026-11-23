@@ -14,7 +14,7 @@ Uso: python3 tools/import_player_v2.py
 import colorsys
 import os
 
-from PIL import Image, ImageOps, ImageSequence
+from PIL import Image, ImageFilter, ImageOps, ImageSequence
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "assets", "source", "player_v2")
@@ -36,9 +36,10 @@ ANIMS = {
     "hoe_right": "hoe_right.gif", "hoe_down": "hoe_down.gif", "run_down": "run_down.gif",
     "walk_up": "walk_up.gif", "axe_up": "axe_up.gif", "pickaxe_up": "pickaxe_up.gif",
     "pickaxe_right": "pickaxe_right.gif", "axe_right_b": "axe_right_b.gif",
+    "water_right_b": "water_right_b.gif",      # 3/4; regador repintado por tools/recolor_can.py
 }
 # golpe de lado usado no jogo (o axe_right antigo fica só para a pose parada de lado)
-SIDE = {"axe": "axe_right_b"}
+SIDE = {"axe": "axe_right_b", "water": "water_right_b"}
 
 
 def frames(name):
@@ -61,8 +62,10 @@ def frames(name):
             if len(ys):
                 cols = np.unique(a0[li == cls], axis=0).astype(float)
                 boxes[cls] = ((ys.min(), ys.max(), xs.min(), xs.max()), cols, tolc)
+        pal = {cls: np.unique(a0[li == cls], axis=0).astype(float) for cls in (SHIRT, SKIN)}
         for f in out:
             f.info["boxes"] = boxes
+            f.info["pal"] = pal
         out = [out[0]] + [repaint_shirt(out[0], f) for f in out[1:]]
     return out
 
@@ -347,15 +350,48 @@ def label_frame(img):
     for cls, (box, cols, tolc) in (img.info.get("boxes") or {}).items():
         y0, y1, x0, x1 = box
         inside = np.zeros((h, w), bool)
-        inside[max(0, y0 - 8):y1 + 9, max(0, x0 - 8):x1 + 9] = True
+        inside[max(0, y0 - 8):y1 + 9, max(0, x0 - 45):x1 + 46] = True     # o corpo se curva nos golpes
         lab[(lab == cls) & ~inside] = 0
-        cand = inside & alpha & ((lab == SKIN) | (lab == 0))
+        near = np.zeros((h, w), bool)
+        near[max(0, y0 - 8):y1 + 9, max(0, x0 - 8):x1 + 9] = True          # acrescentar: só bem no lugar
+        cand = near & alpha & ((lab == SKIN) | (lab == 0))
         if len(cols) and cand.any():
             py, px_ = np.nonzero(cand)
             pc = rgb[py, px_].astype(float)
             dmin = np.sqrt(((pc[:, None, :] - cols[None, :, :]) ** 2).sum(-1)).min(1)
             sel = dmin < tolc
             lab[py[sel], px_[sel]] = cls
+    # golpes: cor clara que só pode ser regata (vermelho pouco acima do verde) dentro da regata da pose
+    # parada vira regata; cor que só pode ser pele (vermelho bem acima do verde) deixa de ser regata;
+    # cinza (metal) não é roupa nem pele
+    if img.info.get("pal") is not None:
+        r_, g_, b_ = rgb[..., 0], rgb[..., 1], rgb[..., 2]
+        lum_ = rgb.mean(-1)
+        gray = (rgb.max(-1) - rgb.min(-1)) < 22
+        lab[alpha & gray & (lab >= SKIN)] = 0
+        sb = (img.info.get("boxes") or {}).get(SHIRT)
+        if sb:
+            y0, y1, x0, x1 = sb[0]
+            ins = np.zeros((h, w), bool)
+            ins[max(0, y0 - 4):y1 + 5, max(0, x0 - 45):x1 + 46] = True
+            shirtish = alpha & ~gray & (lum_ > 150) & (r_ - g_ >= 24) & (r_ - g_ <= 36) & (g_ - b_ >= 18) & ins
+            for _ in range(3):        # cresce a partir da regata que já existe (lâminas soltas ficam de fora)
+                grown = np.array(Image.fromarray(((lab == SHIRT) * 255).astype(np.uint8)).filter(
+                    ImageFilter.MaxFilter(5))) > 0
+                lab[shirtish & grown & ((lab == SKIN) | (lab == 0))] = SHIRT
+        lab[(lab == SHIRT) & (r_ - g_ >= 55)] = SKIN
+        lab[((lab == SKIN) | (lab == SHIRT)) & (r_ - g_ < 24) & (lum_ > 125)] = 0     # lâmina bege, metal
+        lab[(lab == PANTS) & (lum_ > 135)] = 0                                         # calção é escuro
+    # golpes: cabo de madeira, linha da vara etc. (escuros) não são regata nem pele, a menos que a cor
+    # exista na pose parada com essa classe (senão mudariam de cor com a roupa escolhida)
+    for cls, cols in (img.info.get("pal") or {}).items():
+        m = (lab == cls) & (rgb.mean(-1) < 125)
+        if m.any() and len(cols):
+            py, px_ = np.nonzero(m)
+            pc = rgb[py, px_].astype(float)
+            dmin = np.sqrt(((pc[:, None, :] - cols[None, :, :]) ** 2).sum(-1)).min(1)
+            bad = dmin > 10
+            lab[py[bad], px_[bad]] = 0
     out = np.zeros((h, w, 4), np.uint8)
     out[..., 0] = np.where(lab >= SKIN, lab, 0)
     out[..., 3] = np.where(lab >= SKIN, 255, 0)
