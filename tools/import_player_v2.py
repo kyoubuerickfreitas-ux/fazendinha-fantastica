@@ -34,8 +34,11 @@ ANIMS = {
     "pickaxe_down": "pickaxe_down.gif",
     "fishing_down": "fishing_down.gif", "fishing_right": "fishing_right.gif",
     "hoe_right": "hoe_right.gif", "hoe_down": "hoe_down.gif", "run_down": "run_down.gif",
+    "walk_up": "walk_up.gif", "axe_up": "axe_up.gif", "pickaxe_up": "pickaxe_up.gif",
+    "pickaxe_right": "pickaxe_right.gif", "axe_right_b": "axe_right_b.gif",
 }
-BACK = os.path.join(ROOT, "pixellab", "protagonista_4_costas.png")
+# golpe de lado usado no jogo (o axe_right antigo fica só para a pose parada de lado)
+SIDE = {"axe": "axe_right_b"}
 
 
 def frames(name):
@@ -48,7 +51,18 @@ def frames(name):
     for f in out:
         f.info["cmap"] = cmap
         f.info["tol"] = 14 if name.startswith(("walk", "run")) else 26    # golpes variam mais a paleta
-    if name.endswith("_down") and not name.startswith(("walk", "run")):
+    if not name.startswith(("walk", "run")):
+        import numpy as np
+        li = np.array(label_frame(out[0]))[..., 0]
+        a0 = np.array(out[0]).astype(int)[..., :3]
+        boxes = {}
+        for cls, tolc in ((PANTS, 20), (SHIRT, 22)):
+            ys, xs = np.nonzero(li == cls)
+            if len(ys):
+                cols = np.unique(a0[li == cls], axis=0).astype(float)
+                boxes[cls] = ((ys.min(), ys.max(), xs.min(), xs.max()), cols, tolc)
+        for f in out:
+            f.info["boxes"] = boxes
         out = [out[0]] + [repaint_shirt(out[0], f) for f in out[1:]]
     return out
 
@@ -74,8 +88,7 @@ def repaint_shirt(idle, img):
     f = np.clip(lum / 175.0, 0.7, 1.12)
     a[sel, :3] = np.clip(base[None, :] * f[sel][:, None], 0, 255).astype(np.uint8)
     out = Image.fromarray(a, "RGBA")
-    out.info["cmap"] = img.info.get("cmap")
-    out.info["tol"] = img.info.get("tol", 14)
+    out.info.update(img.info)
     return out
 
 
@@ -329,6 +342,20 @@ def label_frame(img):
                 continue
             for y, x in pts:
                 lab[y, x] = 0
+    # golpes: regata e calção só onde eles ficam na pose parada da animação (a ferramenta passando fora
+    # não vira roupa); dentro dessa caixa, a cor da roupa da pose parada volta a ser roupa
+    for cls, (box, cols, tolc) in (img.info.get("boxes") or {}).items():
+        y0, y1, x0, x1 = box
+        inside = np.zeros((h, w), bool)
+        inside[max(0, y0 - 8):y1 + 9, max(0, x0 - 8):x1 + 9] = True
+        lab[(lab == cls) & ~inside] = 0
+        cand = inside & alpha & ((lab == SKIN) | (lab == 0))
+        if len(cols) and cand.any():
+            py, px_ = np.nonzero(cand)
+            pc = rgb[py, px_].astype(float)
+            dmin = np.sqrt(((pc[:, None, :] - cols[None, :, :]) ** 2).sum(-1)).min(1)
+            sel = dmin < tolc
+            lab[py[sel], px_[sel]] = cls
     out = np.zeros((h, w, 4), np.uint8)
     out[..., 0] = np.where(lab >= SKIN, lab, 0)
     out[..., 3] = np.where(lab >= SKIN, 255, 0)
@@ -343,9 +370,8 @@ def build():
     right = [idle_right] + [cell(f) for f in frames("walk_right")]
     put_row(walk, RIGHT, right)
     put_row(walk, LEFT, mirror(right))
-    back = Image.open(BACK).convert("RGBA")
-    back_cells = [cell(back)] + [cell(back, dy=-(1 if i % 4 in (1, 2) else 0)) for i in range(8)]
-    put_row(walk, UP, back_cells)
+    idle_up = cell(frames("axe_up")[0])
+    put_row(walk, UP, [idle_up] + [cell(f) for f in frames("walk_up")])
     put_row(walk, 4, [idle_down] + [cell(f, k=1.05, feet=222) for f in frames("run_down")])
     acts = Image.new("RGBA", (CELL * 9, CELL * 4 * len(TOOLS)), (0, 0, 0, 0))
     for tool, prefix in (("axe", "axe"), ("watering_can", "water"), ("pickaxe", "pickaxe"),
@@ -353,8 +379,11 @@ def build():
         t = TOOLS.index(tool)
         if prefix + "_down" in ANIMS:
             put_row(acts, t * 4 + DOWN, fit9(cell(f) for f in frames(prefix + "_down")))
-        if prefix + "_right" in ANIMS:
-            r = fit9(cell(f) for f in frames(prefix + "_right"))
+        if prefix + "_up" in ANIMS:
+            put_row(acts, t * 4 + UP, fit9(cell(f) for f in frames(prefix + "_up")))
+        side = SIDE.get(prefix, prefix + "_right")
+        if side in ANIMS:
+            r = fit9(cell(f) for f in frames(side))
             put_row(acts, t * 4 + RIGHT, r)
             put_row(acts, t * 4 + LEFT, mirror(r))
     return walk, acts

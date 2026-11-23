@@ -159,11 +159,12 @@ def prepare(im, row, col, scale):
     lum = ca[..., :3].astype(int).sum(-1)
     colored = (ca[..., 3] > 0) & (lum > 100)
     under = np.zeros(head.shape, bool)
+    # onde era a cabeça-molde (com o contorno dela, que também foi apagado)
+    head_d = np.array(Image.fromarray(head.astype(np.uint8) * 255).filter(ImageFilter.MaxFilter(7))) > 0
     for x in range(head.shape[1]):
         cy_ = np.nonzero(colored[:, x])[0]
         if len(cy_):
-            under[:cy_.max() + 1, x] = (head[:cy_.max() + 1, x] | ((ca[:cy_.max() + 1, x, 3] == 0) &
-                (np.arange(cy_.max() + 1) > cy_.min())))
+            under[:cy_.max() + 1, x] = head_d[:cy_.max() + 1, x]
     under &= ca[..., 3] == 0
     shade = (ca[colored][:, :3].mean(0) * 0.45).astype(np.uint8)
     ca[under, :3] = shade
