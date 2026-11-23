@@ -156,6 +156,9 @@ func _build_joystick() -> void:
 	joy.anchor_right = 0.32
 	joy.offset_top = 70
 	_root.add_child(joy)
+	# no PC anda-se pelo teclado: o joystick da tela some (o mouse imita toque, então não dá para
+	# perguntar se há tela de toque)
+	joy.visible = OS.has_feature("mobile")
 
 
 func _build_top_left() -> void:
@@ -1810,6 +1813,17 @@ func _process(_d: float) -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("backpack"):
 		toggle_backpack()
+	if event.is_action_pressed("menu"):
+		# Esc: fecha a janela aberta; sem janela, abre as opções
+		if _open_panel:
+			close_panel()
+		elif Game.ui_lock == 0:
+			open_options()
+		get_viewport().set_input_as_handled()
+		return
+	if Game.ui_lock == 0 and (event.is_action_pressed("slot_prev") or event.is_action_pressed("slot_next")):
+		var d := -1 if event.is_action_pressed("slot_prev") else 1
+		Game.select_slot(posmod(Game.selected_slot + d, Game.HOTBAR_SIZE))
 	for i in Game.HOTBAR_SIZE:
 		if event.is_action_pressed("slot_%d" % (i + 1)):
 			Game.select_slot(i)
@@ -1852,6 +1866,12 @@ func _build_options() -> void:
 	v.add_child(_volume_row("Música", Sound.music_volume, Sound.set_music_volume, ""))
 	v.add_child(_volume_row("Efeitos", Sound.sfx_volume, Sound.set_sfx_volume, "harvest"))
 	v.add_child(_zoom_row())
+	if not OS.has_feature("mobile"):
+		var keys := UIStyle.label("Teclado: WASD/setas andar · Shift correr · Espaço usar\n"
+			+ "E interagir · I mochila · 1–6 ou Q/R itens\n+/− ou rodinha zoom · F11 tela cheia · Esc fechar", 9, UIStyle.INK)
+		keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		keys.custom_minimum_size = Vector2(280, 0)
+		v.add_child(keys)
 	var save := Button.new()
 	save.text = "Salvar agora"
 	save.pressed.connect(func():

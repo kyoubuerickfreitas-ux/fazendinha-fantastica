@@ -158,6 +158,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _touches.size() == 2 and _pinch_start > 10.0:
 			set_zoom(_pinch_zoom * _pinch_dist() / _pinch_start, false)
 		return
+	if event.is_action_pressed("fullscreen"):
+		var full := DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_FULLSCREEN
+		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED if full else DisplayServer.WINDOW_MODE_FULLSCREEN)
+		return
+	if Game.ui_lock == 0 and event.is_action_pressed("zoom_in"):
+		set_zoom(zoom_level + 0.1)
+		return
+	if Game.ui_lock == 0 and event.is_action_pressed("zoom_out"):
+		set_zoom(zoom_level - 0.1)
+		return
 	if event is InputEventMouseButton and event.pressed and Game.ui_lock == 0:
 		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
 			set_zoom(zoom_level + 0.1)

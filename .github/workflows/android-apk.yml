@@ -1,4 +1,4 @@
-name: Gerar APK (Android)
+name: Gerar APK (Android) e versão de PC (Windows)
 
 on:
   push:
@@ -85,11 +85,19 @@ jobs:
           ls -la build
           test -s build/fazendinha.apk
 
-      - name: Publicar APK
+      - name: Exportar versão de PC (Windows, um .exe só)
+        run: |
+          ~/godot/godot --headless --path . --export-release "Windows (PC)" build/fazendinha.exe 2>&1 | grep -vE "^(Loading|Loaded|load_|Saving|Moving)" | tail -40
+          ls -la build
+          test -s build/fazendinha.exe
+
+      - name: Publicar APK e .exe
         uses: actions/upload-artifact@v4
         with:
-          name: fazendinha-apk-${{ github.run_number }}
-          path: build/fazendinha.apk
+          name: fazendinha-${{ github.run_number }}
+          path: |
+            build/fazendinha.apk
+            build/fazendinha.exe
           retention-days: 30
 
       - name: Publicar no release "teste" (link direto para o celular)
@@ -97,8 +105,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete teste --yes --cleanup-tag || true
-          gh release create teste build/fazendinha.apk \
+          gh release create teste build/fazendinha.apk build/fazendinha.exe \
             --prerelease \
             --target "${{ github.sha }}" \
-            --title "APK de teste (último build)" \
-            --notes "Build #${{ github.run_number }} do branch ${{ github.ref_name }} (commit ${GITHUB_SHA::7}). Baixe o fazendinha.apk abaixo e instale no celular."
+            --title "Teste: APK e PC (último build)" \
+            --notes "Build #${{ github.run_number }} do branch ${{ github.ref_name }} (commit ${GITHUB_SHA::7}). Celular: baixe o fazendinha.apk e instale. PC (Windows): baixe o fazendinha.exe e abra."

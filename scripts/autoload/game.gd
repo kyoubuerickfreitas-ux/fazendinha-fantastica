@@ -566,7 +566,7 @@ func delete_save() -> void:
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(SAVE_PATH))
 
 
-# ------------------------------------------------------------------ controles de teclado (para testar no PC)
+# ------------------------------------------------------------------ controles de teclado (versão de PC)
 func _setup_input_map() -> void:
 	var keys := {
 		"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT],
@@ -575,6 +575,9 @@ func _setup_input_map() -> void:
 		"backpack": [KEY_I, KEY_TAB], "run": [KEY_SHIFT],
 		"slot_1": [KEY_1], "slot_2": [KEY_2], "slot_3": [KEY_3],
 		"slot_4": [KEY_4], "slot_5": [KEY_5], "slot_6": [KEY_6],
+		"slot_prev": [KEY_Q], "slot_next": [KEY_R],
+		"menu": [KEY_ESCAPE], "fullscreen": [KEY_F11],
+		"zoom_in": [KEY_EQUAL, KEY_KP_ADD], "zoom_out": [KEY_MINUS, KEY_KP_SUBTRACT],
 	}
 	for action in keys:
 		if not InputMap.has_action(action):

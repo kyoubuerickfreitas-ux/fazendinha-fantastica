@@ -54,6 +54,25 @@ func _run() -> void:
 	await _shot("01_inicio")
 	assert(main.tutorial.active() and main.hud._tut_panel.visible, "jogo novo começa com o tutorial")
 	game.tutorial["done"] = true    # as recompensas mexeriam nas contas dos testes abaixo; testado no fim
+	# PC: Esc abre as opções e fecha a janela aberta; Q/R trocam o item da barra
+	var esc := InputEventAction.new()
+	esc.action = "menu"
+	esc.pressed = true
+	Input.parse_input_event(esc)
+	await _wait(0.1)
+	assert(main.hud._open_panel == main.hud._options, "Esc abre as opções")
+	await _shot("46_opcoes_pc")
+	Input.parse_input_event(esc)
+	await _wait(0.1)
+	assert(main.hud._open_panel == null, "Esc fecha a janela")
+	var nxt := InputEventAction.new()
+	nxt.action = "slot_next"
+	nxt.pressed = true
+	var sel0: int = game.selected_slot
+	Input.parse_input_event(nxt)
+	await _wait(0.1)
+	assert(game.selected_slot == (sel0 + 1) % game.HOTBAR_SIZE, "R passa para o próximo item")
+	game.select_slot(sel0)
 	# mochila: 30 por espaço (a 31ª cenoura abre outro espaço); dirigindo com a caçamba, vai para ela
 	var free0: int = game.inventory.count(null)
 	assert(game.add_item("carrot", 31) == 0)
