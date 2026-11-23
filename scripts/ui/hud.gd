@@ -15,8 +15,8 @@ signal quit_confirmed
 
 
 const HAND_ICON := preload("res://assets/sprites/ui/hud/hand.png")   # tools/import_hud.py
-const TRACTOR_PRICE := 2500
-const TRAILER_PRICE := 1500
+const TRACTOR_PRICE := 12000
+const TRAILER_PRICE := 8000
 ## O trator e a caçamba vão ser vendidos na loja da cidade; o Fungo não vende (por enquanto vêm no início).
 const SELL_VEHICLES := false
 const SKIN := "res://assets/sprites/ui/hud/"
@@ -1634,7 +1634,7 @@ func _refresh_shop() -> void:
 		c.queue_free()
 
 	if _sells_vehicles() and not Game.tractor.get("owned", false):
-		var trow := _shop_row("", "Trator\nAnda bem mais rápido · %d moedas" % TRACTOR_PRICE)
+		var trow := _shop_row("", "Trator · %d moedas\nMais que o dobro da velocidade" % TRACTOR_PRICE)
 		var tic: TextureRect = trow.get_child(0)
 		tic.texture = _first_frame(preload("res://assets/sprites/tractor/right.png"))
 		tic.custom_minimum_size = Vector2(36, 26)
@@ -1648,7 +1648,7 @@ func _refresh_shop() -> void:
 		_shop_buy.add_child(trow)
 		_shop_buy.move_child(trow, 0)
 	if _sells_vehicles() and Game.tractor.get("owned", false) and not Game.trailer.get("owned", false):
-		var crow := _shop_row("", "Caçamba\nEngata no trator e leva %d espaços de carga · %d moedas" % [Trailer.CARGO_SIZE, TRAILER_PRICE])
+		var crow := _shop_row("", "Caçamba (melhoria) · %d moedas\n%d espaços de %d; a colheita vai direto" % [TRAILER_PRICE, Trailer.CARGO_SIZE, ItemDB.MAX_STACK])
 		var cic: TextureRect = crow.get_child(0)
 		cic.texture = _first_frame(preload("res://assets/sprites/tractor/trailer_left.png"))
 		cic.custom_minimum_size = Vector2(36, 26)
@@ -1964,13 +1964,21 @@ func buy_tractor() -> void:
 func buy_trailer() -> void:
 	if Game.trailer.get("owned", false) or not Game.tractor.get("owned", false) or Game.money < TRAILER_PRICE:
 		return
-	var t: Tractor = world.tractor if world.tractor else (player.tractor if player.riding else null)
+	# o trator pode estar dirigido, estacionado na fazenda ou na cidade (na frente da loja)
+	var w: FarmWorld = world
+	var t: Tractor = world.tractor
+	if t == null and player.riding:
+		t = player.tractor
+	var city = world.get_parent().get("city") if world.get_parent() else null
+	if t == null and city and city.tractor:
+		w = city
+		t = city.tractor
 	if t == null:
 		return
 	Game.add_money(-TRAILER_PRICE)
 	Game.trailer["owned"] = true
 	Trailer.items()
-	world.spawn_trailer(t)
+	w.spawn_trailer(t)
 	Sound.play("honk")
 	close_panel()
 	show_toast("A caçamba foi engatada no trator! Toque nela com a mão para guardar itens.")

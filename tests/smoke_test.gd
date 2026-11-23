@@ -1280,13 +1280,29 @@ func _run() -> void:
 	game.inventory[0] = null
 	assert(ItemDB.missing_text({"wood": 10}).contains("tem 0 de 10"))
 
-	# ---- trator (por enquanto já vem no jogo novo; depois será vendido na cidade)
-	assert(game.tractor["owned"] and game.trailer["owned"] and w.tractor != null and w.trailer != null,
-		"jogo novo começa com o trator e a caçamba")
+	# ---- trator e caçamba: vendidos no ferreiro (Cometa), caros; a caçamba só depois do trator
+	assert(not game.tractor["owned"] and not game.trailer["owned"] and w.tractor == null, "jogo novo começa sem trator")
 	main.hud.open_shop()
 	await _wait(0.2)
 	assert(main.hud._shop_buy.find_child("BuyTractor", true, false) == null, "o Fungo não vende o trator")
 	main.hud.close_panel()
+	game.add_money(HUD.TRACTOR_PRICE + HUD.TRAILER_PRICE)
+	var money_v: int = game.money
+	main.hud.open_shop("smith")
+	await _wait(0.2)
+	assert(main.hud._shop_buy.find_child("BuyTractor", true, false) != null, "o ferreiro vende o trator")
+	assert(main.hud._shop_buy.find_child("BuyTrailer", true, false) == null, "a caçamba só aparece depois do trator")
+	await _shot("44_ferreiro_trator")
+	main.hud.buy_tractor()
+	await _wait(0.2)
+	assert(game.tractor["owned"] and w.tractor != null and game.money == money_v - HUD.TRACTOR_PRICE)
+	main.hud.open_shop("smith")
+	await _wait(0.2)
+	assert(main.hud._shop_buy.find_child("BuyTrailer", true, false) != null, "depois do trator, o ferreiro vende a caçamba")
+	await _shot("45_ferreiro_cacamba")
+	main.hud.buy_trailer()
+	await _wait(0.2)
+	assert(game.trailer["owned"] and w.trailer != null and game.money == money_v - HUD.TRACTOR_PRICE - HUD.TRAILER_PRICE)
 	p.position = w.tractor.position + Vector2(0, 12)
 	await _wait(0.2)
 	assert(p.find_interactable() != null and p.find_interactable().label == "Subir no trator")

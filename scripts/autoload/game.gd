@@ -63,13 +63,13 @@ const MAX_STAMINA := 100.0
 var stamina := MAX_STAMINA
 var exhausted := false      # zerou: só volta a correr depois de recuperar um pouco
 var run_held := false       # botão de correr (ou Shift) apertado
-## Trator: comprado no Fungo; fica estacionado onde você desceu (x, y na fazenda).
+## Trator: comprado no ferreiro da cidade (Cometa); fica estacionado onde você desceu (x, y na fazenda).
 var tractor := {"owned": false, "x": 0.0, "y": 0.0}
 ## Caçamba: engatada atrás do trator; items = carga (lista de espaços como a mochila).
 var trailer := {"owned": false, "items": []}
-## TESTES: trator e caçamba já vêm no jogo novo (e saves antigos ganham). Depois eles serão vendidos
-## numa loja da cidade (HUD.buy_tractor / buy_trailer já existem); aí é só pôr false.
-const START_WITH_VEHICLES := true
+## true: trator e caçamba já vêm no jogo novo (e saves antigos ganham). false: comprados no ferreiro
+## da cidade (HUD.buy_tractor / buy_trailer).
+const START_WITH_VEHICLES := false
 ## Casa: baú (24 espaços) e objetos colocados dentro (aquários...).
 var house := {"chest": [], "placeables": [], "layout": {}, "colors": {}}
 ## Jogador: nome, nome da fazenda e aparência (criação de personagem). created = já passou pela tela.
