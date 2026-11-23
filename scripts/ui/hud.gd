@@ -1301,6 +1301,8 @@ func open_calendar() -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if _capture_key(event):
+		return
 	if event is InputEventScreenTouch and event.pressed and _open_panel == null and _top_right \
 			and _top_right.get_global_rect().has_point(event.position):
 		open_calendar()
@@ -1867,11 +1869,11 @@ func _build_options() -> void:
 	v.add_child(_volume_row("Efeitos", Sound.sfx_volume, Sound.set_sfx_volume, "harvest"))
 	v.add_child(_zoom_row())
 	if not OS.has_feature("mobile"):
-		var keys := UIStyle.label("Teclado: WASD/setas andar · Shift correr · Espaço usar\n"
-			+ "E interagir · I mochila · 1–6 ou Q/R itens\n+/− ou rodinha zoom · F11 tela cheia · Esc fechar", 9, UIStyle.INK)
-		keys.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		keys.custom_minimum_size = Vector2(280, 0)
-		v.add_child(keys)
+		var kb := Button.new()
+		kb.name = "KeysButton"
+		kb.text = "Teclas do teclado"
+		kb.pressed.connect(open_keys)
+		v.add_child(kb)
 	var save := Button.new()
 	save.text = "Salvar agora"
 	save.pressed.connect(func():
@@ -2095,6 +2097,78 @@ func open_floor_chooser(deepest: int) -> void:
 			floor_chosen.emit(lv))
 		_floors_body.add_child(b)
 	_open(_floors)
+
+
+# ------------------------------------------------------------------ remapear teclas (PC)
+var _keys_win: Control
+var _keys_grid: GridContainer
+var _keys_hint: Label
+var _capturing := ""        # ação esperando a tecla nova ("" = nenhuma)
+
+
+func open_keys() -> void:
+	if _keys_win == null:
+		var w := _make_window("Teclas", Vector2(500, 0))
+		_keys_win = w[0]
+		var v: VBoxContainer = w[1]
+		_keys_hint = UIStyle.label("", 10, UIStyle.EARTH)
+		v.add_child(_keys_hint)
+		_keys_grid = GridContainer.new()
+		_keys_grid.columns = 4
+		_keys_grid.add_theme_constant_override("h_separation", 8)
+		_keys_grid.add_theme_constant_override("v_separation", 2)
+		v.add_child(_keys_grid)
+		var h := HBoxContainer.new()
+		var reset := Button.new()
+		reset.name = "ResetKeys"
+		reset.text = "Restaurar padrão"
+		reset.pressed.connect(func():
+			Game.reset_key_binds()
+			_capturing = ""
+			_refresh_keys())
+		h.add_child(reset)
+		var back := Button.new()
+		back.text = "Voltar"
+		back.pressed.connect(func():
+			_capturing = ""
+			open_options())
+		h.add_child(back)
+		v.add_child(h)
+	_capturing = ""
+	_refresh_keys()
+	_open(_keys_win)
+
+
+func _refresh_keys() -> void:
+	for c in _keys_grid.get_children():
+		c.queue_free()
+	for pair in Game.KEY_ACTIONS:
+		var action: String = pair[0]
+		_keys_grid.add_child(UIStyle.label(pair[1], 9, UIStyle.INK))
+		var b := Button.new()
+		b.name = "Key_" + action
+		b.custom_minimum_size = Vector2(78, 0)
+		b.add_theme_font_size_override("font_size", 9)
+		b.text = "..." if _capturing == action else Game.key_name(action)
+		b.pressed.connect(func():
+			_capturing = action
+			_refresh_keys())
+		_keys_grid.add_child(b)
+	_keys_hint.text = ("Aperte a tecla nova (Esc cancela)" if _capturing != ""
+		else "Clique numa ação e aperte a tecla nova. Esc fica para fechar as janelas.")
+
+
+## Pega a próxima tecla para a ação escolhida (antes de qualquer outro uso da tecla). true = pegou.
+func _capture_key(event: InputEvent) -> bool:
+	if _capturing == "" or not (event is InputEventKey) or not event.pressed or event.echo:
+		return false
+	get_viewport().set_input_as_handled()
+	var k: int = event.physical_keycode if event.physical_keycode != 0 else event.keycode
+	if k != KEY_ESCAPE:
+		Game.rebind_key(_capturing, k)
+	_capturing = ""
+	_refresh_keys()
+	return true
 
 
 func open_options() -> void:

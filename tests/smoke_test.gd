@@ -73,6 +73,26 @@ func _run() -> void:
 	await _wait(0.1)
 	assert(game.selected_slot == (sel0 + 1) % game.HOTBAR_SIZE, "R passa para o próximo item")
 	game.select_slot(sel0)
+	# PC: remapear teclas (Opções > Teclas): clica na ação e aperta a tecla nova
+	main.hud.open_keys()
+	await _wait(0.1)
+	main.hud._capturing = "use_tool"
+	var kf := InputEventKey.new()
+	kf.physical_keycode = KEY_F
+	kf.pressed = true
+	Input.parse_input_event(kf)
+	await _wait(0.1)
+	assert(game.key_binds["use_tool"][0] == KEY_F and main.hud._capturing == "", "usar ferramenta agora é F")
+	var ev_f := InputEventKey.new()
+	ev_f.physical_keycode = KEY_F
+	assert(InputMap.event_is_action(ev_f, "use_tool"))
+	game.rebind_key("use_tool", KEY_E)
+	assert(not (KEY_E in game.key_binds["interact"]) and game.key_binds["interact"].size() > 0,
+		"a tecla sai da ação que a usava")
+	await _shot("47_teclas")
+	game.reset_key_binds()
+	assert(game.key_binds["use_tool"][0] == KEY_SPACE and game.key_binds["interact"][0] == KEY_E)
+	main.hud.close_panel()
 	# mochila: 30 por espaço (a 31ª cenoura abre outro espaço); dirigindo com a caçamba, vai para ela
 	var free0: int = game.inventory.count(null)
 	assert(game.add_item("carrot", 31) == 0)

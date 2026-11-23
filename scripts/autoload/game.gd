@@ -567,22 +567,91 @@ func delete_save() -> void:
 
 
 # ------------------------------------------------------------------ controles de teclado (versão de PC)
+## Teclas padrão de cada ação (a 1ª é a principal; as outras são alternativas, como as setas).
+const KEY_DEFAULTS := {
+	"move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN],
+	"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT],
+	"run": [KEY_SHIFT], "use_tool": [KEY_SPACE, KEY_J], "interact": [KEY_E, KEY_K],
+	"backpack": [KEY_I, KEY_TAB], "slot_prev": [KEY_Q], "slot_next": [KEY_R],
+	"zoom_in": [KEY_EQUAL, KEY_KP_ADD], "zoom_out": [KEY_MINUS, KEY_KP_SUBTRACT],
+	"fullscreen": [KEY_F11], "menu": [KEY_ESCAPE],
+	"slot_1": [KEY_1], "slot_2": [KEY_2], "slot_3": [KEY_3],
+	"slot_4": [KEY_4], "slot_5": [KEY_5], "slot_6": [KEY_6],
+}
+## Ações que aparecem na tela de remapear (Opções > Teclas), em ordem.
+const KEY_ACTIONS := [["move_up", "Andar para cima"], ["move_down", "Andar para baixo"],
+	["move_left", "Andar para a esquerda"], ["move_right", "Andar para a direita"], ["run", "Correr"],
+	["use_tool", "Usar ferramenta"], ["interact", "Interagir"], ["backpack", "Mochila"],
+	["slot_prev", "Item anterior"], ["slot_next", "Próximo item"], ["zoom_in", "Aproximar"],
+	["zoom_out", "Afastar"], ["fullscreen", "Tela cheia"],
+	["slot_1", "Item 1"], ["slot_2", "Item 2"], ["slot_3", "Item 3"],
+	["slot_4", "Item 4"], ["slot_5", "Item 5"], ["slot_6", "Item 6"]]
+const KEYS_PATH := "user://keys.cfg"
+var key_binds := {}         # ação -> [teclas] (physical keycodes)
+
+
 func _setup_input_map() -> void:
-	var keys := {
-		"move_left": [KEY_A, KEY_LEFT], "move_right": [KEY_D, KEY_RIGHT],
-		"move_up": [KEY_W, KEY_UP], "move_down": [KEY_S, KEY_DOWN],
-		"use_tool": [KEY_SPACE, KEY_J], "interact": [KEY_E, KEY_K],
-		"backpack": [KEY_I, KEY_TAB], "run": [KEY_SHIFT],
-		"slot_1": [KEY_1], "slot_2": [KEY_2], "slot_3": [KEY_3],
-		"slot_4": [KEY_4], "slot_5": [KEY_5], "slot_6": [KEY_6],
-		"slot_prev": [KEY_Q], "slot_next": [KEY_R],
-		"menu": [KEY_ESCAPE], "fullscreen": [KEY_F11],
-		"zoom_in": [KEY_EQUAL, KEY_KP_ADD], "zoom_out": [KEY_MINUS, KEY_KP_SUBTRACT],
-	}
-	for action in keys:
+	key_binds = {}
+	for a in KEY_DEFAULTS:
+		key_binds[a] = (KEY_DEFAULTS[a] as Array).duplicate()
+	var cfg := ConfigFile.new()
+	if cfg.load(KEYS_PATH) == OK:
+		for a in KEY_DEFAULTS:
+			if cfg.has_section_key("keys", a):
+				var k = cfg.get_value("keys", a)
+				if k is Array and not k.is_empty():
+					key_binds[a] = k
+	_apply_key_binds()
+
+
+func _apply_key_binds() -> void:
+	for action in key_binds:
 		if not InputMap.has_action(action):
 			InputMap.add_action(action)
-		for k in keys[action]:
+		InputMap.action_erase_events(action)
+		for k in key_binds[action]:
 			var ev := InputEventKey.new()
 			ev.physical_keycode = k
 			InputMap.action_add_event(action, ev)
+
+
+## Nome da tecla principal de uma ação (para mostrar na tela).
+func key_name(action: String) -> String:
+	var ks: Array = key_binds.get(action, [])
+	if ks.is_empty():
+		return "—"
+	var names := {KEY_EQUAL: "=", KEY_MINUS: "−", KEY_SPACE: "Espaço", KEY_UP: "↑", KEY_DOWN: "↓",
+		KEY_LEFT: "←", KEY_RIGHT: "→", KEY_ENTER: "Enter", KEY_CTRL: "Ctrl", KEY_KP_ADD: "+ (num)",
+		KEY_KP_SUBTRACT: "− (num)", KEY_BACKSPACE: "Apagar", KEY_CAPSLOCK: "Caps Lock",
+		KEY_PERIOD: ".", KEY_COMMA: ",", KEY_SLASH: "/", KEY_SEMICOLON: ";"}
+	return names.get(ks[0], OS.get_keycode_string(ks[0]))
+
+
+## Troca a tecla principal de uma ação. Se outra ação usava essa tecla, ela perde a tecla
+## (e fica com a antiga desta, se ficou sem nenhuma). Esc fica reservado para fechar/opções.
+func rebind_key(action: String, keycode: int) -> void:
+	if not key_binds.has(action) or keycode == KEY_ESCAPE:
+		return
+	var old: Array = key_binds[action]
+	var old_main: int = old[0] if not old.is_empty() else 0
+	for a in key_binds:
+		if a != action and keycode in key_binds[a]:
+			key_binds[a].erase(keycode)
+			if (key_binds[a] as Array).is_empty() and old_main != 0:
+				key_binds[a].append(old_main)
+	var rest := old.filter(func(k): return k != keycode and k != old_main)
+	key_binds[action] = [keycode] + rest
+	_apply_key_binds()
+	_save_key_binds()
+
+
+func reset_key_binds() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(KEYS_PATH))
+	_setup_input_map()
+
+
+func _save_key_binds() -> void:
+	var cfg := ConfigFile.new()
+	for a in key_binds:
+		cfg.set_value("keys", a, key_binds[a])
+	cfg.save(KEYS_PATH)
