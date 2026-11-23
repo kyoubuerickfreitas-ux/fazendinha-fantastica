@@ -54,6 +54,27 @@ func _run() -> void:
 	await _shot("01_inicio")
 	assert(main.tutorial.active() and main.hud._tut_panel.visible, "jogo novo começa com o tutorial")
 	game.tutorial["done"] = true    # as recompensas mexeriam nas contas dos testes abaixo; testado no fim
+	# mochila: 30 por espaço (a 31ª cenoura abre outro espaço); dirigindo com a caçamba, vai para ela
+	var free0: int = game.inventory.count(null)
+	assert(game.add_item("carrot", 31) == 0)
+	assert(game.inventory.count(null) == free0 - 2 and game.count_item("carrot") == 31, "31 cenouras = 2 espaços")
+	for s in game.inventory:
+		assert(s == null or int(s["qty"]) <= game.BAG_STACK, "nenhum espaço da mochila passa de 30")
+	game.remove_item("carrot", 31)
+	var had_trailer: bool = game.trailer["owned"]
+	game.trailer["owned"] = true
+	game.cargo_auto = true
+	game.add_item("carrot", 120)
+	var in_cargo := 0
+	for s in game.cargo_items():
+		if s != null and s["id"] == "carrot":
+			in_cargo += int(s["qty"])
+			assert(int(s["qty"]) <= ItemDB.MAX_STACK)
+	assert(in_cargo == 120 and game.count_item("carrot") == 0, "dirigindo, a colheita vai para a caçamba (99 por espaço)")
+	for i in game.cargo_items().size():
+		game.cargo_items()[i] = null
+	game.cargo_auto = false
+	game.trailer["owned"] = had_trailer
 
 	var p = main.player
 	var w = main.world
@@ -572,8 +593,8 @@ func _run() -> void:
 		game.inventory[i] = null
 
 	# bancada: fabricar, construir, máquina, feno, celeiro e compra de animal
-	game.add_item("wood", 200)
-	game.add_item("stone", 100)
+	game.add_item("wood", 120)
+	game.add_item("stone", 60)
 	game.add_item("fiber", 20)
 	game.add_money(2000)
 	main.hud.open_crafting()
@@ -629,11 +650,13 @@ func _run() -> void:
 			barn_pl = pl
 	for i in range(12, game.INV_SIZE):
 		game.inventory[i] = null
-	game.add_item("wood", 400)
-	game.add_item("stone", 300)
 	game.add_money(8000)
-	print("antes de melhorar: madeira %d pedra %d moedas %d" % [game.count_item("wood"), game.count_item("stone"), game.money])
+	# 30 por espaço na mochila: o material de cada melhoria é dado na hora
+	game.add_item("wood", 150)
+	game.add_item("stone", 80)
 	print(w.upgrade_building(barn_pl))
+	game.add_item("wood", 200)
+	game.add_item("stone", 120)
 	print(w.upgrade_building(barn_pl))
 	print("capacidade com celeiro nível 3: ", w.capacity("big"))
 	assert(barn_pl.level == 3 and w.capacity("big") == 3 + 12)

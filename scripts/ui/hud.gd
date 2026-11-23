@@ -1535,12 +1535,21 @@ func _on_slot_drop(from: ItemSlot, to: ItemSlot) -> void:
 		show_toast("As ferramentas ficam na mochila.")
 		return
 	var same: bool = t != null and t["id"] == s["id"] and int(t.get("q", 0)) == int(s.get("q", 0)) and ItemDB.is_stackable(s["id"])
+	var lim_b := Game.stack_limit(b)
 	if same:
-		var add: int = mini(int(s["qty"]), ItemDB.MAX_STACK - int(t["qty"]))
+		var add: int = maxi(0, mini(int(s["qty"]), lim_b - int(t["qty"])))
 		t["qty"] = int(t["qty"]) + add
 		s["qty"] = int(s["qty"]) - add
 		if int(s["qty"]) <= 0:
 			a[i] = null
+	elif t == null and int(s["qty"]) > lim_b:
+		# pilha grande da caçamba num espaço da mochila: vai só o que cabe, o resto fica
+		b[j] = s.duplicate()
+		b[j]["qty"] = lim_b
+		s["qty"] = int(s["qty"]) - lim_b
+	elif int(s["qty"]) > lim_b or (t != null and int(t["qty"]) > Game.stack_limit(a)):
+		show_toast("Na mochila cabem %d por espaço." % Game.BAG_STACK)
+		return
 	else:
 		a[i] = t
 		b[j] = s

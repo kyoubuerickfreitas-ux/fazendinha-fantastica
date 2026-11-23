@@ -105,21 +105,7 @@ static func move_stack(from: Array, to: Array, i: int) -> bool:
 		return false
 	var qty: int = int(s["qty"])
 	var q: int = int(s.get("q", 0))
-	if ItemDB.is_stackable(s["id"]):
-		for t in to:
-			if t != null and t["id"] == s["id"] and int(t.get("q", 0)) == q and t["qty"] < ItemDB.MAX_STACK:
-				var add: int = mini(qty, ItemDB.MAX_STACK - int(t["qty"]))
-				t["qty"] += add
-				qty -= add
-				if qty <= 0:
-					break
-	while qty > 0:
-		var idx := to.find(null)
-		if idx == -1:
-			break
-		var add: int = mini(qty, ItemDB.MAX_STACK) if ItemDB.is_stackable(s["id"]) else 1
-		to[idx] = {"id": s["id"], "qty": add} if q == 0 else {"id": s["id"], "qty": add, "q": q}
-		qty -= add
+	qty = Game.put_stack(to, s["id"], qty, q, Game.stack_limit(to))
 	if qty <= 0:
 		from[i] = null
 	else:

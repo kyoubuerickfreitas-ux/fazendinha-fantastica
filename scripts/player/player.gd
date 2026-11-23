@@ -107,6 +107,7 @@ func _physics_process(delta: float) -> void:
 			fishing.cancel("Você recolheu a linha.")
 	_busy = max(0.0, _busy - delta)
 
+	Game.cargo_auto = riding and tractor != null and tractor.trailer != null
 	if riding:
 		_update_run(Vector2.ZERO, delta)      # dirigindo não gasta fôlego (e ele recupera)
 		velocity = v * SPEED * RIDE_MULT

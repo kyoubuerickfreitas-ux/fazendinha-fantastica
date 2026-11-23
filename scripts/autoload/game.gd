@@ -17,6 +17,7 @@ const SAVE_PATH := "user://save.json"
 const SAVE_VERSION := 1
 
 const INV_SIZE := 24
+const BAG_STACK := 30              # máximo por espaço na mochila (caçamba e baú: ItemDB.MAX_STACK)
 const HOTBAR_SIZE := 6
 
 const DAY_START := 6 * 60          # 06:00
@@ -283,28 +284,64 @@ func selected_item_id() -> String:
 	return s["id"] if s != null else ""
 
 
-## Adiciona itens. Retorna quantos NÃO couberam.
-## q = qualidade (0 comum, 1 prata, 2 ouro, 3 lendário); só empilha com a mesma qualidade.
-func add_item(id: String, qty: int = 1, q: int = 0) -> int:
+## Dirigindo o trator com a caçamba engatada (o jogador atualiza): o que você pega vai direto para a
+## caçamba (99 por espaço); a mochila só recebe o que não couber lá.
+var cargo_auto := false
+var _cargo_told := false
+
+
+## Quanto cabe por espaço nesta lista (mochila: BAG_STACK; caçamba/baú: ItemDB.MAX_STACK).
+func stack_limit(arr: Array) -> int:
+	return BAG_STACK if is_same(arr, inventory) else ItemDB.MAX_STACK
+
+
+## Põe itens numa lista de espaços: completa as pilhas iguais e depois usa espaços vazios.
+## Retorna quantos não couberam.
+static func put_stack(arr: Array, id: String, qty: int, q: int, limit: int) -> int:
 	if ItemDB.is_stackable(id):
-		for s in inventory:
-			if s != null and s["id"] == id and int(s.get("q", 0)) == q and s["qty"] < ItemDB.MAX_STACK:
-				var add: int = min(qty, ItemDB.MAX_STACK - s["qty"])
-				s["qty"] += add
+		for s in arr:
+			if s != null and s["id"] == id and int(s.get("q", 0)) == q and int(s["qty"]) < limit:
+				var add: int = mini(qty, limit - int(s["qty"]))
+				s["qty"] = int(s["qty"]) + add
 				qty -= add
 				if qty <= 0:
-					break
+					return 0
 	while qty > 0:
-		var idx := inventory.find(null)
+		var idx := arr.find(null)
 		if idx == -1:
 			break
-		var add: int = min(qty, ItemDB.MAX_STACK) if ItemDB.is_stackable(id) else 1
-		inventory[idx] = {"id": id, "qty": add} if q == 0 else {"id": id, "qty": add, "q": q}
+		var add: int = mini(qty, limit) if ItemDB.is_stackable(id) else 1
+		arr[idx] = {"id": id, "qty": add} if q == 0 else {"id": id, "qty": add, "q": q}
 		qty -= add
+	return qty
+
+
+## Adiciona itens. Retorna quantos NÃO couberam.
+## q = qualidade (0 comum, 1 prata, 2 ouro, 3 lendário); só empilha com a mesma qualidade.
+## Na mochila cabem BAG_STACK por espaço: passou disso, a sobra vai para outro espaço.
+func add_item(id: String, qty: int = 1, q: int = 0) -> int:
+	if cargo_auto and trailer.get("owned", false) and ItemDB.get_item(id).get("type", "") != "tool":
+		var before := qty
+		qty = put_stack(cargo_items(), id, qty, q, ItemDB.MAX_STACK)
+		if qty < before and not _cargo_told:
+			_cargo_told = true
+			toast.emit("Dirigindo, o que você pega vai direto para a caçamba!")
+	qty = put_stack(inventory, id, qty, q, BAG_STACK)
 	inventory_changed.emit()
 	if qty > 0:
 		toast.emit("Mochila cheia!")
 	return qty
+
+
+## Os espaços da caçamba (sempre Trailer.CARGO_SIZE).
+func cargo_items() -> Array:
+	var a = trailer.get("items", [])
+	if not (a is Array):
+		a = []
+	if a.size() != Trailer.CARGO_SIZE:
+		a.resize(Trailer.CARGO_SIZE)
+		trailer["items"] = a
+	return a
 
 
 ## q = -1: qualquer qualidade
@@ -500,6 +537,18 @@ func load_game() -> Dictionary:
 			inventory[i] = {"id": str(s["id"]), "qty": int(s.get("qty", 1))}
 			if int(s.get("q", 0)) > 0:
 				inventory[i]["q"] = int(s["q"])
+	# saves de antes do limite de BAG_STACK por espaço: a sobra vai para espaços vazios
+	for i in INV_SIZE:
+		var s = inventory[i]
+		if s != null and int(s["qty"]) > BAG_STACK:
+			var extra: int = int(s["qty"]) - BAG_STACK
+			s["qty"] = BAG_STACK
+			while extra > 0 and inventory.find(null) != -1:
+				var add := mini(extra, BAG_STACK)
+				var idx := inventory.find(null)
+				inventory[idx] = {"id": s["id"], "qty": add} if int(s.get("q", 0)) == 0 else {"id": s["id"], "qty": add, "q": s["q"]}
+				extra -= add
+			s["qty"] = int(s["qty"]) + extra          # sem espaço: fica junto (passa do limite)
 	# saves de antes dos animais F1 ganham a tesoura de tosquia
 	if count_item("shears") == 0:
 		add_item("shears", 1)
