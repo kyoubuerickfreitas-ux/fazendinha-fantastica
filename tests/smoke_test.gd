@@ -1746,6 +1746,19 @@ func _run() -> void:
 	await _shot("41_novo_visual")
 	main.hud.tutorial_restart_requested.emit()
 	assert(main.tutorial.active() and int(game.tutorial["step"]) == 0 and main.hud._tut_panel.visible)
+	# os passos fora da fazenda (entrar em casa, conversar na cidade, cozinhar) avançam lá dentro
+	var house_step := -1
+	for i in Tutorial.STEPS.size():
+		if Tutorial.STEPS[i]["metric"] == "counter:house_visits":
+			house_step = i
+	game.tutorial["step"] = house_step
+	game.tutorial["base"] = -1
+	game.counters["house_visits"] = 0
+	main.enter_house()
+	await _wait(1.5)
+	assert(main.house != null and int(game.tutorial["step"]) > house_step, "o passo de entrar em casa avança dentro de casa")
+	main.exit_house()
+	await _wait(1.5)
 	game.tutorial["done"] = true
 	main.tutorial._refresh_panel()
 

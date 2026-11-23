@@ -65,6 +65,9 @@ func _ready() -> void:
 	tutorial.player = player
 	tutorial.hud = hud
 	world.add_child(tutorial)
+	# a fazenda é pausada quando você está em casa, na cidade, numa loja ou na mina: o tutorial
+	# continua conferindo os passos lá (entrar em casa, conversar na cidade, cozinhar...)
+	tutorial.process_mode = Node.PROCESS_MODE_ALWAYS
 	hud.tutorial_skip_pressed.connect(func():
 		hud.ask("Pular o tutorial?\n(as dicas param de aparecer)", tutorial.skip))
 
