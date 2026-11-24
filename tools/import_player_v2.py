@@ -47,6 +47,11 @@ def frames(name):
     out = [f.convert("RGBA") for f in ImageSequence.Iterator(im)]
     if name.startswith("axe"):
         out = [fill_blade(f) for f in out]
+    if name.startswith("fishing"):
+        import numpy as np
+        b0 = Image.fromarray(((np.array(out[0])[..., 3] >= 120) * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))
+        body = np.array(b0) > 0                  # silhueta da pose parada, com folga
+        out = [remove_line(f) for f in out]
     # andar/correr: a classificação por cor+posição já acerta; golpes: paleta própria de cada animação
     cmap = None if name.startswith(("walk", "run")) else color_classes(out[0])
     for f in out:
@@ -115,6 +120,46 @@ def color_classes(first):
         elif n >= tot * 0.6:
             cmap[col] = cls
     return cmap
+
+
+def remove_line(img, body=None):
+    """Pescar: o jogo desenha a linha e a boia; tira as do desenho (riscos de 1-2 px e o pesinho solto)."""
+    import numpy as np
+    from import_animals import components
+    a = np.array(img)
+    op = a[..., 3] >= 120
+    m = Image.fromarray((op * 255).astype(np.uint8))
+    opened = np.array(m.filter(ImageFilter.MinFilter(3)).filter(ImageFilter.MaxFilter(3))) > 0
+    keep = opened & op
+    # o que sobrou longe do corpo (pesinho, pedaços de linha mais grossos) também sai
+    ki = Image.fromarray(np.dstack([keep * 255] * 4).astype(np.uint8))
+    comps = components(ki, 128)
+    if comps:
+        big = max(c["area"] for c in comps)
+        for c in comps:
+            if c["area"] < big * 0.02:
+                for x, y in c["pts"]:
+                    keep[y, x] = False
+    # devolve o contorno de 1 px do que ficou (a abertura come as quinas)
+    keep |= op & (np.array(Image.fromarray((keep * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(3))) > 0)
+    # pedaço de linha encostado na vara ou na cabeça: preto/cinza a mais de 3 px de qualquer cor (os
+    # contornos do corpo e da vara ficam a até 3 px da pele/roupa/madeira); as pupilas são pedaços grandes
+    rgb = a[..., :3].astype(int)
+    neutral = (rgb.max(-1) - rgb.min(-1) < 30) & (rgb.sum(-1) < 330)
+    colored = keep & ~neutral
+    near_col = np.array(Image.fromarray((colored * 255).astype(np.uint8)).filter(ImageFilter.MaxFilter(7))) > 0
+    loose = keep & neutral & ~near_col
+    li = Image.fromarray(np.dstack([loose * 255] * 4).astype(np.uint8))
+    for c in components(li, 128):
+        bw, bh = c["bbox"][2] - c["bbox"][0], c["bbox"][3] - c["bbox"][1]
+        thin = c["area"] < 0.45 * bw * bh or max(bw, bh) >= 3 * min(bw, bh)   # pupila: bolinha cheia
+        if c["area"] < 100 and thin:
+            for x, y in c["pts"]:
+                keep[y, x] = False
+    a[~keep] = 0
+    out = Image.fromarray(a)
+    out.info.update(img.info)
+    return out
 
 
 def fill_blade(img, r=5):
