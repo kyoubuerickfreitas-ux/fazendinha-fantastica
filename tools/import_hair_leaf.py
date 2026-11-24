@@ -45,7 +45,7 @@ ROW_Y = (0, 430)
 GAME_EYES = ((54.5, 47.5), (73.5, 47.5))           # pupilas de frente no quadro parado do jogo
 GAME_SIDE_EYE = (79.0, 43.5)                       # pupila de lado (olhando para a direita)
 # ajuste fino de lado (px do quadro): o recorte do cabelo em volta da orelha cai na orelha do boneco
-SIDE_ADJ = {"folhas": (2, 4), "folhas_rabo": (2, 2), "folhas_flores": (-2, 2)}   # x: franja encostada na testa
+SIDE_ADJ = {"folhas": (2, 4), "folhas_rabo": (2, 2), "folhas_flores": (1, 2)}   # x: franja encostada na testa
 
 
 def dil(m, n):
