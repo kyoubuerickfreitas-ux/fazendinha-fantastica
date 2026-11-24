@@ -14,7 +14,8 @@ const SKINS := [["Pêssego", "f2d2b6"], ["Areia", "e3b38c"], ["Caramelo", "c98c6
 ## "Cabelos" de cogumelo (tools/import_hair.py): já vêm com as cores da arte (não são tingidos).
 const HAIR_STYLES := [["careca", "Careca"], ["classico", "Cogumelo clássico"], ["folhoso", "Cogumelo folhoso"],
 	["enrolado", "Cogumelo enrolado"], ["pontudo", "Cogumelo pontudo"], ["florido", "Cogumelo florido"],
-	["rachado", "Cogumelo rachado"], ["fumado", "Cogumelo fumado"]]
+	["rachado", "Cogumelo rachado"], ["fumado", "Cogumelo fumado"],
+	["folhas", "Folhas"]]      # tools/import_hair_leaf.py
 const HAIR_COLORS := [["Preto", "2e2422"], ["Castanho", "6e4428"], ["Ruivo", "b8532c"], ["Loiro", "e3bd55"],
 	["Grisalho", "d9d4cc"], ["Rosa", "e891b2"], ["Azul", "5f8fd6"], ["Verde", "6fb36a"]]
 const SHIRTS := [["Creme", "e8dcc0"], ["Vermelha", "c8483a"], ["Azul", "4f7fc4"], ["Verde", "5f9e4a"],
