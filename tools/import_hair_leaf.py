@@ -52,7 +52,7 @@ def hair_of(im, x0, x1, cut):
     bg = im[5, 5]
     op = np.abs(c - bg).sum(-1) > 70
     r, g, b = c[..., 0], c[..., 1], c[..., 2]
-    green = op & (g >= r - 8) & (g > b + 25)
+    green = op & (g >= r - 8) & (g > b + 12)      # inclui o verde-escuro das sombras do cabelo
     green[cut:] = False
     # o pedaço grande e as folhas soltas que encostam nele
     gi = Image.fromarray(np.dstack([green * 255] * 4).astype(np.uint8))
