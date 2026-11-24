@@ -26,16 +26,18 @@ CELL = H.CELL
 DOWN, LEFT, RIGHT, UP = H.DOWN, H.LEFT, H.RIGHT, H.UP
 
 # corte -> {vista: (x0, x1 da coluna na folha, y onde o cabelo acaba)}; y das linhas: 0..430
+# "eyes": pupilas de frente (x, y) na folha; "side_eye": pupila de lado (olhando para a esquerda)
 STYLES = {
-    "folhas": {"front": (74, 291, 190), "side": (330, 532, 200), "back": (555, 744, 205)},
+    "folhas": {"front": (74, 291, 198), "side": (330, 532, 200), "back": (555, 744, 205),
+               "eyes": ((146.5, 151.0), (218.0, 150.5)), "side_eye": (372.0, 150.0)},
+    "folhas_rabo": {"front": (825, 1050, 198), "side": (1082, 1305, 200), "back": (1313, 1513, 206),
+                    "eyes": ((902.0, 151.5), (970.0, 150.5)), "side_eye": (1115.0, 150.0)},
 }
 ROW_Y = (0, 430)
-SHEET_EYES = ((146.5, 151.0), (218.0, 150.5))     # pupilas de frente (x, y) na folha
-SHEET_SIDE_EYE = (372.0, 150.0)                    # pupila de lado (olhando para a esquerda)
 GAME_EYES = ((54.5, 47.5), (73.5, 47.5))           # pupilas de frente no quadro parado do jogo
 GAME_SIDE_EYE = (79.0, 43.5)                       # pupila de lado (olhando para a direita)
 # ajuste fino de lado (px do quadro): o recorte do cabelo em volta da orelha cai na orelha do boneco
-SIDE_ADJ = {"folhas": (0, 4)}
+SIDE_ADJ = {"folhas": (0, 4), "folhas_rabo": (0, 2)}
 
 
 def dil(m, n):
@@ -60,13 +62,23 @@ def hair_of(im, x0, x1, cut):
     big = max(k["area"] for k in comps)
     keep = np.zeros(green.shape, bool)
     for k in comps:
-        if k["area"] >= big * 0.01:
+        if k["area"] >= max(12, big * 0.002):      # pontinhas soltas (nuca, atrás da orelha) também
             for x, y in k["pts"]:
                 keep[y, x] = True
     dark = op & (c.sum(-1) < 200)
     hm = keep | (dark & dil(keep, 5))
     hm = ero(dil(hm, 3), 3) & op
     hm[cut:] = False
+    # buraquinhos cercados de cabelo (miolo claro das folhas, brilho): também são cabelo
+    holes = ~hm
+    hi = Image.fromarray(np.dstack([holes * 255] * 4).astype(np.uint8))
+    for k in components(hi, 128):
+        bb = k["bbox"]
+        touches = bb[0] == 0 or bb[1] == 0 or bb[2] >= hm.shape[1] or bb[3] >= hm.shape[0]
+        if k["area"] < 80 and not touches:
+            for x, y in k["pts"]:
+                if op[y, x]:
+                    hm[y, x] = True
     a = np.zeros(c.shape[:2] + (4,), np.uint8)
     a[..., :3] = c
     a[..., 3] = hm * 255
@@ -93,13 +105,15 @@ def main(styles=None, preview=False):
     walk = Image.open(os.path.join(H.SPR, "player.png")).convert("RGBA")
     acts = Image.open(os.path.join(H.SPR, "player_actions.png")).convert("RGBA")
     wa = np.array(walk)
-    s = (GAME_EYES[1][0] - GAME_EYES[0][0]) / (SHEET_EYES[1][0] - SHEET_EYES[0][0])
-    eye_mid = ((SHEET_EYES[0][0] + SHEET_EYES[1][0]) / 2, (SHEET_EYES[0][1] + SHEET_EYES[1][1]) / 2)
     game_mid = ((GAME_EYES[0][0] + GAME_EYES[1][0]) / 2, (GAME_EYES[0][1] + GAME_EYES[1][1]) / 2)
-    print("escala %.3f" % s)
     results = {}
     for style in styles or STYLES:
         spec = STYLES[style]
+        se = spec["eyes"]
+        s = (GAME_EYES[1][0] - GAME_EYES[0][0]) / (se[1][0] - se[0][0])
+        eye_mid = ((se[0][0] + se[1][0]) / 2, (se[0][1] + se[1][1]) / 2)
+        SHEET_SIDE_EYE = spec["side_eye"]
+        print("%s: escala %.3f" % (style, s))
         place = {}       # direção -> (imagem do cabelo, x e y do canto no quadro parado)
         fx0, fx1, fcut = spec["front"]
         hf = scaled(hair_of(im, fx0, fx1, fcut), s)
