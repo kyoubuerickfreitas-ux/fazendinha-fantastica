@@ -40,6 +40,9 @@ STYLES = {
 LONG = {"folhas_flores"}
 # folha extra colada de lado (centro no quadro parado olhando para a direita): tapa o vão acima da orelha
 LEAF_PATCH = {"folhas_rabo": (63, 40)}
+# vãos de pele que o cabelo deixa de lado (caixa x0, y0, x1, y1 no quadro parado olhando para a direita):
+# a pele descoberta ali é pintada com o verde do cabelo em volta
+GAP_FILL = {"folhas_flores": [(52, 39, 62, 45), (54, 44, 58, 51, "all")]}   # "all": cobre também a orelha
 LEAF_BOX = (1196, 84, 1252, 124)          # a folha de baixo da presilha do rabinho, na folha
 ROW_Y = (0, 430)
 GAME_EYES = ((54.5, 47.5), (73.5, 47.5))           # pupilas de frente no quadro parado do jogo
@@ -137,6 +140,30 @@ def leaf_piece(im, s):
     return scaled(a, s)
 
 
+def fill_gaps(hs, body, px, py, boxes):
+    """Pinta no cabelo (imagem hs posta em px, py) a pele do corpo que aparece dentro das caixas."""
+    h = np.array(hs).copy()
+    b = body.astype(int)
+    for box in boxes:
+        x0, y0, x1, y1 = box[:4]
+        cover_all = len(box) > 4 and box[4] == "all"
+        for y in range(y0, y1):
+            for x in range(x0, x1):
+                hx, hy = x - px, y - py
+                if not (0 <= hx < h.shape[1] and 0 <= hy < h.shape[0]) or h[hy, hx, 3] or not b[y, x, 3]:
+                    continue
+                r, g, bb = b[y, x, :3]
+                if not cover_all and (r - g < 30 or r < 150):
+                    continue          # não é pele (contorno da orelha fica)
+                win = h[max(0, hy - 3):hy + 4, max(0, hx - 3):hx + 4]
+                hair = win[win[..., 3] > 0][:, :3]
+                hair = hair[hair.sum(-1) > 120]
+                col = np.median(hair, 0) if len(hair) else np.array([72, 80, 36])
+                h[hy, hx, :3] = col.astype(np.uint8)
+                h[hy, hx, 3] = 255
+    return Image.fromarray(h)
+
+
 def body_cx(im, x0, x1, rows=(220, 300)):
     c = im[rows[0]:rows[1], x0:x1]
     op = np.abs(c - im[5, 5]).sum(-1) > 70
@@ -183,6 +210,10 @@ def main(styles=None, preview=False):
             hs = hs.copy()
             hs.alpha_composite(lf, (int(round(lx - (GAME_SIDE_EYE[0] - ex + adx) - lf.width / 2)),
                                     int(round(ly - (GAME_SIDE_EYE[1] - ey + ady) - lf.height / 2))))
+        if style in GAP_FILL:
+            hs = fill_gaps(hs, wa[RIGHT * CELL:(RIGHT + 1) * CELL, 0:CELL],
+                           int(round(GAME_SIDE_EYE[0] - ex + adx)), int(round(GAME_SIDE_EYE[1] - ey + ady)),
+                           GAP_FILL[style])
         place[RIGHT] = (hs, GAME_SIDE_EYE[0] - ex + adx, GAME_SIDE_EYE[1] - ey + ady)
         place[LEFT] = (hs.transpose(Image.FLIP_LEFT_RIGHT), CELL - (GAME_SIDE_EYE[0] - ex + adx) - hs.width,
                        GAME_SIDE_EYE[1] - ey + ady)
