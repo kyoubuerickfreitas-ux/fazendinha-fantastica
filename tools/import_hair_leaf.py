@@ -34,6 +34,8 @@ SHEET_EYES = ((146.5, 151.0), (218.0, 150.5))     # pupilas de frente (x, y) na 
 SHEET_SIDE_EYE = (372.0, 150.0)                    # pupila de lado (olhando para a esquerda)
 GAME_EYES = ((54.5, 47.5), (73.5, 47.5))           # pupilas de frente no quadro parado do jogo
 GAME_SIDE_EYE = (79.0, 43.5)                       # pupila de lado (olhando para a direita)
+# ajuste fino de lado (px do quadro): o recorte do cabelo em volta da orelha cai na orelha do boneco
+SIDE_ADJ = {"folhas": (0, 4)}
 
 
 def dil(m, n):
@@ -106,9 +108,10 @@ def main(styles=None, preview=False):
         hs = scaled(hair_of(im, sx0, sx1, scut)[:, ::-1].copy(), s)        # espelhado: olha para a direita
         ex = (sx1 - SHEET_SIDE_EYE[0]) * s                                 # olho na imagem espelhada
         ey = (SHEET_SIDE_EYE[1] - ROW_Y[0]) * s
-        place[RIGHT] = (hs, GAME_SIDE_EYE[0] - ex, GAME_SIDE_EYE[1] - ey)
-        place[LEFT] = (hs.transpose(Image.FLIP_LEFT_RIGHT), CELL - (GAME_SIDE_EYE[0] - ex) - hs.width,
-                       GAME_SIDE_EYE[1] - ey)
+        adx, ady = SIDE_ADJ.get(style, (0, 0))
+        place[RIGHT] = (hs, GAME_SIDE_EYE[0] - ex + adx, GAME_SIDE_EYE[1] - ey + ady)
+        place[LEFT] = (hs.transpose(Image.FLIP_LEFT_RIGHT), CELL - (GAME_SIDE_EYE[0] - ex + adx) - hs.width,
+                       GAME_SIDE_EYE[1] - ey + ady)
         bx0, bx1, bcut = spec["back"]
         hb = scaled(hair_of(im, bx0, bx1, bcut), s)
         gcx = np.nonzero(wa[UP * CELL + 70:UP * CELL + 100, 0:CELL, 3] > 0)[1].mean()
