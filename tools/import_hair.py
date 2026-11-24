@@ -191,7 +191,7 @@ def head_width(im, row, col):
     return head.sum(1).max()
 
 
-def build(sheet, refs, rows_dir, extra_dy=None):
+def build(sheet, refs, rows_dir, extra_dy=None, behind=()):
     out = Image.new("RGBA", sheet.size, (0, 0, 0, 0))
     arr = np.array(sheet)
     for row, d in rows_dir.items():
@@ -232,6 +232,11 @@ def build(sheet, refs, rows_dir, extra_dy=None):
             edge = gap & ~body & empty_n
             layer[edge, :3] = (40, 28, 26)
             layer[occ] = 0
+            if d in behind:
+                # cabelo comprido: abaixo do queixo fica por trás do corpo (ombro, braço, regata)
+                low = np.zeros((CELL, CELL), bool)
+                low[max(0, top + oy + HEAD_H - 6):, :] = True
+                layer[low & (tgt[..., 3] > 0)] = 0
             out.alpha_composite(Image.fromarray(layer), (col * CELL, row * CELL))
     return out
 
