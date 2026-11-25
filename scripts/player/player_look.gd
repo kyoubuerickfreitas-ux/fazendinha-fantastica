@@ -11,12 +11,11 @@ const DIR := "res://assets/sprites/player/"
 
 const SKINS := [["Pêssego", "f2d2b6"], ["Areia", "e3b38c"], ["Caramelo", "c98c60"], ["Canela", "a46a45"],
 	["Cacau", "7a4a31"], ["Ébano", "4f3124"], ["Lilás (fada)", "b9a2d8"], ["Musgo (duende)", "93b37a"]]
-## "Cabelos" de cogumelo (tools/import_hair.py): já vêm com as cores da arte (não são tingidos).
-const HAIR_STYLES := [["careca", "Careca"], ["classico", "Cogumelo clássico"], ["folhoso", "Cogumelo folhoso"],
-	["enrolado", "Cogumelo enrolado"], ["pontudo", "Cogumelo pontudo"], ["florido", "Cogumelo florido"],
-	["rachado", "Cogumelo rachado"], ["fumado", "Cogumelo fumado"],
-	["folhas", "Folhas"], ["folhas_rabo", "Folhas com rabinho"],
-	["folhas_flores", "Comprido com flores"]]      # tools/import_hair_leaf.py
+## Cabelos de folhas (tools/import_hair_leaf.py): já vêm com as cores da arte (não são tingidos).
+const HAIR_STYLES := [["folhas", "Folhas"], ["folhas_rabo", "Folhas com rabinho"],
+	["folhas_flores", "Comprido com flores"]]
+## Lista antiga (careca + 7 cogumelos + folhas): índice antigo -> novo, para saves de antes de hair_v 2.
+const OLD_HAIR := {8: 0, 9: 1, 10: 2}
 const HAIR_COLORS := [["Preto", "2e2422"], ["Castanho", "6e4428"], ["Ruivo", "b8532c"], ["Loiro", "e3bd55"],
 	["Grisalho", "d9d4cc"], ["Rosa", "e891b2"], ["Azul", "5f8fd6"], ["Verde", "6fb36a"]]
 const SHIRTS := [["Creme", "e8dcc0"], ["Vermelha", "c8483a"], ["Azul", "4f7fc4"], ["Verde", "5f9e4a"],
@@ -31,12 +30,13 @@ const FARM_NAMES := ["Recanto Verde", "Sítio do Orvalho", "Vale das Abóboras",
 
 
 static func default_look() -> Dictionary:
-	return {"skin": 1, "hair": 1, "hair_color": 1, "shirt": 0, "pants": 0}
+	return {"skin": 1, "hair": 0, "hair_color": 1, "shirt": 0, "pants": 0, "hair_v": 2}
 
 
 static func random_look() -> Dictionary:
 	return {"skin": randi() % SKINS.size(), "hair": randi() % HAIR_STYLES.size(),
-		"hair_color": randi() % HAIR_COLORS.size(), "shirt": randi() % SHIRTS.size(), "pants": randi() % PANTS.size()}
+		"hair_color": randi() % HAIR_COLORS.size(), "shirt": randi() % SHIRTS.size(), "pants": randi() % PANTS.size(),
+		"hair_v": 2}
 
 
 static func random_name() -> String:
@@ -53,8 +53,10 @@ static func sanitize(look) -> Dictionary:
 	if look is Dictionary:
 		var sizes := {"skin": SKINS.size(), "hair": HAIR_STYLES.size(), "hair_color": HAIR_COLORS.size(),
 			"shirt": SHIRTS.size(), "pants": PANTS.size()}
-		for k in out:
+		for k in sizes:
 			var v := int(look.get(k, out[k]))
+			if k == "hair" and int(look.get("hair_v", 1)) < 2:
+				v = int(OLD_HAIR.get(v, 0))          # save antigo: só os cortes de folhas continuam
 			if v >= 0 and v < int(sizes[k]):
 				out[k] = v
 	return out
@@ -68,7 +70,7 @@ static func hair_color(_look: Dictionary) -> Color:
 	return Color.WHITE          # os chapéus de cogumelo têm cor própria
 
 
-## Chapéus encaixados quadro a quadro no corpo novo por tools/import_hair.py.
+## Cabelos encaixados quadro a quadro no corpo novo por tools/import_hair_leaf.py.
 const HAIR_READY := true
 
 
@@ -77,8 +79,6 @@ static func hair_texture(look: Dictionary, actions: bool) -> Texture2D:
 	if not HAIR_READY:
 		return null
 	var style: String = HAIR_STYLES[clampi(int(look.get("hair", 0)), 0, HAIR_STYLES.size() - 1)][0]
-	if style == "careca":
-		return null
 	return load(DIR + "hair_%s%s.png" % [style, "_actions" if actions else ""])
 
 
