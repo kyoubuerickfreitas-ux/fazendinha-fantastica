@@ -241,10 +241,17 @@ func _draw_path(pts: Array, w: float, edge: bool) -> void:
 	var ts := SAND_TEX.get_size()
 	for i in pts.size():
 		var a: Vector2 = pts[i] * TILE
-		_path_poly(_circle_pts(a, w / 2.0), edge, ts)
+		if i > 0 and i < pts.size() - 1:
+			_path_poly(_circle_pts(a, w / 2.0), edge, ts)       # esquina: arredondada
 		if i < pts.size() - 1:
 			var b: Vector2 = pts[i + 1] * TILE
-			var n := (b - a).normalized().orthogonal() * (w / 2.0)
+			var d := (b - a).normalized()
+			# pontas da rua: retas, meia largura para fora (cobrem o cruzamento como a esquina)
+			if i == 0:
+				a -= d * (w / 2.0)
+			if i + 1 == pts.size() - 1:
+				b += d * (w / 2.0)
+			var n := d.orthogonal() * (w / 2.0)
 			_path_poly(PackedVector2Array([a + n, b + n, b - n, a - n]), edge, ts)
 
 
