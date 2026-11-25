@@ -1476,6 +1476,18 @@ func _run() -> void:
 	await _shot("51_fogao")
 	game.cook_queue.clear()
 	main.hud.close_panel()
+	# cama: de dia não deixa dormir; depois das 18h pergunta
+	var bed_m0: int = game.minutes
+	game.minutes = 10 * 60
+	main.house.bed_used.emit()
+	await _wait(0.1)
+	assert(main.hud._open_panel == null, "de dia a cama não deixa dormir")
+	game.minutes = 19 * 60
+	main.house.bed_used.emit()
+	await _wait(0.1)
+	assert(main.hud._open_panel == main.hud._confirm, "de noite a cama pergunta se quer dormir")
+	main.hud.close_panel()
+	game.minutes = bed_m0
 	# decorar: mover o sofá e girar a cama
 	var dbtn: Button = main.hud._root.get_node("Decorate")
 	assert(dbtn.visible, "dentro de casa aparece o botão Decorar")

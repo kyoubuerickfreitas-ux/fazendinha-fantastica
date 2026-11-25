@@ -22,6 +22,7 @@ const HOTBAR_SIZE := 6
 
 const DAY_START := 6 * 60          # 06:00
 const DAY_END := 26 * 60           # 02:00 do dia seguinte: desmaia de sono
+const SLEEP_FROM := 18 * 60        # a cama só deixa dormir a partir das 18:00 (não dá para pular dias)
 const SECONDS_PER_GAME_MINUTE := 0.7
 const WATER_CAPACITY := 20
 

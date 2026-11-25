@@ -320,6 +320,14 @@ func _sell_all() -> void:
 	Game.toast.emit("Vendeu %d itens por %d moedas!" % [count, total])
 
 
+## Cama: só dá para dormir de noite (a partir de Game.SLEEP_FROM); de dia, ainda tem o que fazer.
+func _on_bed() -> void:
+	if Game.minutes < Game.SLEEP_FROM:
+		Game.toast.emit("Ainda é cedo para dormir! A cama fica para depois das %dh." % (Game.SLEEP_FROM / 60))
+		return
+	hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true))
+
+
 func _sleep(rested: bool) -> void:
 	player.fishing.cancel()
 	player.dismount()
@@ -376,7 +384,7 @@ func enter_house() -> void:
 		add_child(house)
 		house.generate({})
 		house.exit_used.connect(exit_house)
-		house.bed_used.connect(func(): hud.ask("Dormir até amanhã?\n(o jogo é salvo)", _sleep.bind(true)))
+		house.bed_used.connect(_on_bed)
 		house.chest_used.connect(func(): hud.open_cargo("chest"))
 		house.stove_used.connect(_use_stove)
 		_move_player(house, house.spawn_pos)

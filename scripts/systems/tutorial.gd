@@ -35,7 +35,7 @@ const STEPS := [
 		"metric": "counter:eaten", "goal": 1, "abs": true},
 	{"text": "Venda algo: chegue perto da caixa de vendas ao lado de casa e toque nela.",
 		"metric": "counter:sold", "goal": 1, "target": "bin"},
-	{"text": "Quando escurecer, entre em casa e durma na cama. O dia passa e o jogo é salvo.",
+	{"text": "Depois das 18h, entre em casa e durma na cama. O dia passa e o jogo é salvo.",
 		"metric": "day", "goal": 1, "target": "door"},
 	{"text": "Regue as plantas todo dia. Colha a Couve-Musgo quando o canteiro tiver uma estrelinha.",
 		"metric": "counter:harvests", "goal": 1, "abs": true, "target": "soil", "reward": {"money": 100}},
