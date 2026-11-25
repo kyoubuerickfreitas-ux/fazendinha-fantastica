@@ -3,8 +3,8 @@ extends FarmWorld
 ## A cidade: um mapa à parte (como a mina e a casa), aonde se chega pela estrada leste da fazenda
 ## (entra-se pelo oeste da cidade). Vila em volta de uma praça calçada (poço, bancos, canteiros): a
 ## Pousada no alto, lojas em volta (Ferraria, Restaurante, Feira com a horta, Peixaria junto do rio,
-## Roupas embaixo), casas em grupos, um coreto e o moinho. Caminhos de terra que fazem curva ligam
-## tudo; o rio corre na borda leste, com cais. Arte: tools/import_city.py (assets/sprites/city/).
+## Roupas embaixo), casas em grupos, um coreto e o moinho. Caminhos de terra retos (esquinas
+## arredondadas) ligam tudo; o rio corre na borda leste, com cais. Arte: tools/import_city.py (assets/sprites/city/).
 ## Não se ara, não se planta e não se constrói aqui.
 
 signal exit_used                       ## saiu pela estrada de volta à fazenda
@@ -17,20 +17,18 @@ const PATH_W := 62.0              # largura dos caminhos (px)
 const SAND_EDGE := Color(0.6, 0.44, 0.24, 0.9)
 const CURB := Color(0.22, 0.15, 0.1, 0.55)
 
-## Caminhos de terra: linhas por pontos (em quadrados), com 2 quadrados de largura
+## Caminhos de terra: linhas retas (só na horizontal e na vertical, como o resto do jogo) por pontos em
+## quadrados, com 2 quadrados de largura; as esquinas ficam arredondadas
 const PATHS := [
-	[Vector2(0, 17.5), Vector2(7, 17.5), Vector2(13, 17.2), Vector2(19, 16.2)],          # estrada da fazenda
-	[Vector2(25.5, 11), Vector2(25.5, 9)],                                                # praça -> Pousada
-	[Vector2(20, 11.5), Vector2(17, 9.8), Vector2(12, 10.2), Vector2(8.5, 9.8), Vector2(3.5, 9)],
-	[Vector2(31, 11.5), Vector2(36, 10.3), Vector2(41, 9.8)],                             # -> Restaurante
-	[Vector2(31, 15.5), Vector2(36, 16.8), Vector2(40, 17.6), Vector2(43, 19.6)],         # -> Peixaria e cais
-	[Vector2(25.5, 19.5), Vector2(26.2, 24), Vector2(26, 27.6), Vector2(25, 32), Vector2(24.2, 37.5)],
-	[Vector2(11, 17.5), Vector2(11.5, 21), Vector2(12, 23.8)],
-	[Vector2(2, 23.9), Vector2(8, 24.1), Vector2(17.5, 23.9), Vector2(21, 22.5), Vector2(23.5, 19.5)],
-	[Vector2(12, 24), Vector2(12.5, 28), Vector2(12, 33.8)],
-	[Vector2(4, 33.9), Vector2(12, 33.9), Vector2(19.5, 34.1), Vector2(25, 33)],
-	[Vector2(31, 19.5), Vector2(33.5, 22.5), Vector2(34, 26.7), Vector2(39, 26.9), Vector2(42, 29.5),
-		Vector2(43.5, 32.6)],
+	[Vector2(0, 17.5), Vector2(19.5, 17.5)],                       # estrada da fazenda até a praça
+	[Vector2(3, 9.9), Vector2(44, 9.9)],                           # rua de cima (lojas e Pousada)
+	[Vector2(30.5, 16), Vector2(43, 16), Vector2(43, 33)],         # praça -> Peixaria -> cais -> margem
+	[Vector2(25.5, 19), Vector2(25.5, 24)],                        # praça -> rua das casas
+	[Vector2(2, 24), Vector2(43, 24)],                             # rua das casas
+	[Vector2(12, 17.5), Vector2(12, 24)],
+	[Vector2(22.5, 24), Vector2(22.5, 33)],
+	[Vector2(31, 24), Vector2(31, 33)],
+	[Vector2(4, 33), Vector2(43, 33)],                             # rua de baixo
 ]
 ## Praça central (piso de lajotas) e os canteiros de flores dela
 const PLAZA := Rect2i(19, 11, 13, 9)
@@ -50,38 +48,39 @@ const BUILDINGS := [
 	["blacksmith", 16.6, 9, "smith", "Ferraria"],
 	["inn", 25.5, 9, "inn", "Pousada"],
 	["notice_board", 30.6, 9, "board", "Quadro de avisos"],
-	["restaurant", 41.0, 9, "restaurant", "Restaurante"],
-	["market", 11.0, 16, "market", "Feira"],
+	["restaurant", 39.0, 9, "restaurant", "Restaurante"],
+	["market", 11.0, 17, "market", "Feira"],
 	["fountain", 25.5, 17, "well", "Chafariz"],
-	["fish_shop", 39.6, 17, "fish", "Peixaria"],
+	["fish_shop", 38.6, 15, "fish", "Peixaria"],
 	["house_red", 4.4, 23, "home", "Casa de morador"],
-	["house_red_blue", 9.0, 23, "home", "Casa de morador"],
-	["barn_house", 15.6, 23, "home", "Casa de morador"],
-	["tailor", 26.0, 27, "tailor", "Ateliê de Roupas"],
-	["bakery", 34.0, 26, "bakery", "Padaria"],
-	["house_red_purple", 39.2, 26, "home", "Casa de morador"],
-	["barn_house_red", 5.6, 33, "home", "Casa de morador"],
-	["inn_red", 19.0, 33, "home", "Casa grande"],
-	["barn_house_blue", 35.6, 33, "home", "Casa de morador"],
-	["signpost", 3.2, 17, "sign", "Placa"],
+	["house_red_blue", 8.6, 23, "home", "Casa de morador"],
+	["barn_house", 16.4, 23, "home", "Casa de morador"],
+	["bakery", 34.6, 23, "bakery", "Padaria"],
+	["house_red_purple", 39.4, 23, "home", "Casa de morador"],
+	["barn_house_red", 5.6, 32, "home", "Casa de morador"],
 	["gazebo", 12.6, 31, "gazebo", "Coreto"],
+	["inn_red", 18.8, 32, "home", "Casa grande"],
+	["tailor", 26.6, 32, "tailor", "Ateliê de Roupas"],
+	["barn_house_blue", 36.8, 32, "home", "Casa de morador"],
+	["signpost", 3.2, 17, "sign", "Placa"],
 ]
 ## Enfeites: [arte, x, linha da base]
 const DECOR := [
-	# praça: bancos em volta do poço e postes nos cantos
+	# praça: bancos em volta do chafariz e postes nos cantos
 	["bench", 22.4, 15], ["bench", 28.6, 15], ["bench", 23.0, 19], ["bench", 28.0, 19],
 	["lamp_post", 21.6, 11], ["lamp_post", 29.4, 11], ["lamp_post", 21.6, 18], ["lamp_post", 29.4, 18],
-	# coreto (a barraca vermelha) com bancos e o jardim em volta
-	["bench", 9.6, 31], ["bench", 15.6, 31], ["boat", 46.6, 23],
-	# na frente das lojas e das casas
-	["barrel", 14.0, 9], ["crate", 19.2, 9], ["barrel", 19.8, 9],
-	["bench", 37.8, 9], ["barrel", 43.8, 9], ["crate", 44.3, 9],
-	["crate", 8.6, 16], ["barrel", 13.6, 16], ["crate", 14.2, 16],
-	["barrel", 36.9, 17], ["crate", 42.4, 17], ["barrel", 43.0, 17],
-	["banner_post", 22.8, 27], ["barrel", 29.2, 27], ["crate", 31.8, 26],
-	["lamp_post", 6.8, 17], ["lamp_post", 14.0, 24], ["lamp_post", 34.0, 20], ["lamp_post", 24.0, 24],
-	["lamp_post", 23.0, 34], ["lamp_post", 41.0, 20], ["lamp_post", 2.0, 24], ["lamp_post", 37.0, 11],
-	["bench", 44.0, 31],
+	# coreto: bancos dos lados
+	["bench", 10.2, 31], ["bench", 15.0, 31],
+	["boat", 46.6, 22],
+	# na frente das lojas
+	["barrel", 13.8, 9], ["crate", 19.4, 9], ["barrel", 20.0, 9],
+	["bench", 35.8, 9], ["barrel", 41.8, 9], ["crate", 42.4, 9],
+	["crate", 8.6, 17], ["barrel", 13.6, 17], ["crate", 14.2, 17],
+	["barrel", 35.9, 15], ["crate", 41.4, 15],
+	["banner_post", 23.9, 32], ["barrel", 29.2, 32], ["crate", 29.8, 32],
+	# postes nas ruas
+	["lamp_post", 6.8, 17], ["lamp_post", 34.0, 15], ["lamp_post", 10.4, 26], ["lamp_post", 20.6, 26],
+	["lamp_post", 33.0, 26], ["lamp_post", 41.0, 26], ["lamp_post", 45.6, 9], ["lamp_post", 41.6, 21],
 ]
 ## Flores (último estágio da planta): [planta, x, y] em quadrados (canteiros, jardins e o coreto)
 const FLOWERS := [
@@ -89,20 +88,19 @@ const FLOWERS := [
 	["sunflower", 30.6, 11.9], ["hydrangea", 31.4, 12.6], ["tulip", 30.5, 12.9], ["pink_tulip", 31.5, 11.8],
 	["rose", 19.6, 18.9], ["lavender", 20.4, 19.6], ["pink_tulip", 19.5, 19.9], ["daisy", 20.5, 18.7],
 	["hydrangea", 30.6, 18.9], ["sunflower", 31.4, 19.6], ["daisy", 30.5, 19.9], ["tulip", 31.5, 18.7],
-	["rose", 10.0, 33.4], ["tulip", 11.0, 34.6], ["daisy", 14.0, 34.6], ["lavender", 15.2, 33.4],
-	["pink_tulip", 8.6, 35.2], ["hydrangea", 16.4, 35.2],
-	["tulip", 2.4, 21.6], ["daisy", 6.8, 21.6], ["rose", 11.2, 21.6], ["lavender", 13.2, 21.6],
-	["sunflower", 21.6, 27.4], ["sunflower", 30.4, 27.4], ["pink_tulip", 37.0, 24.4], ["rose", 41.6, 24.4],
-	["daisy", 27.8, 9.4], ["tulip", 23.0, 9.4], ["hydrangea", 6.6, 9.6], ["rose", 38.6, 33.4],
 ]
+## Canteiros de flores (retângulos em quadrados, enchidos com flores sorteadas)
+const FLOWER_BEDS := [Rect2i(10, 27, 6, 1), Rect2i(14, 20, 3, 1), Rect2i(2, 20, 2, 2), Rect2i(37, 18, 4, 2),
+	Rect2i(32, 27, 3, 2), Rect2i(24, 26, 4, 2), Rect2i(19, 26, 2, 2), Rect2i(6, 26, 3, 2),
+	Rect2i(27, 6, 3, 1), Rect2i(21, 6, 2, 1), Rect2i(37, 28, 4, 2)]
+const FLOWER_KINDS := ["daisy", "tulip", "lavender", "pink_tulip", "rose", "hydrangea", "sunflower"]
 ## Cercas (tools/make_city_fence.py): ["h", x0, x1, linha] ou ["v", coluna, y0, y1] (inclusive).
 ## Onde a cerca cruza um caminho, um prédio ou a água, aquele pedaço fica de fora (vira porteira).
 const FENCES := [
 	["v", 1, 11, 15], ["v", 8, 11, 15],                          # horta
-	["h", 8, 17, 36], ["v", 8, 30, 35], ["v", 17, 30, 35],       # jardim do coreto
-	["h", 2, 17, 25],                                            # na frente das casas da esquerda
-	["h", 35, 43, 21], ["v", 43, 21, 25],                        # quintal das casas da direita
-	["v", 43, 13, 16],                                           # lado da Peixaria
+	["h", 9, 16, 25], ["v", 9, 26, 31], ["v", 16, 26, 31],       # jardim do coreto
+	["h", 2, 8, 25], ["h", 32, 41, 25],                          # jardins na beira da rua das casas
+	["h", 36, 41, 17],                                           # quintal da Peixaria
 ]
 ## Bosques (árvores e arbustos sorteados): o resto da grama, longe dos caminhos e dos prédios
 const PARKS := [Rect2i(0, 0, 50, 38)]
@@ -116,8 +114,8 @@ const GATE := Rect2(0, 16 * 32, 2 * 32, 4 * 32)
 const ARRIVE := Vector2(3 * 32 + 16, 17 * 32 + 26)
 
 ## Moradores que passeiam pela cidade (os que não cuidam de loja) e onde cada um gosta de ficar
-const STROLL := {"carpa": Vector2i(44, 20), "pipoca": Vector2i(23, 13), "estrelo": Vector2i(13, 32),
-	"raiz": Vector2i(8, 17)}
+const STROLL := {"carpa": Vector2i(44, 20), "pipoca": Vector2i(23, 13), "estrelo": Vector2i(13, 33),
+	"raiz": Vector2i(8, 18)}
 
 var spawn_pos := ARRIVE
 var doors := {}        # tipo do prédio -> posição da porta (para voltar da loja)
@@ -194,6 +192,17 @@ func generate(_saved: Dictionary) -> void:
 		_add_decor(d[0], d[1], d[2])
 	for f in FLOWERS:
 		_add_flower(f[0], f[1], f[2])
+	var frng := RandomNumberGenerator.new()
+	frng.seed = 777
+	for bed in FLOWER_BEDS:
+		for y in range(bed.position.y, bed.end.y):
+			for x in range(bed.position.x, bed.end.x):
+				var c := Vector2i(x, y)
+				if ground_at(c) != Ground.GRASS or blocked.has(c):
+					continue
+				blocked[c] = true
+				for k in 2:
+					_add_flower(FLOWER_KINDS[frng.randi() % FLOWER_KINDS.size()], x + 0.3 + k * 0.45, y + 0.6 + k * 0.3)
 	for y in range(FIELD.position.y, FIELD.end.y):          # horta: uma fileira de cada verdura
 		var crop: String = FIELD_CROPS[(y - FIELD.position.y) % FIELD_CROPS.size()]
 		for x in range(FIELD.position.x, FIELD.end.x):
@@ -361,16 +370,17 @@ func _add_trees(rng: RandomNumberGenerator) -> void:
 					elif r < 0.85:
 						_spawn_prop("bush", c, -1, rng.randi())
 					continue
-				if r > 0.95 and not _next_to_path(c):           # tufinho de flores na grama
-					var fl: Array = ["daisy", "tulip", "lavender", "pink_tulip", "rose", "hydrangea"]
-					_add_flower(fl[rng.randi() % fl.size()], x + 0.5, y + 0.8)
+				if r > 0.88 and not _next_to_path(c):           # tufinhos de flores na grama
+					_add_flower(FLOWER_KINDS[rng.randi() % FLOWER_KINDS.size()], x + 0.35, y + 0.7)
+					if r > 0.94:
+						_add_flower(FLOWER_KINDS[rng.randi() % FLOWER_KINDS.size()], x + 0.8, y + 0.95)
 					continue
 				if not _covers_street(c) and not _near_building(c):
-					if r < 0.28 and _can_place_tree(c, 1):
+					if r < 0.4 and _can_place_tree(c, 1):
 						_spawn_prop("tree", c, -1, rng.randi())
-					elif r < 0.42:
+					elif r < 0.62:
 						_spawn_prop("bush", c, -1, rng.randi())
-				elif r < 0.07 and not _next_to_path(c) and not blocked.has(c + Vector2i.UP):
+				elif r < 0.16 and not _next_to_path(c) and not blocked.has(c + Vector2i.UP):
 					_spawn_prop("bush", c, -1, rng.randi())      # arbustinhos entre as casas
 	# cerquinha embaixo da horta
 	for x in range(FIELD.position.x, FIELD.end.x, 1):
