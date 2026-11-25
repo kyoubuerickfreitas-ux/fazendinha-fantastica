@@ -558,9 +558,9 @@ func _on_city_building(kind: String) -> void:
 				Game.stats_changed.emit()
 				Sound.play("fill")
 				FX.spawn(city, "fill", player.position + Vector2(0, -10))
-				Game.toast.emit("Regador cheio com a água do poço.")
+				Game.toast.emit("Regador cheio com a água do chafariz.")
 			else:
-				Game.toast.emit("Um poço antigo de água fresquinha. Dá para encher o regador aqui.")
+				Game.toast.emit("O chafariz da praça, de água fresquinha. Dá para encher o regador aqui.")
 		"board":
 			var lines := ["Quadro de avisos · %s" % Calendar.short_text(Game.day)]
 			if FishQuests.is_tournament_day():
@@ -575,6 +575,8 @@ func _on_city_building(kind: String) -> void:
 			Game.toast.emit("← Fazenda %s" % Game.farm_name())
 		"windmill":
 			Game.toast.emit("O moinho gira devagar. Dizem que logo vai moer farinha.")
+		"gazebo":
+			Game.toast.emit("O coreto da vila. Nas noites de festa tem música aqui!")
 		_:
 			Game.toast.emit("Casa de um morador. A porta está fechada.")
 

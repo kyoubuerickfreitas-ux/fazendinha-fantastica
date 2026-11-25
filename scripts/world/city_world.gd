@@ -11,7 +11,10 @@ signal exit_used                       ## saiu pela estrada de volta à fazenda
 signal building_used(kind: String)     ## tocou na porta de uma loja/casa (ver BUILDINGS)
 
 const DIR := "res://assets/sprites/city/"
-const PLAZA_TEX := preload("res://assets/sprites/city/plaza.png")
+const PLAZA_TEX := preload("res://assets/sprites/city/cobble.png")      # calçamento de pedra
+const SAND_TEX := preload("res://assets/sprites/city/sand.png")         # terra clara dos caminhos
+const PATH_W := 62.0              # largura dos caminhos (px)
+const SAND_EDGE := Color(0.6, 0.44, 0.24, 0.9)
 const CURB := Color(0.22, 0.15, 0.1, 0.55)
 
 ## Caminhos de terra: linhas por pontos (em quadrados), com 2 quadrados de largura
@@ -49,7 +52,7 @@ const BUILDINGS := [
 	["notice_board", 30.6, 9, "board", "Quadro de avisos"],
 	["restaurant", 41.0, 9, "restaurant", "Restaurante"],
 	["market", 11.0, 16, "market", "Feira"],
-	["well", 25.5, 16, "well", "Poço"],
+	["fountain", 25.5, 17, "well", "Chafariz"],
 	["fish_shop", 39.6, 17, "fish", "Peixaria"],
 	["house_red", 4.4, 23, "home", "Casa de morador"],
 	["house_red_blue", 9.0, 23, "home", "Casa de morador"],
@@ -61,6 +64,7 @@ const BUILDINGS := [
 	["inn_red", 19.0, 33, "home", "Casa grande"],
 	["barn_house_blue", 35.6, 33, "home", "Casa de morador"],
 	["signpost", 3.2, 17, "sign", "Placa"],
+	["gazebo", 12.6, 31, "gazebo", "Coreto"],
 ]
 ## Enfeites: [arte, x, linha da base]
 const DECOR := [
@@ -68,7 +72,7 @@ const DECOR := [
 	["bench", 22.4, 15], ["bench", 28.6, 15], ["bench", 23.0, 19], ["bench", 28.0, 19],
 	["lamp_post", 21.6, 11], ["lamp_post", 29.4, 11], ["lamp_post", 21.6, 18], ["lamp_post", 29.4, 18],
 	# coreto (a barraca vermelha) com bancos e o jardim em volta
-	["market_red", 12.6, 31], ["bench", 9.6, 31], ["bench", 15.6, 31],
+	["bench", 9.6, 31], ["bench", 15.6, 31], ["boat", 46.6, 23],
 	# na frente das lojas e das casas
 	["barrel", 14.0, 9], ["crate", 19.2, 9], ["barrel", 19.8, 9],
 	["bench", 37.8, 9], ["barrel", 43.8, 9], ["crate", 44.3, 9],
@@ -119,6 +123,7 @@ var spawn_pos := ARRIVE
 var doors := {}        # tipo do prédio -> posição da porta (para voltar da loja)
 var _plaza_cells := {}
 var _dock_cells := {}
+var _shore_cells := {}
 var _field_cells := {}
 
 
@@ -168,6 +173,7 @@ func generate(_saved: Dictionary) -> void:
 		for x in range(river_edge(y), W):
 			ground[y * W + x] = Ground.WATER
 		ground[y * W + river_edge(y) - 1] = Ground.PATH          # prainha de terra na beira do rio
+		_shore_cells[Vector2i(river_edge(y) - 1, y)] = true
 	for d in DOCKS:
 		for y in range(d.position.y, d.end.y):
 			for x in range(d.position.x, d.end.x):
@@ -221,6 +227,35 @@ func _dirt_line(pts: Array) -> void:
 						ground[c.y * W + c.x] = Ground.PATH
 
 
+## Uma faixa de caminho pela linha de pontos (quadrados): retângulos e círculos nas juntas.
+func _draw_path(pts: Array, w: float, edge: bool) -> void:
+	var ts := SAND_TEX.get_size()
+	for i in pts.size():
+		var a: Vector2 = pts[i] * TILE
+		_path_poly(_circle_pts(a, w / 2.0), edge, ts)
+		if i < pts.size() - 1:
+			var b: Vector2 = pts[i + 1] * TILE
+			var n := (b - a).normalized().orthogonal() * (w / 2.0)
+			_path_poly(PackedVector2Array([a + n, b + n, b - n, a - n]), edge, ts)
+
+
+func _path_poly(poly: PackedVector2Array, edge: bool, ts: Vector2) -> void:
+	if edge:
+		_ground_layer.draw_colored_polygon(poly, SAND_EDGE)
+		return
+	var uvs := PackedVector2Array()
+	for p in poly:
+		uvs.append(p / ts)
+	_ground_layer.draw_polygon(poly, PackedColorArray([Color.WHITE]), uvs, SAND_TEX)
+
+
+static func _circle_pts(c: Vector2, r: float) -> PackedVector2Array:
+	var out := PackedVector2Array()
+	for k in 20:
+		out.append(c + Vector2.from_angle(TAU * k / 20.0) * r)
+	return out
+
+
 func _sprite_at(art: String, cx: float, base_row: int) -> Array:
 	var holder := StaticBody2D.new()
 	holder.position = Vector2(cx * TILE, base_row * TILE)
@@ -238,7 +273,7 @@ func _add_building(art: String, cx: float, base_row: int, kind: String, label: S
 	var s: Sprite2D = hs[1]
 	var w := s.texture.get_width()
 	var h := s.texture.get_height()
-	var small := kind in ["well", "board", "sign"] or art.begins_with("market")
+	var small := kind in ["well", "board", "sign", "gazebo"] or art.begins_with("market")
 	var deep := 22.0 if small else 30.0
 	_add_rect_collision(holder, Vector2(w - 14, deep), Vector2(0, -deep / 2.0 - 2))
 	var c0 := int(floor(cx - w / 2.0 / TILE))
@@ -250,9 +285,12 @@ func _add_building(art: String, cx: float, base_row: int, kind: String, label: S
 		if art.begins_with(key):
 			var sm := FX.spawn_loop(s, "chimney", _img_pt(s, CHIMNEYS[key] + Vector2(0, -12)))
 			sm.z_index = 1
-	if art == "well":
-		for lx in [12.0, 69.0]:
-			add_glow(s, _img_pt(s, Vector2(lx, 24)), 30.0)
+	if not small and kind != "windmill":
+		# jardinzinho: arbusto e flor dos dois lados da casa
+		for side in [c0 - 1, c1 + 1]:
+			var bc := Vector2i(side, base_row - 1)
+			if is_inside(bc) and ground_at(bc) == Ground.GRASS and not blocked.has(bc) and not props.has(bc):
+				_spawn_prop("bush", bc, -1, int(cx * 7 + side))
 	var door := Interactable.new()
 	door.label = label
 	door.reach = 30.0
@@ -316,6 +354,17 @@ func _add_trees(rng: RandomNumberGenerator) -> void:
 				if ground_at(c) != Ground.GRASS or blocked.has(c) or x >= river_edge(y) - 1:
 					continue
 				var r := rng.randf()
+				var edge := mini(mini(x, y - 2), H - 1 - y)
+				if edge < 4 and not _covers_street(c) and not _near_building(c):
+					if r < 0.6 and _can_place_tree(c, 0):          # bosque fechado em volta da vila
+						_spawn_prop("tree", c, -1, rng.randi())
+					elif r < 0.85:
+						_spawn_prop("bush", c, -1, rng.randi())
+					continue
+				if r > 0.95 and not _next_to_path(c):           # tufinho de flores na grama
+					var fl: Array = ["daisy", "tulip", "lavender", "pink_tulip", "rose", "hydrangea"]
+					_add_flower(fl[rng.randi() % fl.size()], x + 0.5, y + 0.8)
+					continue
 				if not _covers_street(c) and not _near_building(c):
 					if r < 0.28 and _can_place_tree(c, 1):
 						_spawn_prop("tree", c, -1, rng.randi())
@@ -388,23 +437,29 @@ func _draw_ground() -> void:
 			var i := y * W + x
 			var c := Vector2i(x, y)
 			var dest := Rect2(x * TILE, y * TILE, TILE, TILE)
-			if _plaza_cells.has(c):
-				_ground_layer.draw_texture_rect_region(PLAZA_TEX, dest, dest)
-			elif _dock_cells.has(c):
-				_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_WATER))
+			if _dock_cells.has(c) or ground[i] == Ground.WATER:
+				var up := y > 0 and ground[i - W] != Ground.WATER and not _dock_cells.has(c + Vector2i.UP)
+				_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_WATER_BANK if up and not _dock_cells.has(c) else T_WATER))
 			elif _field_cells.has(c):
 				_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_TILLED))
 			else:
-				match ground[i]:
-					Ground.PATH:
-						_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_PATH))
-					Ground.WATER:
-						var up := y > 0 and ground[i - W] != Ground.WATER and not _dock_cells.has(c + Vector2i.UP)
-						_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_WATER_BANK if up else T_WATER))
-						if x > 0 and ground[i - 1] != Ground.WATER and not _dock_cells.has(c + Vector2i.LEFT):
-							_ground_layer.draw_rect(Rect2(dest.position, Vector2(4, TILE)), Color(0.42, 0.3, 0.17, 0.85))
-					_:
-						_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_GRASS[variant[i]]))
+				_ground_layer.draw_texture_rect_region(TILES_TEX, dest, _tile_rect(T_GRASS[variant[i]]))
+	# caminhos de terra: faixas lisas que fazem curva (borda escura e a terra por cima)
+	for pass_i in 2:
+		for line in PATHS:
+			_draw_path(line, PATH_W + (5.0 if pass_i == 0 else 0.0), pass_i == 0)
+	for c in _shore_cells:
+		var r := Rect2(c.x * TILE - 6, c.y * TILE, TILE + 6, TILE)
+		_ground_layer.draw_rect(Rect2(r.position - Vector2(3, 0), r.size + Vector2(3, 0)), SAND_EDGE)
+		_ground_layer.draw_texture_rect_region(SAND_TEX, r, Rect2(r.position, r.size))
+	# a margem do rio: beirada de terra molhada
+	for y in H:
+		var x := river_edge(y)
+		if not _dock_cells.has(Vector2i(x, y)):
+			_ground_layer.draw_rect(Rect2(x * TILE, y * TILE, 4, TILE), Color(0.45, 0.32, 0.18, 0.9))
+	for c in _plaza_cells:
+		var dest := Rect2(c.x * TILE, c.y * TILE, TILE, TILE)
+		_ground_layer.draw_texture_rect_region(PLAZA_TEX, dest, dest)
 	for d in _dock_cells:
 		_ground_layer.draw_texture(BRIDGE_TEX, Vector2(d.x * TILE, d.y * TILE - 6))
 	# beirada escura onde as lajotas da praça encontram a terra ou a grama
