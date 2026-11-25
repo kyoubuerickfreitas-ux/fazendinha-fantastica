@@ -91,6 +91,15 @@ const FLOWERS := [
 	["sunflower", 21.6, 27.4], ["sunflower", 30.4, 27.4], ["pink_tulip", 37.0, 24.4], ["rose", 41.6, 24.4],
 	["daisy", 27.8, 9.4], ["tulip", 23.0, 9.4], ["hydrangea", 6.6, 9.6], ["rose", 38.6, 33.4],
 ]
+## Cercas (tools/make_city_fence.py): ["h", x0, x1, linha] ou ["v", coluna, y0, y1] (inclusive).
+## Onde a cerca cruza um caminho, um prédio ou a água, aquele pedaço fica de fora (vira porteira).
+const FENCES := [
+	["v", 1, 11, 15], ["v", 8, 11, 15],                          # horta
+	["h", 8, 17, 36], ["v", 8, 30, 35], ["v", 17, 30, 35],       # jardim do coreto
+	["h", 2, 17, 25],                                            # na frente das casas da esquerda
+	["h", 35, 43, 21], ["v", 43, 21, 25],                        # quintal das casas da direita
+	["v", 43, 13, 16],                                           # lado da Peixaria
+]
 ## Bosques (árvores e arbustos sorteados): o resto da grama, longe dos caminhos e dos prédios
 const PARKS := [Rect2i(0, 0, 50, 38)]
 ## Topo da chaminé na imagem (tools/import_city.py): fumaça animada. As variações de cor usam a mesma.
@@ -174,6 +183,7 @@ func generate(_saved: Dictionary) -> void:
 	_build_water_collision()
 	for b in BUILDINGS:
 		_add_building(b[0], b[1], b[2], b[3], b[4])
+	_add_fences()
 	for d in DECOR:
 		_add_decor(d[0], d[1], d[2])
 	for f in FLOWERS:
@@ -313,9 +323,36 @@ func _add_trees(rng: RandomNumberGenerator) -> void:
 						_spawn_prop("bush", c, -1, rng.randi())
 				elif r < 0.07 and not _next_to_path(c) and not blocked.has(c + Vector2i.UP):
 					_spawn_prop("bush", c, -1, rng.randi())      # arbustinhos entre as casas
-	# cerquinha em volta da horta e dos jardins das casas
+	# cerquinha embaixo da horta
 	for x in range(FIELD.position.x, FIELD.end.x, 1):
 		_spawn_prop("fence", Vector2i(x, FIELD.end.y), -1, 0)
+
+
+## Cercas de madeira (FENCES): um trecho por quadrado, com colisão.
+func _add_fences() -> void:
+	var th: Texture2D = load(DIR + "fence_h.png")
+	var tv: Texture2D = load(DIR + "fence_v.png")
+	for f in FENCES:
+		var cells := []
+		if f[0] == "h":
+			for x in range(f[1], f[2] + 1):
+				cells.append([Vector2i(x, f[3]), th])
+		else:
+			for y in range(f[2], f[3] + 1):
+				cells.append([Vector2i(f[1], y), tv])
+		for it in cells:
+			var c: Vector2i = it[0]
+			if not is_inside(c) or ground_at(c) != Ground.GRASS or blocked.has(c) or _field_cells.has(c):
+				continue
+			var holder := StaticBody2D.new()
+			holder.position = Vector2((c.x + 0.5) * TILE, (c.y + 1) * TILE - 4)
+			var sp := Sprite2D.new()
+			sp.texture = it[1]
+			sp.offset = Vector2(0, -sp.texture.get_height() / 2.0)
+			holder.add_child(sp)
+			_add_rect_collision(holder, Vector2(TILE - 2 if f[0] == "h" else 10, 8), Vector2(0, -4))
+			entities.add_child(holder)
+			blocked[c] = true
 
 
 func _next_to_path(c: Vector2i) -> bool:
